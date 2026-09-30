@@ -15,16 +15,16 @@ import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 
-/** Cara o cruz: lo mas simple del casino, doblar o perder. */
+/** Coin flip: the simplest game in the casino, double or nothing. */
 public final class CoinFlipGame extends AbstractSoloGame {
 
-    private static final String CARA = "cara";
-    private static final String CRUZ = "cruz";
+    private static final String HEADS = "heads";
+    private static final String TAILS = "tails";
 
     public CoinFlipGame(MultiverseGamblingPlugin plugin) {
-        super(plugin, GameMeta.builder("cara-o-cruz", "Cara o Cruz", GameCategory.SOLO, Material.GOLD_INGOT)
-                .desc("&7Elige cara o cruz y dobla tu apuesta.",
-                        "&7Rapido, limpio y sin excusas.")
+        super(plugin, GameMeta.builder("coin-flip", "Coin Flip", GameCategory.SOLO, Material.GOLD_INGOT)
+                .desc("&7Pick heads or tails and double your bet.",
+                        "&7Quick, clean and no excuses.")
                 .build());
     }
 
@@ -50,8 +50,8 @@ public final class CoinFlipGame extends AbstractSoloGame {
                 double progress = (double) elapsed / duration;
                 int wait = 1 + (int) (progress * progress * 8);
                 if (elapsed % wait == 0) {
-                    String shown = Rng.chance(0.5) ? CARA : CRUZ;
-                    online.sendActionBar(Text.c("&7La moneda gira... &f" + shown));
+                    String shown = Rng.chance(0.5) ? HEADS : TAILS;
+                    online.sendActionBar(Text.c("&7The coin spins... &f" + shown));
                     online.playSound(online.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 0.4f,
                             1.0f + (float) progress);
                 }
@@ -65,18 +65,18 @@ public final class CoinFlipGame extends AbstractSoloGame {
                     return;
                 }
                 boolean heads = plugin.fair().roll(online.getUniqueId()) < 0.5;
-                String result = heads ? CARA : CRUZ;
+                String result = heads ? HEADS : TAILS;
                 boolean won = result.equals(side);
-                // Ojo: pagar 2.0 con una moneda justa daria ventaja cero a la casa.
-                // Se usa el pago justo recortado, igual que en los dados.
+                // Careful: paying 2.0 with a fair coin would give the house a zero edge.
+                // The trimmed fair payout is used, exactly like in the dice game.
                 double multiplier = DiceTable.payout(50.0, plugin.config().houseEdge());
                 double payout = settle(online, wager, won ? multiplier : 0);
 
                 announceResult(online, won, "&f" + result);
                 info(online, title());
-                info(online, "&7Elegiste &f" + side + " &7y salio &f" + result);
-                info(online, "&7Acertar paga &f" + Text.multiplier(multiplier)
-                        + " &7(ventaja de la casa del "
+                info(online, "&7You picked &f" + side + " &7and it came up &f" + result);
+                info(online, "&7A correct call pays &f" + Text.multiplier(multiplier)
+                        + " &7(house edge of "
                         + Text.percent(plugin.config().houseEdge()) + "&7).");
                 showResult(online, wager.amount(), payout);
                 sound(online, won ? Sound.ENTITY_PLAYER_LEVELUP : Sound.ENTITY_VILLAGER_NO,
@@ -87,14 +87,14 @@ public final class CoinFlipGame extends AbstractSoloGame {
         animation.run();
     }
 
-    private static final class SideGui extends Gui {
+    private final class SideGui extends Gui {
 
         private final CoinFlipGame game;
         private final Wager wager;
         private boolean armed;
 
         SideGui(MultiverseGamblingPlugin plugin, Player player, CoinFlipGame game, Wager wager) {
-            super(plugin, player, 3, "&8Cara o Cruz &7· &6Elige");
+            super(plugin, player, 3, "&8" + game.displayName(player) + " &7· &6Pick a side");
             this.game = game;
             this.wager = wager;
         }
@@ -106,33 +106,33 @@ public final class CoinFlipGame extends AbstractSoloGame {
 
             double multiplier = DiceTable.payout(50.0, plugin.config().houseEdge());
             set(4, Items.of(Material.GOLD_INGOT)
-                    .name("&6Apuesta: &f" + plugin.economy().format(wager.amount()))
-                    .lore("&7Acertar paga &f" + Text.multiplier(multiplier) + "&7, o sea &f"
+                    .name("&6Bet: &f" + plugin.economy().format(wager.amount()))
+                    .lore("&7A correct call pays &f" + Text.multiplier(multiplier) + "&7, that is &f"
                             + plugin.economy().format(wager.amount() * multiplier))
                     .glow(true)
                     .build());
 
             set(11, Items.of(Material.GOLD_BLOCK)
-                    .name("&6CARA")
-                    .lore("&7La cara del sol.", "", "&ePulsa para apostar a cara")
+                    .name("&6HEADS")
+                    .lore("&7The sun side.", "", "&eClick to bet on heads")
                     .build(), e -> {
                 armed = true;
                 close();
-                game.flip(player(), wager, CARA);
+                game.flip(player(), wager, HEADS);
             });
 
             set(15, Items.of(Material.IRON_BLOCK)
-                    .name("&7CRUZ")
-                    .lore("&7El sello real.", "", "&ePulsa para apostar a cruz")
+                    .name("&7TAILS")
+                    .lore("&7The royal seal.", "", "&eClick to bet on tails")
                     .build(), e -> {
                 armed = true;
                 close();
-                game.flip(player(), wager, CRUZ);
+                game.flip(player(), wager, TAILS);
             });
 
             set(22, Items.of(Material.BARRIER)
                     .name("&cCancelar")
-                    .lore("&7Recuperas tu apuesta.")
+                    .lore("&7You get your stake back.")
                     .build(), e -> close());
         }
 
@@ -145,7 +145,7 @@ public final class CoinFlipGame extends AbstractSoloGame {
 
         @Override
         public String sessionId() {
-            return "cara-o-cruz";
+            return "coin-flip";
         }
     }
 }

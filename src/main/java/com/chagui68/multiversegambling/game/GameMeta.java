@@ -4,7 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 import org.bukkit.Material;
 
-/** Ficha tecnica de un juego: como se llama, como se ve y cuanta gente admite. */
+/**
+ * Technical sheet of a game: what it is called, how it looks and how many players it
+ * takes. The name and the description are written in the plugin's default language
+ * (English) and can be overridden per language with {@code catalog.<id>.*} keys in
+ * the {@code lang} files.
+ */
 public record GameMeta(
         String id,
         String name,

@@ -7,36 +7,36 @@ import org.junit.jupiter.api.Test;
 class PlinkoTableTest {
 
     @Test
-    void lasProbabilidadesDeLosCubosSumanUno() {
+    void theBucketProbabilitiesAddUpToOne() {
         for (int rows : new int[] {8, 12, 16}) {
             double sum = 0;
             for (int bucket = 0; bucket <= rows; bucket++) {
                 sum += PlinkoTable.bucketChance(rows, bucket);
             }
-            assertEquals(1.0, sum, 1e-9, "filas=" + rows);
+            assertEquals(1.0, sum, 1e-9, "rows=" + rows);
         }
     }
 
     @Test
-    void elCuboCentralEsElMasProbableYLosExtremosLosMasRaros() {
+    void theCentreBucketIsTheMostLikelyAndTheEdgesTheRarest() {
         int rows = 12;
         double center = PlinkoTable.bucketChance(rows, rows / 2);
         double edge = PlinkoTable.bucketChance(rows, 0);
-        assertTrue(center > edge * 100, "el centro deberia ser muchisimo mas probable que el borde");
+        assertTrue(center > edge * 100, "the centre should be far more likely than the edge");
         assertEquals(edge, PlinkoTable.bucketChance(rows, rows), 1e-12, "la tabla es simetrica");
     }
 
     @Test
-    void laTablaNuncaDaVentajaAlJugador() {
+    void theTableNeverFavoursThePlayer() {
         for (int rows : new int[] {8, 12, 16}) {
             double[] table = PlinkoTable.multipliers(rows, 0.01, 10_000);
             double rtp = PlinkoTable.rtp(table, rows, 10_000);
-            assertTrue(rtp <= 1.0, "filas=" + rows + " devolvia " + rtp);
+            assertTrue(rtp <= 1.0, "rows=" + rows + " devolvia " + rtp);
         }
     }
 
     @Test
-    void elTopeDeMultiplicadorSoloReduceElRetorno() {
+    void theMultiplierCapOnlyReducesTheReturn() {
         int rows = 16;
         double[] sinTope = PlinkoTable.multipliers(rows, 0.01, 100_000);
         double[] conTope = PlinkoTable.multipliers(rows, 0.01, 50);
@@ -47,17 +47,17 @@ class PlinkoTableTest {
     }
 
     @Test
-    void losMultiplicadoresDecrecenHaciaElCentro() {
+    void theMultipliersDecreaseTowardsTheCentre() {
         int rows = 12;
         double[] table = PlinkoTable.multipliers(rows, 0.01, 10_000);
         for (int i = 0; i < rows / 2; i++) {
-            assertTrue(table[i] > table[i + 1], "cubo " + i + " deberia pagar mas que " + (i + 1));
+            assertTrue(table[i] > table[i + 1], "bucket " + i + " should pay more than " + (i + 1));
         }
         assertTrue(table[rows / 2] < table[0]);
     }
 
     @Test
-    void laCaidaSiempreCaeDentroDeLaPiramide() {
+    void theFallAlwaysLandsInsideThePyramid() {
         int rows = 16;
         for (int i = 0; i < 20_000; i++) {
             int bucket = PlinkoTable.drop(rows);
@@ -66,7 +66,7 @@ class PlinkoTableTest {
     }
 
     @Test
-    void laDistribucionSimuladaSePareceALaBinomial() {
+    void theSimulatedDistributionResemblesTheBinomialOne() {
         int rows = 8;
         int samples = 200_000;
         int[] hits = new int[rows + 1];

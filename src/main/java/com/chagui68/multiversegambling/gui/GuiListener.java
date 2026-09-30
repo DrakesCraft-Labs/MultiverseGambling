@@ -10,7 +10,7 @@ import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.inventory.InventoryType;
 
-/** Bloquea todo lo que no sea pulsar un boton dentro de un menu del casino. */
+/** Blocks anything that is not clicking a button inside a casino menu. */
 public final class GuiListener implements Listener {
 
     private final MultiverseGamblingPlugin plugin;
@@ -41,7 +41,7 @@ public final class GuiListener implements Listener {
         try {
             gui.handleClick(event);
         } catch (RuntimeException error) {
-            plugin.getLogger().severe("Error al pulsar en el menu del casino: " + error);
+            plugin.getLogger().severe("Error while clicking in the casino menu: " + error);
             error.printStackTrace();
         }
     }

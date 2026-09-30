@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-/** Registro de todo lo que pasa en el casino, en {@code stats.json}. */
+/** Record of everything that happens in the casino, stored in {@code stats.json}. */
 public final class StatsStore {
 
     private static final Type MAP_TYPE = new TypeToken<Map<String, PlayerStats>>() {
@@ -47,10 +47,10 @@ public final class StatsStore {
     }
 
     /**
-     * Anota una jugada ya liquidada.
+     * Records a round that has already been settled.
      *
-     * @param bet    lo que se retiro del monedero
-     * @param payout lo que se devolvio al jugador
+     * @param bet    what was taken out of the wallet
+     * @param payout what was returned to the player
      */
     public void record(UUID playerId, String gameId, double bet, double payout) {
         PlayerStats entry = of(playerId);
@@ -65,7 +65,7 @@ public final class StatsStore {
         entry.biggestLoss = Math.max(entry.biggestLoss, bet - payout);
     }
 
-    /** Ranking por ganancia neta. */
+    /** Ranking by net profit. */
     public List<TopEntry> topByProfit(int limit) {
         return ranking(Comparator.comparingDouble((TopEntry entry) -> entry.stats().profit()).reversed(), limit);
     }
@@ -90,13 +90,13 @@ public final class StatsStore {
         if (player != null) {
             return player.getName();
         }
-        // Un jugador puede no tener nombre resoluble (cuenta borrada del proxy),
-        // y un "null" en el ranking queda fatal.
+        // A player may have no resolvable name (account deleted from the proxy), and a
+        // "null" in the ranking looks terrible.
         String name = plugin.getServer().getOfflinePlayer(playerId).getName();
         return name == null ? playerId.toString().substring(0, 8) : name;
     }
 
-    /** Suma de todo el dinero que ha ganado la casa. */
+    /** Total money the house has won. */
     public double houseProfit() {
         double profit = 0;
         for (PlayerStats entry : stats.values()) {
@@ -118,11 +118,11 @@ public final class StatsStore {
                 try {
                     stats.put(UUID.fromString(key), value == null ? new PlayerStats() : value);
                 } catch (IllegalArgumentException ignored) {
-                    plugin.getLogger().warning("UUID invalido en stats.json: " + key);
+                    plugin.getLogger().warning("Invalid UUID in stats.json: " + key);
                 }
             });
         } catch (IOException e) {
-            plugin.getLogger().warning("No se pudo leer stats.json: " + e.getMessage());
+            plugin.getLogger().warning("Could not read stats.json: " + e.getMessage());
         }
     }
 
@@ -132,13 +132,13 @@ public final class StatsStore {
         try {
             File parent = file.getParentFile();
             if (parent != null && !parent.exists() && !parent.mkdirs()) {
-                plugin.getLogger().warning("No se pudo crear la carpeta de datos del casino");
+                plugin.getLogger().warning("Could not create the plugin data folder");
             }
             try (Writer writer = Files.newBufferedWriter(file.toPath(), StandardCharsets.UTF_8)) {
                 gson.toJson(raw, MAP_TYPE, writer);
             }
         } catch (IOException e) {
-            plugin.getLogger().warning("No se pudo guardar stats.json: " + e.getMessage());
+            plugin.getLogger().warning("Could not save stats.json: " + e.getMessage());
         }
     }
 

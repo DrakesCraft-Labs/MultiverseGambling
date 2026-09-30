@@ -1,0 +1,362 @@
+# ============================================================================
+#  MultiverseGambling - mensajes (Español)
+#
+#  Un fichero por idioma, dentro de plugins/MultiverseGambling/lang/.
+#  Los jugadores cambian de idioma en el juego con: /casino language <codigo>
+#
+#  Los colores usan el formato clasico con ampersand: &6 dorado, &7 gris...
+#  Las llaves son huecos que rellena el plugin:
+#    {bet} {prize} {profit} {amount} {game} {player} {min} {max}
+#    {seconds} {round} {current} {balance} {currency} {seed} {value} {usage}
+#    {language} {languages} {native} {world} {hash} {state} {description}
+#  ============================================================================
+
+prefix: '&8[&6Casino&8] &r'
+
+general:
+  no-permission: '&cNo tienes permiso para hacer eso.'
+
+economy:
+  not-enough-money: '&cNo puedes pagar una apuesta de {bet}.'
+  account-created: '&7Bienvenido al casino. Te hemos abierto una cuenta con {balance}.'
+
+games:
+  disabled: '&cEl juego &f{game} &cesta desactivado en la configuracion.'
+  already-playing: '&cYa tienes una partida abierta. Termínala o ciérrala antes de empezar otra.'
+  win: '&aHas ganado &f{prize} &a(apostaste {bet}, beneficio de {profit}).'
+  tie: '&eEmpate: recuperas tus {bet}.'
+  lose: '&cHas perdido los {bet} que tenias apostados.'
+  abandoned: '&cHas dejado la partida y has perdido {bet}.'
+  global-announcement: '&8[&6Casino&8] &f{player} &7acaba de ganar &6{prize} &7en el casino (beneficio de &6{profit}&7).'
+  play-again-prompt: '&7¿Otra ronda? '
+  play-again-button: '&a&l[ JUGAR OTRA VEZ ]'
+  play-again-hover: '&7Jugar a {game} otra vez'
+  win-title: '&6&l¡HAS GANADO!'
+  lose-title: '&c&lSIN PREMIO'
+
+group:
+  waiting-players: '&7Esperando jugadores para empezar: &f{current}&7/&f{min}&7.'
+  betting-open: '&aLas apuestas estan abiertas &f{seconds}s&a. Puedes entrar ya.'
+  betting-hint: '&7Usa &f/casino play <juego> &7para entrar.'
+  countdown: '&eLa ronda empieza en &f{seconds}&e...'
+  time-left: '&7Quedan &f{seconds}s &7para cerrar las apuestas.'
+  round-starting: '&6¡Empieza la ronda &f{round}&6!'
+  round-finished: '&7Ronda terminada. La siguiente empieza cuando entren jugadores.'
+  round-voided: '&cLa ronda quedo anulada y se devolvio el dinero.'
+  round-cancelled: '&cNo hay suficientes jugadores con apuesta (minimo {min}); se devuelve todo.'
+  round-in-progress: '&eEsa ronda esta en marcha; te hemos apuntado a la siguiente.'
+  queued-next: '&7Estas apuntado a la siguiente ronda de &f{game}&7. Te avisaremos.'
+  already-queued: '&7Ya estabas apuntado a la siguiente ronda.'
+  bet-accepted: '&aApuesta de &f{amount} &aaceptada en &f{game}&a.'
+  betting-open-again: '&eEmpieza otra ronda de &f{game}&e: vuelve a entrar y apuesta.'
+  room-full: '&cLa sala esta llena (maximo {max}). Prueba la siguiente ronda.'
+  not-in-table: '&cNo estas en ninguna partida abierta.'
+  not-in-color-round: '&cNo estas en esta ronda de ruleta.'
+  not-betting-this-round: '&cNo estas apostando en esta ronda.'
+  unknown-action: '&cEsa accion no existe en este juego.'
+  invalid-tile: '&cEsa casilla no es valida.'
+  invalid-horse: '&cEse caballo no existe.'
+  russian-roulette-finished: '&7La partida ya ha terminado.'
+  russian-roulette-not-your-turn: '&cNo es tu turno; &f{player} &cdebe disparar.'
+
+duel:
+  self-duel: '&cNo puedes retarte a ti mismo.'
+  already-busy: '&cTanto tu como ese jugador ya teneis un duelo pendiente.'
+  rival-cannot-afford: '&c{player} no tiene saldo suficiente para aceptar ese duelo.'
+  challenge-sent: '&aReto enviado a &f{player} &apor &f{amount}&a. Espera su respuesta.'
+  challenge-no-funds: '&cTu rival no tenia saldo; aqui tienes tu apuesta.'
+  challenge-expired: '&c{player} no respondio al reto y se te devuelve la apuesta.'
+  challenge-declined: '&c{player} ha rechazado el duelo y se te devuelve la apuesta.'
+  challenge-timed-out: '&7El duelo caduco sin respuesta.'
+  declined: '&7Has rechazado el duelo.'
+  no-challenge: '&cNo tienes ningun duelo pendiente.'
+
+fairness:
+  explanation: '&7Cada tirada sale de un secreto del servidor y de tu semilla. Cuando el secreto rote podras recalcularla y comprobar que nada se ha tocado.'
+  your-seed: '&7Tu semilla actual es &f{seed}&7. Puedes cambiarla con &f/casino verify <texto>&7.'
+  seed-changed: '&aTu semilla ahora es &f{seed}&a.'
+
+# ---------------------------------------------------------------------------
+#  Selector de idioma: /casino language [codigo|reset]
+# ---------------------------------------------------------------------------
+language:
+  current: '&7Tu idioma es &f{language}&7. Disponibles: &f{languages}&7.'
+  usage: '&7Cambialo con &f{usage}&7, o reinicialo para seguir tu cliente de Minecraft.'
+  changed: '&aIdioma cambiado a &f{native} &7({language})&a.'
+  unknown: '&cNo existe un idioma llamado &f{language}&c. Disponibles: &f{languages}&c.'
+  reset: '&aTu idioma vuelve a ser automatico; ahora lees en &f{language}&a.'
+
+# ---------------------------------------------------------------------------
+#  Mundo del casino: /casino world [build]
+# ---------------------------------------------------------------------------
+world:
+  disabled: '&cEl mundo del casino esta desactivado en la configuracion.'
+  teleporting: '&aBienvenido al mundo del casino &f{world}&a.'
+  unavailable: '&cEl mundo del casino todavia no esta listo; revisa la consola del servidor.'
+  built: '&aMundo del casino &f{world} &areconstruido con la plaza, las carreteras y todas las arenas.'
+  build-failed: '&cNo se pudo construir el mundo del casino &f{world}&c; revisa la consola del servidor.'
+
+command:
+  players-only: '&cEste comando es para usarlo dentro del juego.'
+  unknown: '&cSubcomando desconocido: &f{subcommand}&c. Prueba &f/casino menu&c.'
+  play-help: '&7Juega a cualquier juego con &f/casino play <juego>&7.'
+  unknown-game: '&cNo existe ningun juego llamado &f{game}&c.'
+  unknown-player: '&cNo encuentro al jugador &f{player}&c.'
+  invalid-amount: '&c&f{value} &cno es una cantidad valida.'
+  usage: '&cUso correcto: &f{usage}'
+  balance: '&7Tu saldo es &6{balance}&7.'
+  balance-other: '&7El saldo de &f{player}&7 es &6{balance}&7.'
+  balance-updated: '&aSaldo de &f{player} &aactualizado a &6{balance}&a.'
+  reloaded: '&aConfiguracion y mensajes recargados. Partidas activas: &f{games}&a.'
+  session-cancelled: '&aPartida de &f{player} &acerrada y dinero devuelto.'
+
+# ---------------------------------------------------------------------------
+#  Menus. Las lineas que empiezan por guion son una lista: cada una se muestra
+#  como una linea de la descripcion, asi que se pueden reordenar libremente.
+# ---------------------------------------------------------------------------
+gui:
+  verify:
+    title: '&8&m        &r &6Azar provably-fair &8&m        '
+  category:
+    solo:
+      name: 'Solitario'
+      description: 'Apuestas contra la casa, a tu ritmo.'
+    group:
+      name: 'En grupo'
+      description: 'Apuestas contra y con otros jugadores.'
+  hub:
+    title: '&8Casino &7· &6Menu principal'
+    balance: '&6Tu saldo: &f{balance}'
+    balance-lore:
+      - '&7Economia: &f{provider}'
+      - '&7Apuesta minima: &f{min}'
+      - ''
+      - '&7Elige un juego abajo para empezar.'
+    stats: '&eTus estadisticas'
+    stats-lore:
+      - '&7Partidas, ganancia neta y ranking.'
+      - ''
+      - '&ePulsa para verlas'
+    fairness: '&dAzar provably-fair'
+    fairness-lore:
+      - '&7El casino publica el hash de su secreto'
+      - '&7antes de jugar: podras comprobar cada'
+      - '&7tirada cuando rote.'
+      - ''
+      - '&7Secreto actual:'
+      - '&f{hash}...'
+      - ''
+      - '&e/casino verify'
+    bet: '&7Apuesta: &f{min} &7- &f{max}'
+    players: '&7Jugadores: &f{min} &7- &f{max}'
+    play: '&ePulsa para jugar'
+    disabled: '&cDesactivado en la configuracion'
+    tab-lore:
+      - '&7{description}'
+      - '&7Juegos disponibles: &f{amount}'
+      - ''
+      - '{state}'
+    tab-selected: '&aEstas viendo esta pestaña'
+    tab-switch: '&ePulsa para cambiar'
+    group-lore:
+      - '&7Retos contra otros jugadores,'
+      - '&7con jackpot comun y ronda automatica.'
+    solo-lore:
+      - '&7Apuestas contra la casa,'
+      - '&7sin esperar a nadie.'
+    close: '&cCerrar'
+  stats:
+    title: '&8Casino &7· &6Estadisticas'
+    lore:
+      - '&7Partidas jugadas: &f{games}'
+      - '&7Victorias: &f{wins} &7({rate})'
+      - '&7Apostado: &f{wagered}'
+      - '&7Recuperado: &f{returned}'
+      - '&7Beneficio: {profit}'
+      - '&7Retorno real: &f{rtp}'
+      - '&7Mayor premio: &f{biggest}'
+      - '&7Juego favorito: &f{favourite}'
+    top-profit: '&aTop beneficios'
+    top-wagered: '&6Top apostado'
+    top-prize: '&bTop mayor premio'
+    top-empty: '&7Todavia no hay datos.'
+    entry: '&7{player}: &f{value}'
+    house: '&cGanancia de la casa'
+    house-lore:
+      - '&7Total ganado por el casino: &f{profit}'
+      - '&7Ventaja configurada: &f{edge}'
+    back: '&eVolver al menu'
+  bet:
+    title: '&8Apuesta &7· &6{game}'
+    current: '&6Apuesta: &f{bet}'
+    lore:
+      - '&7Juego: &f{game}'
+      - '&7Saldo: &f{balance}'
+      - '&7Minimo: &f{min}'
+      - '&7Maximo: &f{max}'
+      - ''
+      - '&7Sube o baja la apuesta con los botones.'
+    half: '&cMitad'
+    half-lore: '&7Divide la apuesta entre 2'
+    down: '&eBajar'
+    down-lore: '&7Resta un 10%'
+    up: '&aSubir'
+    up-lore: '&7Suma un 10%'
+    double: '&6Doble'
+    double-lore: '&7Multiplica la apuesta por 2'
+    min: '&7Minimo'
+    min-lore: '&7Apuesta lo mas bajo permitido'
+    half-balance: '&bMitad del saldo'
+    half-balance-lore: '&7Apuesta la mitad de lo que tienes'
+    all: '&aTodo'
+    all-lore: '&7Apuesta todo tu saldo'
+    selected: '&fCantidad seleccionada'
+    selected-lore:
+      - '&7Apostando: &6{bet}'
+      - '&7Tope actual: &f{limit}'
+    confirm: '&a&lCONFIRMAR APUESTA'
+    confirm-lore:
+      - '&7Vas a apostar &6{bet}'
+      - '&7en &f{game}&7.'
+      - ''
+      - '&ePulsa para jugar'
+    no-funds: '&c&lSIN SALDO SUFICIENTE'
+    no-funds-lore:
+      - '&7Necesitas al menos &f{min}'
+      - '&7y tienes &f{balance}&7.'
+    back: '&cVolver al menu'
+    back-lore: '&7Cierra este menu'
+
+# ============================================================================
+#  Traduccion del catalogo de juegos
+#
+#  Los nombres y descripciones en ingles estan en el codigo; aqui solo hace
+#  falta lo que quieras traducir. La clave es el id del juego y puedes cambiar
+#  el nombre con "name" y las lineas de descripcion con "description".
+# ============================================================================
+catalog:
+  roulette:
+    name: 'Ruleta Clasica'
+    description:
+      - '&7Rojo, negro, docenas, columnas o un'
+      - '&7numero exacto: de &f2x &7a &f36x&7.'
+      - '&7El cero es verde y solo paga al numero.'
+  slots:
+    name: 'Tragamonedas'
+    description:
+      - '&7Tres rodillos, siete simbolos y un'
+      - '&7jackpot de &f600x&7 en la corona.'
+      - '&7Devuelve cerca del &f95%&7 de lo apostado.'
+  crash:
+    name: 'Crash'
+    description:
+      - '&7La curva sube y tu decides cuando salir.'
+      - '&7Si no te sales a tiempo lo pierdes todo.'
+      - '&7Ningun objetivo es mejor que otro.'
+  mines:
+    name: 'Minas'
+    description:
+      - '&7Destapa casillas seguras y retirate'
+      - '&7cuando quieras. Con mas minas,'
+      - '&7mas paga cada acierto.'
+  towers:
+    name: 'La Torre'
+    description:
+      - '&7Cada piso esconde una bomba entre'
+      - '&7varias casillas. Sube todo lo que'
+      - '&7puedas y retirate a tiempo.'
+  blackjack:
+    name: 'Blackjack'
+    description:
+      - '&7Llega a 21 sin pasarte y gana al'
+      - '&7crupier. El natural paga &f3:2&7.'
+      - '&7Pide, plantate o dobla.'
+  high-low:
+    name: 'Mayor o Menor'
+    description:
+      - '&7Adivina si la siguiente carta es mayor'
+      - '&7o menor. Encadena aciertos para'
+      - '&7multiplicar y retirate cuando quieras.'
+  dice:
+    name: 'Dados'
+    description:
+      - '&7Fija un objetivo del 0.01 al 99.99 y'
+      - '&7apuesta a por encima o por debajo.'
+      - '&7Cuanto mas dificil, mas paga.'
+  plinko:
+    name: 'Plinko'
+    description:
+      - '&7Suelta la bolita y mira en que cubo'
+      - '&7cae. Los bordes pagan muchisimo'
+      - '&7y el centro casi nada.'
+  lucky-wheel:
+    name: 'Ruleta de la Suerte'
+    description:
+      - '&7Doce segmentos, muchos vacios y'
+      - '&7golpes de hasta &f4x&7. Una vuelta'
+      - '&7decide el premio.'
+  scratch:
+    name: 'Rasca y Gana'
+    description:
+      - '&7Destapa tres casillas de nueve.'
+      - '&7Tres iguales pagan el premio del simbolo'
+      - '&7y dos iguales devuelven parte.'
+  coin-flip:
+    name: 'Cara o Cruz'
+    description:
+      - '&7Elige cara o cruz y dobla tu apuesta.'
+      - '&7Rapido, limpio y sin excusas.'
+  color-roulette:
+    name: 'Ruleta de Colores'
+    description:
+      - '&7Rojo, negro o verde. Todos apuestan'
+      - '&7y la rueda decide quien cobra.'
+      - '&7El verde paga unas &f36x&7.'
+  jackpot:
+    name: 'Bote Comun'
+    description:
+      - '&7Todos ponen dinero en un mismo bote'
+      - '&7y un sorteo ponderado decide quien'
+      - '&7se lo lleva todo.'
+  hot-bomb:
+    name: 'Bomba Caliente'
+    description:
+      - '&7La bomba pasa de mano en mano.'
+      - '&7Al que le pille con ella, fuera.'
+      - '&7El ultimo en pie se lleva el bote.'
+  bomb-board:
+    name: 'Tablero de Bombas'
+    description:
+      - '&7Un tablero con bombas escondidas.'
+      - '&7Por turnos, cada uno destapa una casilla.'
+      - '&7El ultimo en pie se lleva el bote.'
+  russian-roulette:
+    name: 'Ruleta Rusa'
+    description:
+      - '&7Por turnos, cada uno aprieta el gatillo.'
+      - '&7Con &f1 bala en 6 recamaras&7, la suerte'
+      - '&7decide quien queda en pie.'
+  race:
+    name: 'Carrera de Caballos'
+    description:
+      - '&7Ocho caballos con sus probabilidades.'
+      - '&7Apostar al favorito paga poco;'
+      - '&7al tapado, mucho.'
+  duel:
+    name: 'Duelo 1v1'
+    description:
+      - '&7Reta a otro jugador por una cantidad.'
+      - '&7Los dos ponen lo mismo y una tirada'
+      - '&7decide quien se lo lleva todo.'
+  raffle:
+    name: 'Rifa'
+    description:
+      - '&7Boletas a precio fijo. El sorteo'
+      - '&7reparte el bote en tres premios:'
+      - '&f70%&7, &f20% &7y &f10%&7.'
+  dice-poker:
+    name: 'Poker de Dados'
+    description:
+      - '&7Cada jugador tira cinco dados.'
+      - '&7Gana la mejor mano: repoker, poker,'
+      - '&7full, escalera, trio...'

@@ -3,22 +3,22 @@ package com.chagui68.multiversegambling.session;
 import java.util.UUID;
 
 /**
- * Estado de juego que necesita avanzar tick a tick y que debe poder cerrarse
- * limpiamente si el jugador se va o el plugin se apaga.
+ * Game state that must advance tick by tick and must be able to close cleanly when the
+ * player leaves or the plugin shuts down.
  */
 public interface SoloSession {
 
     UUID playerId();
 
-    /** Identificador del juego, para saber si hay algo en curso. */
+    /** Game identifier, to know whether something is running. */
     String sessionId();
 
-    /** Un tick del servidor. */
+    /** One server tick. */
     void tick();
 
-    /** @return false cuando la sesion ya no debe seguir recibiendo ticks. */
+    /** @return false when the session should stop receiving ticks. */
     boolean active();
 
-    /** Cierre ordenado: debe devolver dinero y cerrar inventarios si toca. */
+    /** Orderly shutdown: it must refund money and close inventories when needed. */
     void cancel();
 }

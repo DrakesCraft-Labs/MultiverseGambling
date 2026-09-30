@@ -18,19 +18,19 @@ import java.util.UUID;
 import org.bukkit.entity.Player;
 
 /**
- * Azar verificable del casino.
+ * Provably fair randomness of the casino.
  *
- * <p>Al arrancar el servidor se genera un secreto y se publica su hash. Todas las
- * tiradas se derivan de ese secreto mas la semilla del jugador y un contador. Al
- * rotar el secreto se revela el anterior, y entonces cualquiera puede recalcular
- * las tiradas y comprobar que la casa no las retoco.</p>
+ * <p>A secret is generated when the server starts and its hash is published. Every roll
+ * is derived from that secret plus the player seed and a counter. When the secret
+ * rotates the previous one is revealed, and then anybody can recompute the rolls and
+ * check that the house did not touch them.</p>
  */
 public final class FairnessService {
 
     /**
-     * Identidad del casino cuando la tirada no es de un jugador concreto: turnos
-     * de bomba, carreras, sorteos. Tener un UUID fijo hace que la auditoria de una
-     * partida en grupo siga siendo reproducible.
+     * The identity of the casino when a roll does not belong to a specific player: bomb
+     * turns, races, draws. Having a fixed UUID keeps the audit of a group round
+     * reproducible.
      */
     public static final UUID HOUSE = new UUID(0L, 0L);
 
@@ -57,7 +57,7 @@ public final class FairnessService {
         return plugin.config().provablyFairEnabled();
     }
 
-    /** Genera un secreto nuevo y deja el anterior disponible para auditoria. */
+    /** Generates a new secret and leaves the previous one available for auditing. */
     public void rotateServerSeed() {
         previousSeed = serverSeed;
         serverSeed = ProvablyFair.randomSeed();
@@ -90,7 +90,7 @@ public final class FairnessService {
         return nonce++;
     }
 
-    /** Proxima tirada uniforme en [0,1) atribuida al jugador. */
+    /** Next uniform roll in [0,1) attributed to the player. */
     public double roll(UUID playerId) {
         if (!enabled()) {
             return Math.random();
@@ -116,15 +116,15 @@ public final class FairnessService {
         return ProvablyFair.rollInt(serverSeed, clientSeed(playerId), nextNonce(), 0, bound);
     }
 
-    /** Texto listo para /casino verificar. */
+    /** Text ready for /casino verify. */
     public String[] auditLines(UUID playerId) {
         String revealed = previousSeed == null ? null : ProvablyFair.sha256(previousSeed);
         return new String[] {
-                "&7Secreto actual (hash): &f" + serverSeedHash(),
-                "&7Secreto anterior: &f" + (previousSeed == null ? "ninguno todavia" : previousSeed),
-                "&7Hash que dejo el anterior: &f" + (revealed == null ? "-" : revealed),
-                "&7Tu semilla de cliente: &f" + clientSeed(playerId),
-                "&7Tiradas emitidas en esta sesion: &f" + nonce,
+                "&7Current secret (hash): &f" + serverSeedHash(),
+                "&7Previous secret: &f" + (previousSeed == null ? "none yet" : previousSeed),
+                "&7Hash left by the previous secret: &f" + (revealed == null ? "-" : revealed),
+                "&7Your client seed: &f" + clientSeed(playerId),
+                "&7Rolls issued in this session: &f" + nonce,
         };
     }
 
@@ -141,11 +141,11 @@ public final class FairnessService {
                 try {
                     clientSeeds.put(UUID.fromString(key), value);
                 } catch (IllegalArgumentException ignored) {
-                    // Entrada corrupta: se ignora sin romper la carga.
+                    // Corrupt entry: ignored without breaking the load.
                 }
             });
         } catch (IOException e) {
-            plugin.getLogger().warning("No se pudo leer fairness.json: " + e.getMessage());
+            plugin.getLogger().warning("Could not read fairness.json: " + e.getMessage());
         }
     }
 
@@ -155,13 +155,13 @@ public final class FairnessService {
         try {
             File parent = file.getParentFile();
             if (parent != null && !parent.exists() && !parent.mkdirs()) {
-                plugin.getLogger().warning("No se pudo crear la carpeta de datos del casino");
+                plugin.getLogger().warning("Could not create the plugin data folder");
             }
             try (Writer writer = Files.newBufferedWriter(file.toPath(), StandardCharsets.UTF_8)) {
                 gson.toJson(raw, MAP_TYPE, writer);
             }
         } catch (IOException e) {
-            plugin.getLogger().warning("No se pudo guardar fairness.json: " + e.getMessage());
+            plugin.getLogger().warning("Could not save fairness.json: " + e.getMessage());
         }
     }
 

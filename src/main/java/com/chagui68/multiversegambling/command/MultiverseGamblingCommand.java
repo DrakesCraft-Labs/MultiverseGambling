@@ -1,8 +1,10 @@
 package com.chagui68.multiversegambling.command;
 
 import com.chagui68.multiversegambling.MultiverseGamblingPlugin;
+import com.chagui68.multiversegambling.config.Messages;
 import com.chagui68.multiversegambling.game.Game;
 import com.chagui68.multiversegambling.game.GameCategory;
+import com.chagui68.multiversegambling.i18n.Language;
 import com.chagui68.multiversegambling.stats.PlayerStats;
 import com.chagui68.multiversegambling.stats.StatsStore;
 import com.chagui68.multiversegambling.util.Text;
@@ -19,12 +21,12 @@ import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
-/** {@code /casino}: abre el menu y expone saldo, ranking, auditoria y administracion. */
+/** {@code /casino}: opens the menu and exposes balance, ranking, audit and administration. */
 public final class MultiverseGamblingCommand implements CommandExecutor, TabCompleter {
 
     private static final List<String> SUBS = List.of(
-            "menu", "juegos", "jugar", "accion", "saldo", "stats", "top", "verificar",
-            "reload", "dar", "quitar", "set", "cancelar", "info");
+            "menu", "games", "play", "action", "balance", "stats", "top", "verify",
+            "world", "language", "info", "reload", "give", "take", "set", "cancel");
 
     private final MultiverseGamblingPlugin plugin;
 
@@ -37,11 +39,11 @@ public final class MultiverseGamblingCommand implements CommandExecutor, TabComp
                              @NotNull String label, @NotNull String[] args) {
         if (args.length == 0) {
             if (!(sender instanceof Player player)) {
-                plugin.messages().send(sender, "comando.solo-jugadores");
+                plugin.messages().send(sender, "command.players-only");
                 return true;
             }
             if (!player.hasPermission("casino.play")) {
-                plugin.messages().send(player, "general.sin-permiso");
+                plugin.messages().send(player, "general.no-permission");
                 return true;
             }
             plugin.guis().openHub(player);
@@ -50,64 +52,70 @@ public final class MultiverseGamblingCommand implements CommandExecutor, TabComp
 
         String sub = args[0].toLowerCase(Locale.ROOT);
         switch (sub) {
-            case "menu", "abrir" -> {
+            case "menu" -> {
                 return withPlayer(sender, player -> plugin.guis().openHub(player));
             }
-            case "juegos", "lista" -> {
+            case "games", "list" -> {
                 return listGames(sender, args);
             }
-            case "jugar", "apostar" -> {
+            case "play", "bet" -> {
                 return playGame(sender, args);
             }
-            case "saldo", "balance" -> {
+            case "balance" -> {
                 return balance(sender, args);
             }
-            case "stats", "estadisticas" -> {
+            case "stats" -> {
                 return stats(sender, args);
             }
             case "top", "ranking" -> {
                 return top(sender, args);
             }
-            case "verificar", "azar", "fair" -> {
+            case "verify", "fair" -> {
                 return verify(sender, args);
+            }
+            case "world" -> {
+                return world(sender, args);
+            }
+            case "language", "lang" -> {
+                return language(sender, args);
             }
             case "info" -> {
                 return info(sender);
             }
-            case "reload", "recargar" -> {
+            case "reload" -> {
                 if (!sender.hasPermission("casino.admin")) {
-                    plugin.messages().send(sender, "general.sin-permiso");
+                    plugin.messages().send(sender, "general.no-permission");
                     return true;
                 }
                 plugin.reloadAll();
-                plugin.messages().send(sender, "comando.recargado", "juegos", plugin.games().enabled().size());
+                plugin.messages().send(sender, "command.reloaded", "games", plugin.games().enabled().size());
                 return true;
             }
-            case "dar", "quitar", "set" -> {
+            case "give", "take", "set" -> {
                 return adminMoney(sender, sub, args);
             }
-            case "accion" -> {
+            case "action" -> {
                 return action(sender, args);
             }
-            case "cancelar" -> {
+            case "cancel" -> {
                 return cancel(sender, args);
             }
             default -> {
-                plugin.messages().send(sender, "comando.desconocido", "subcomando", sub);
+                plugin.messages().send(sender, "command.unknown", "subcommand", sub);
                 return true;
             }
         }
     }
 
-    // ------------------------------------------------------------------ acciones
+    // ----------------------------------------------------------------- actions
 
     private boolean withPlayer(CommandSender sender, java.util.function.Consumer<Player> action) {
         if (!(sender instanceof Player player)) {
-            plugin.messages().send(sender, "comando.solo-jugadores");
+            plugin.messages().send(sender, "command.players-only");
             return true;
         }
         if (!player.hasPermission("casino.play")) {
-            plugin.messages().send(player, "general.sin-permiso");
+            plugin.messages().send(player, "general.no-permission");
             return true;
         }
         action.accept(player);
@@ -115,28 +123,28 @@ public final class MultiverseGamblingCommand implements CommandExecutor, TabComp
     }
 
     /**
-     * Punto de entrada de los botones de chat. Cada juego en grupo decide que
-     * acciones acepta, con lo que un juego nuevo no necesita tocar el comando.
+     * Entry point for the chat buttons. Each group game decides which actions it
+     * accepts, so a new game never has to touch the command.
      */
     private boolean action(CommandSender sender, String[] args) {
         if (!(sender instanceof Player player)) {
-            plugin.messages().send(sender, "comando.solo-jugadores");
+            plugin.messages().send(sender, "command.players-only");
             return true;
         }
         if (args.length < 2) {
-            plugin.messages().send(player, "comando.uso", "uso", "/casino accion <accion>");
+            plugin.messages().send(player, "command.usage", "usage", "/casino action <action>");
             return true;
         }
         var game = plugin.games().activeGameOf(player.getUniqueId());
         if (game.isEmpty()) {
-            plugin.messages().send(player, "grupo.sin-mesa");
+            plugin.messages().send(player, "group.not-in-table");
             return true;
         }
         String[] rest = java.util.Arrays.copyOfRange(args, 2, args.length);
         try {
             game.get().handleAction(player, args[1].toLowerCase(Locale.ROOT), rest);
         } catch (RuntimeException error) {
-            plugin.getLogger().severe("Error procesando la accion '" + args[1] + "': " + error);
+            plugin.getLogger().severe("Error while handling the action '" + args[1] + "': " + error);
             error.printStackTrace();
         }
         return true;
@@ -145,47 +153,47 @@ public final class MultiverseGamblingCommand implements CommandExecutor, TabComp
     private boolean listGames(CommandSender sender, String[] args) {
         GameCategory filter = null;
         if (args.length > 1) {
-            filter = args[1].toLowerCase(Locale.ROOT).startsWith("g") ? GameCategory.GRUPO
+            filter = args[1].toLowerCase(Locale.ROOT).startsWith("g") ? GameCategory.GROUP
                     : (args[1].toLowerCase(Locale.ROOT).startsWith("s") ? GameCategory.SOLO : null);
         }
-        plugin.messages().sendRaw(sender, "&8&m        &r &6Catalogo del casino &8&m        ");
+        plugin.messages().sendRaw(sender, "&8&m        &r &6Casino catalogue &8&m        ");
         for (GameCategory category : GameCategory.values()) {
             if (filter != null && category != filter) {
                 continue;
             }
-            plugin.messages().sendRaw(sender, "&6" + category.label() + " &7· " + category.description());
+            plugin.messages().sendRaw(sender, "&6" + plugin.messages().forSenderOr(sender,
+                    "gui.category." + category.key() + ".name", category.label())
+                    + " &7- " + plugin.messages().forSenderOr(sender,
+                    "gui.category." + category.key() + ".description", category.description()));
             for (Game game : plugin.games().byCategory(category)) {
                 String state = game.enabled() ? "&a●" : "&c●";
-                plugin.messages().sendRaw(sender, "  " + state + " &f" + game.name()
+                plugin.messages().sendRaw(sender, "  " + state + " &f"
+                        + plugin.messages().gameName(sender, game.id(), game.name())
                         + " &7(" + game.id() + ") &8- &7" + plugin.economy().shortFormat(game.minBet())
-                        + " a " + plugin.economy().shortFormat(game.maxBet()));
+                        + " to " + plugin.economy().shortFormat(game.maxBet()));
             }
         }
-        plugin.messages().send(sender, "comando.jugar-ayuda");
+        plugin.messages().send(sender, "command.play-help");
         return true;
     }
 
     private boolean playGame(CommandSender sender, String[] args) {
         if (!(sender instanceof Player player)) {
-            plugin.messages().send(sender, "comando.solo-jugadores");
+            plugin.messages().send(sender, "command.players-only");
             return true;
         }
         if (!player.hasPermission("casino.play")) {
-            plugin.messages().send(player, "general.sin-permiso");
+            plugin.messages().send(player, "general.no-permission");
             return true;
         }
         if (args.length < 2) {
-            if (args.length == 0) {
-                plugin.guis().openHub(player);
-                return true;
-            }
             plugin.guis().openHub(player);
             return true;
         }
         String query = String.join("_", java.util.Arrays.copyOfRange(args, 1, args.length));
         Game game = plugin.games().search(query).orElse(null);
         if (game == null) {
-            plugin.messages().send(player, "comando.juego-desconocido", "juego", query);
+            plugin.messages().send(player, "command.unknown-game", "game", query);
             return true;
         }
         game.open(player);
@@ -197,16 +205,16 @@ public final class MultiverseGamblingCommand implements CommandExecutor, TabComp
             @SuppressWarnings("deprecation")
             OfflinePlayer target = Bukkit.getOfflinePlayer(args[1]);
             if (target.getName() == null && !target.hasPlayedBefore()) {
-                plugin.messages().send(sender, "comando.jugador-desconocido", "jugador", args[1]);
+                plugin.messages().send(sender, "command.unknown-player", "player", args[1]);
                 return true;
             }
-            plugin.messages().send(sender, "comando.saldo-otro",
-                    "jugador", String.valueOf(target.getName()),
-                    "saldo", plugin.economy().format(plugin.economy().balance(target.getUniqueId())));
+            plugin.messages().send(sender, "command.balance-other",
+                    "player", String.valueOf(target.getName()),
+                    "balance", plugin.economy().format(plugin.economy().balance(target.getUniqueId())));
             return true;
         }
-        return withPlayer(sender, player -> plugin.messages().send(player, "comando.saldo",
-                "saldo", plugin.economy().format(plugin.economy().balance(player.getUniqueId()))));
+        return withPlayer(sender, player -> plugin.messages().send(player, "command.balance",
+                "balance", plugin.economy().format(plugin.economy().balance(player.getUniqueId()))));
     }
 
     private boolean stats(CommandSender sender, String[] args) {
@@ -216,41 +224,42 @@ public final class MultiverseGamblingCommand implements CommandExecutor, TabComp
             player = self;
         }
         if (player == null) {
-            plugin.messages().send(sender, "comando.jugador-desconocido",
-                    "jugador", args.length > 1 ? args[1] : "-");
+            plugin.messages().send(sender, "command.unknown-player",
+                    "player", args.length > 1 ? args[1] : "-");
             return true;
         }
         PlayerStats stats = plugin.stats().of(player.getUniqueId());
-        plugin.messages().sendRaw(sender, "&8&m        &r &6Estadisticas de " + player.getName() + " &8&m        ");
-        plugin.messages().sendRaw(sender, "&7Partidas: &f" + stats.games
-                + " &8| &7Victorias: &f" + stats.wins + " &8(" + Text.percent(stats.winRate()) + ")");
-        plugin.messages().sendRaw(sender, "&7Apostado: &f" + plugin.economy().format(stats.wagered)
-                + " &8| &7Recuperado: &f" + plugin.economy().format(stats.returned));
-        plugin.messages().sendRaw(sender, (stats.profit() >= 0 ? "&7Beneficio: &a" : "&7Beneficio: &c")
+        plugin.messages().sendRaw(sender, "&8&m        &r &6Stats for " + player.getName() + " &8&m        ");
+        plugin.messages().sendRaw(sender, "&7Games: &f" + stats.games
+                + " &8| &7Wins: &f" + stats.wins + " &8(" + Text.percent(stats.winRate()) + ")");
+        plugin.messages().sendRaw(sender, "&7Wagered: &f" + plugin.economy().format(stats.wagered)
+                + " &8| &7Returned: &f" + plugin.economy().format(stats.returned));
+        plugin.messages().sendRaw(sender, (stats.profit() >= 0 ? "&7Profit: &a" : "&7Profit: &c")
                 + plugin.economy().format(stats.profit())
-                + " &8| &7Retorno real: &f" + Text.percent(stats.rtp()));
-        plugin.messages().sendRaw(sender, "&7Mayor premio: &f" + plugin.economy().format(stats.biggestWin)
-                + " &8| &7Juego favorito: &f" + stats.favouriteGame());
+                + " &8| &7Actual RTP: &f" + Text.percent(stats.rtp()));
+        String favourite = plugin.messages().gameName(sender, stats.favouriteGame(), stats.favouriteGame());
+        plugin.messages().sendRaw(sender, "&7Biggest win: &f" + plugin.economy().format(stats.biggestWin)
+                + " &8| &7Favourite game: &f" + favourite);
         return true;
     }
 
     private boolean top(CommandSender sender, String[] args) {
-        String mode = args.length > 1 ? args[1].toLowerCase(Locale.ROOT) : "beneficio";
+        String mode = args.length > 1 ? args[1].toLowerCase(Locale.ROOT) : "profit";
         List<StatsStore.TopEntry> entries = switch (mode) {
-            case "apostado", "wagered" -> plugin.stats().topByWagered(10);
-            case "premio", "win" -> plugin.stats().topByBiggestWin(10);
+            case "wagered" -> plugin.stats().topByWagered(10);
+            case "prize" -> plugin.stats().topByBiggestWin(10);
             default -> plugin.stats().topByProfit(10);
         };
         plugin.messages().sendRaw(sender, "&8&m        &r &6Ranking &7(" + mode + ") &8&m        ");
         if (entries.isEmpty()) {
-            plugin.messages().sendRaw(sender, "&7Todavia no hay datos.");
+            plugin.messages().sendRaw(sender, "&7No data yet.");
             return true;
         }
         int position = 1;
         for (StatsStore.TopEntry entry : entries) {
             double value = switch (mode) {
-                case "apostado", "wagered" -> entry.stats().wagered;
-                case "premio", "win" -> entry.stats().biggestWin;
+                case "wagered" -> entry.stats().wagered;
+                case "prize" -> entry.stats().biggestWin;
                 default -> entry.stats().profit();
             };
             String colour = position == 1 ? "&6" : (position <= 3 ? "&e" : "&7");
@@ -264,85 +273,169 @@ public final class MultiverseGamblingCommand implements CommandExecutor, TabComp
     private boolean verify(CommandSender sender, String[] args) {
         if (args.length > 1 && sender instanceof Player player) {
             plugin.fair().setClientSeed(player, args[1]);
-            plugin.messages().send(player, "azar.semilla-cambiada",
-                    "semilla", plugin.fair().clientSeed(player.getUniqueId()));
+            plugin.messages().send(player, "fairness.seed-changed",
+                    "seed", plugin.fair().clientSeed(player.getUniqueId()));
             return true;
         }
         UUID id = sender instanceof Player player ? player.getUniqueId() : new UUID(0, 0);
-        plugin.messages().sendRaw(sender, "&8&m        &r &6Azar verificable &8&m        ");
+        plugin.messages().sendRaw(sender, "&8&m        &r &6Provably fair &8&m        ");
         for (String line : plugin.fair().auditLines(id)) {
             plugin.messages().sendRaw(sender, line);
         }
-        plugin.messages().send(sender, "azar.explicacion");
+        plugin.messages().send(sender, "fairness.explanation");
         return true;
+    }
+
+    /** Teleports to the casino world; {@code /casino world build} rebuilds the structures. */
+    private boolean world(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) {
+            plugin.messages().send(sender, "command.players-only");
+            return true;
+        }
+        if (!player.hasPermission("casino.play")) {
+            plugin.messages().send(player, "general.no-permission");
+            return true;
+        }
+        if (!plugin.config().worldEnabled()) {
+            plugin.messages().send(player, "world.disabled");
+            return true;
+        }
+        if (args.length > 1 && args[1].equalsIgnoreCase("build")) {
+            if (!sender.hasPermission("casino.admin")) {
+                plugin.messages().send(sender, "general.no-permission");
+                return true;
+            }
+            boolean ok = plugin.world().rebuild();
+            plugin.messages().send(player, ok ? "world.built" : "world.build-failed",
+                    "world", plugin.config().worldName());
+            return true;
+        }
+        if (plugin.world().teleport(player)) {
+            plugin.messages().send(player, "world.teleporting", "world", plugin.config().worldName());
+        } else {
+            plugin.messages().send(player, "world.unavailable");
+        }
+        return true;
+    }
+
+    /**
+     * Self translation: {@code /casino language es} switches everything this player
+     * reads. The list of available languages comes from the {@code lang} folder, so an
+     * admin can drop an extra file and it shows up without touching the code.
+     */
+    private boolean language(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) {
+            plugin.messages().send(sender, "command.players-only");
+            return true;
+        }
+        Messages messages = plugin.messages();
+        if (args.length > 1 && matches(args[1], "reset", "auto", "default")) {
+            plugin.languages().clear(player.getUniqueId());
+            messages.send(player, "language.reset", "language", messages.localeOf(player));
+            return true;
+        }
+        if (args.length < 2) {
+            messages.send(player, "language.current", "language", messages.localeOf(player),
+                    "languages", messages.localeList());
+            messages.send(player, "language.usage", "usage", "/casino language <" + String.join("|", messages.locales()) + ">");
+            return true;
+        }
+        String query = args[1].toLowerCase(Locale.ROOT);
+        Language known = Language.match(query);
+        String code = known == null ? query : known.code();
+        if (!messages.supports(code)) {
+            messages.send(player, "language.unknown", "language", args[1],
+                    "languages", messages.localeList());
+            return true;
+        }
+        plugin.languages().set(player.getUniqueId(), code);
+        // Sent after the switch, so the confirmation already arrives in the new language.
+        messages.send(player, "language.changed", "language", code, "native", localeName(code));
+        return true;
+    }
+
+    private String localeName(String code) {
+        Language language = Language.match(code);
+        return language == null ? code : language.nativeName();
+    }
+
+    private boolean matches(String value, String... candidates) {
+        for (String candidate : candidates) {
+            if (value.equalsIgnoreCase(candidate)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private boolean info(CommandSender sender) {
         plugin.messages().sendRaw(sender, "&8&m        &r &6MultiverseGambling &8&m        ");
-        plugin.messages().sendRaw(sender, "&7Economia: &f" + plugin.economy().provider().name());
-        plugin.messages().sendRaw(sender, "&7Juegos: &f" + plugin.games().all().size()
-                + " &7(" + plugin.games().enabled().size() + " activos)");
-        plugin.messages().sendRaw(sender, "&7Ventaja de la casa: &f" + Text.percent(plugin.config().houseEdge()));
-        plugin.messages().sendRaw(sender, "&7Azar verificable: &f"
-                + (plugin.fair().enabled() ? "activado" : "desactivado"));
-        plugin.messages().sendRaw(sender, "&7Secreto actual: &f" + plugin.fair().serverSeedHash());
+        plugin.messages().sendRaw(sender, "&7Economy: &f" + plugin.economy().provider().name());
+        plugin.messages().sendRaw(sender, "&7Games: &f" + plugin.games().all().size()
+                + " &7(" + plugin.games().enabled().size() + " active)");
+        plugin.messages().sendRaw(sender, "&7House edge: &f" + Text.percent(plugin.config().houseEdge()));
+        plugin.messages().sendRaw(sender, "&7Provably fair: &f"
+                + (plugin.fair().enabled() ? "enabled" : "disabled"));
+        plugin.messages().sendRaw(sender, "&7Current secret: &f" + plugin.fair().serverSeedHash());
+        plugin.messages().sendRaw(sender, "&7Casino world: &f"
+                + (plugin.config().worldEnabled() ? plugin.config().worldName() : "disabled"));
         return true;
     }
 
     private boolean adminMoney(CommandSender sender, String mode, String[] args) {
         if (!sender.hasPermission("casino.admin")) {
-            plugin.messages().send(sender, "general.sin-permiso");
+            plugin.messages().send(sender, "general.no-permission");
             return true;
         }
         if (args.length < 3) {
-            plugin.messages().send(sender, "comando.uso", "uso", "/casino " + mode + " <jugador> <cantidad>");
+            plugin.messages().send(sender, "command.usage", "usage", "/casino " + mode + " <player> <amount>");
             return true;
         }
         @SuppressWarnings("deprecation")
         OfflinePlayer target = Bukkit.getOfflinePlayer(args[1]);
         if (target.getName() == null && !target.hasPlayedBefore()) {
-            plugin.messages().send(sender, "comando.jugador-desconocido", "jugador", args[1]);
+            plugin.messages().send(sender, "command.unknown-player", "player", args[1]);
             return true;
         }
         double amount;
         try {
             amount = Double.parseDouble(args[2].replace(",", "."));
         } catch (NumberFormatException error) {
-            plugin.messages().send(sender, "comando.cantidad-invalida", "valor", args[2]);
+            plugin.messages().send(sender, "command.invalid-amount", "value", args[2]);
             return true;
         }
         UUID id = target.getUniqueId();
         switch (mode) {
-            case "dar" -> plugin.economy().deposit(id, Math.abs(amount));
-            case "quitar" -> plugin.economy().provider().withdraw(id, Math.abs(amount));
+            case "give" -> plugin.economy().deposit(id, Math.abs(amount));
+            case "take" -> plugin.economy().provider().withdraw(id, Math.abs(amount));
             default -> plugin.economy().set(id, Math.max(0, amount));
         }
-        plugin.messages().send(sender, "comando.saldo-actualizado",
-                "jugador", String.valueOf(target.getName()),
-                "saldo", plugin.economy().format(plugin.economy().balance(id)));
+        plugin.messages().send(sender, "command.balance-updated",
+                "player", String.valueOf(target.getName()),
+                "balance", plugin.economy().format(plugin.economy().balance(id)));
         return true;
     }
 
     private boolean cancel(CommandSender sender, String[] args) {
         if (!sender.hasPermission("casino.admin")) {
-            plugin.messages().send(sender, "general.sin-permiso");
+            plugin.messages().send(sender, "general.no-permission");
             return true;
         }
         if (args.length < 2) {
-            plugin.messages().send(sender, "comando.uso", "uso", "/casino cancelar <jugador>");
+            plugin.messages().send(sender, "command.usage", "usage", "/casino cancel <player>");
             return true;
         }
         Player target = Bukkit.getPlayerExact(args[1]);
         if (target == null) {
-            plugin.messages().send(sender, "comando.jugador-desconocido", "jugador", args[1]);
+            plugin.messages().send(sender, "command.unknown-player", "player", args[1]);
             return true;
         }
         plugin.sessions().cancel(target.getUniqueId());
-        plugin.messages().send(sender, "comando.sesion-cancelada", "jugador", target.getName());
+        plugin.messages().send(sender, "command.session-cancelled", "player", target.getName());
         return true;
     }
 
-    // -------------------------------------------------------------- completado
+    // ------------------------------------------------------------ tab complete
 
     @Override
     public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command,
@@ -352,16 +445,19 @@ public final class MultiverseGamblingCommand implements CommandExecutor, TabComp
         }
         if (args.length == 2) {
             return switch (args[0].toLowerCase(Locale.ROOT)) {
-                case "jugar" -> filter(plugin.games().all().stream().map(Game::id).toList(), args[1]);
-                case "juegos", "lista" -> filter(List.of("solo", "grupo"), args[1]);
-                case "top", "ranking" -> filter(List.of("beneficio", "apostado", "premio"), args[1]);
-                case "verificar" -> filter(List.of("<semilla>"), args[1]);
-                case "dar", "quitar", "set", "cancelar", "saldo", "stats" ->
+                case "play" -> filter(plugin.games().all().stream().map(Game::id).toList(), args[1]);
+                case "games" -> filter(List.of("solo", "group"), args[1]);
+                case "top" -> filter(List.of("profit", "wagered", "prize"), args[1]);
+                case "verify" -> filter(List.of("<seed>"), args[1]);
+                case "world" -> filter(List.of("build"), args[1]);
+                case "language", "lang" ->
+                        filter(plugin.messages().locales(), args[1]);
+                case "give", "take", "set", "cancel", "balance", "stats" ->
                         filter(onlineNames(), args[1]);
                 default -> List.of();
             };
         }
-        if (args.length == 3 && List.of("dar", "quitar", "set").contains(args[0].toLowerCase(Locale.ROOT))) {
+        if (args.length == 3 && List.of("give", "take", "set").contains(args[0].toLowerCase(Locale.ROOT))) {
             return filter(List.of("100", "1000", "10000"), args[2]);
         }
         return List.of();

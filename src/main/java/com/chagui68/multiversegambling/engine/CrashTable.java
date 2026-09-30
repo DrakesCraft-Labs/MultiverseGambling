@@ -1,13 +1,13 @@
 package com.chagui68.multiversegambling.engine;
 
 /**
- * El juego de Crash: la curva sube sola y hay que salirse antes de que reviente.
+ * The Crash game: the curve climbs on its own and you must get out before it bursts.
  *
- * <p>El punto de explosion se deriva de un uniforme {@code u} invirtiendo
- * {@code P(X >= x) = (1 - edge) / x}. Con eso, retirarse en cualquier objetivo
- * {@code t} tiene valor esperado exactamente {@code 1 - edge}: la ventaja de la
- * casa es la configurada y no depende del objetivo elegido. La probabilidad
- * {@code edge} se concentra en el estallido instantaneo a 1.00x.</p>
+ * <p>The crash point is derived from a uniform {@code u} by inverting
+ * {@code P(X >= x) = (1 - edge) / x}. With that, cashing out at any target {@code t}
+ * has an expected value of exactly {@code 1 - edge}: the house edge is the configured
+ * one and does not depend on the chosen target. The probability {@code edge} is
+ * concentrated in the instant burst at 1.00x.</p>
  */
 public final class CrashTable {
 
@@ -15,13 +15,13 @@ public final class CrashTable {
     }
 
     /**
-     * @param u          uniforme en [0,1), idealmente de una tirada verificable
-     * @param houseEdge  ventaja de la casa, p. ej. 0.01
-     * @return punto de explosion truncado a 2 decimales, nunca menor que 1.00
+     * @param u          uniform in [0,1), ideally from a provably fair roll
+     * @param houseEdge  house edge, for example 0.01
+     * @return crash point truncated to 2 decimals, never below 1.00
      */
     public static double crashPoint(double u, double houseEdge) {
         if (u < 0 || u >= 1) {
-            throw new IllegalArgumentException("u debe estar en [0,1)");
+            throw new IllegalArgumentException("u must be in [0,1)");
         }
         if (u < houseEdge) {
             return 1.00;
@@ -30,7 +30,7 @@ public final class CrashTable {
         return Math.max(1.00, Math.floor(raw * 100.0) / 100.0);
     }
 
-    /** Multiplicador visible tras {@code seconds} jugados. */
+    /** Multiplier visible after {@code seconds} played. */
     public static double multiplierAt(double seconds, double growthPerSecond) {
         if (seconds <= 0) {
             return 1.0;
@@ -38,7 +38,7 @@ public final class CrashTable {
         return Math.pow(growthPerSecond, seconds);
     }
 
-    /** Segundos que tarda la curva en alcanzar {@code target}. */
+    /** Seconds the curve takes to reach {@code target}. */
     public static double secondsToReach(double target, double growthPerSecond) {
         if (target <= 1.0) {
             return 0;
@@ -47,8 +47,8 @@ public final class CrashTable {
     }
 
     /**
-     * Probabilidad teorica de que la curva alcance {@code target} antes de estallar.
-     * Es el pilar del juego: si esto no cuadra, el jugador tendria ventaja.
+     * Theoretical probability that the curve reaches {@code target} before bursting.
+     * It is the backbone of the game: if this does not add up, the player has an edge.
      */
     public static double reachChance(double target, double houseEdge) {
         if (target <= 1.0) {
@@ -57,7 +57,7 @@ public final class CrashTable {
         return (1.0 - houseEdge) / target;
     }
 
-    /** Tasa de crecimiento para que la curva doble cada {@code doubleEverySeconds}. */
+    /** Growth rate so the curve doubles every {@code doubleEverySeconds}. */
     public static double growthRate(double doubleEverySeconds) {
         return Math.pow(2.0, 1.0 / doubleEverySeconds);
     }

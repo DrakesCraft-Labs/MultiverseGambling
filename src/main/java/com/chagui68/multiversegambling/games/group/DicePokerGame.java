@@ -16,11 +16,11 @@ import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 
 /**
- * Poker de dados.
+ * Dice poker.
  *
- * <p>Todo el mundo tira cinco dados y gana la mejor mano. Como cada tirada sale del
- * generador verificable, dos jugadores pueden reproducir la partida entera con
- * {@code /casino verificar} y comprobar que nadie hizo trampas.</p>
+ * <p>Everybody rolls five dice and the best hand wins. Because every roll comes from
+ * the provably fair generator, two players can replay the whole game with
+ * {@code /casino verify} and check that nobody cheated.</p>
  */
 public final class DicePokerGame extends AbstractGroupGame {
 
@@ -28,10 +28,10 @@ public final class DicePokerGame extends AbstractGroupGame {
     private int resolvedCount;
 
     public DicePokerGame(MultiverseGamblingPlugin plugin) {
-        super(plugin, GameMeta.builder("poker-dados", "Poker de Dados", GameCategory.GRUPO, Material.DRAGON_BREATH)
-                .desc("&7Cada jugador tira cinco dados.",
-                        "&7Gana la mejor mano: repoker, poker,",
-                        "&7full, escalera, trio...")
+        super(plugin, GameMeta.builder("dice-poker", "Dice Poker", GameCategory.GROUP, Material.DRAGON_BREATH)
+                .desc("&7Every player rolls five dice.",
+                        "&7The best hand wins: five of a kind, four",
+                        "&7of a kind, full house, straight, three...")
                 .players(2, 16)
                 .build());
     }
@@ -42,8 +42,8 @@ public final class DicePokerGame extends AbstractGroupGame {
         resolvedCount = 0;
         timer = 0;
         broadcastRaw(roundHeader());
-        broadcastRaw("&7Repartiendo &f" + pot.size() + " &7manos de cinco dados...");
-        // Las tiradas se generan aqui mismo: antes de que nadie pueda reaccionar.
+        broadcastRaw("&7Dealing &f" + pot.size() + " &7hands of five dice...");
+        // The rolls are generated right here, before anybody can react.
         for (UUID id : pot.participants()) {
             int[] dice = new int[DicePoker.DICE];
             for (int i = 0; i < dice.length; i++) {
@@ -59,11 +59,11 @@ public final class DicePokerGame extends AbstractGroupGame {
         if (timer <= 40) {
             if (timer % 20 == 0) {
                 soundAll(Sound.BLOCK_NOTE_BLOCK_HAT, 0.5f, 1.1f);
-                actionBarAll("&7Los dados ruedan sobre la mesa...");
+                actionBarAll("&7The dice roll across the table...");
             }
             return;
         }
-        // Una mano por cada dos segundos, para dar suspense.
+        // One hand every two seconds, to keep the suspense.
         int index = (timer - 40) / 40;
         List<UUID> order = new ArrayList<>(hands.keySet());
         if (index < order.size()) {
@@ -77,7 +77,7 @@ public final class DicePokerGame extends AbstractGroupGame {
             return;
         }
 
-        // Todos han enseñado: se resuelve el ganador.
+        // Everybody has revealed: the winner is settled.
         resolvedCount++;
         UUID winner = null;
         int bestScore = Integer.MIN_VALUE;
@@ -96,23 +96,23 @@ public final class DicePokerGame extends AbstractGroupGame {
 
         double total = pot.total();
         if (tied.size() > 1) {
-            // Empate real: el bote se reparte a partes iguales.
-            broadcastRaw("&6Empate entre " + tied.stream().map(this::playerName).toList()
-                    + "&6; el bote se reparte.");
+            // A real tie: the pot is split evenly.
+            broadcastRaw("&6A tie between " + tied.stream().map(this::playerName).toList()
+                    + "&6; the pot is split.");
             pot.shareAmong(new java.util.LinkedHashSet<>(tied));
         } else if (winner != null) {
             pot.payAllTo(winner, plugin.config().groupHouseCut());
-            broadcastRaw("&8&m        &r &6POKER DE DADOS &8&m        ");
+            broadcastRaw("&8&m        &r &6DICE POKER &8&m        ");
             broadcastRaw("&6Gana &f" + playerName(winner) + " &6con &f"
                     + DicePoker.handOf(hands.get(winner)).label() + "&6: &f"
                     + DicePoker.describe(hands.get(winner)));
         }
-        broadcastRaw("&7Bote repartido: &f" + plugin.economy().format(total));
+        broadcastRaw("&7Pot paid out: &f" + plugin.economy().format(total));
         soundAll(Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.2f);
         Player winnerPlayer = winner == null ? null : online(winner);
         if (winnerPlayer != null) {
             winnerPlayer.showTitle(net.kyori.adventure.title.Title.title(
-                    com.chagui68.multiversegambling.util.Text.c("&6&lMEJOR MANO"),
+                    com.chagui68.multiversegambling.util.Text.c("&6&lBEST HAND"),
                     com.chagui68.multiversegambling.util.Text.c("&f" + DicePoker.handOf(hands.get(winner)).label()),
                     net.kyori.adventure.title.Title.Times.times(
                             java.time.Duration.ofMillis(200),

@@ -5,8 +5,8 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.random.RandomGenerator;
 
 /**
- * Fuente de azar del casino. Es intencionadamente puro (sin Bukkit) para poder
- * probarlo con tests y para que todas las probabilidades vivan en un solo sitio.
+ * Randomness source of the casino. On purpose it is pure (no Bukkit) so it can be unit
+ * tested and so every probability lives in a single place.
  */
 public final class Rng {
 
@@ -17,12 +17,12 @@ public final class Rng {
         return ThreadLocalRandom.current();
     }
 
-    /** Uniforme en [0, 1). */
+    /** Uniform in [0, 1). */
     public static double next() {
         return ThreadLocalRandom.current().nextDouble();
     }
 
-    /** Entero uniforme en [min, max], ambos incluidos. */
+    /** Uniform integer in [min, max], both included. */
     public static int intBetween(int min, int max) {
         if (max < min) {
             throw new IllegalArgumentException("max (" + max + ") < min (" + min + ")");
@@ -30,7 +30,7 @@ public final class Rng {
         return min + ThreadLocalRandom.current().nextInt(max - min + 1);
     }
 
-    /** {@code true} con la probabilidad indicada (0..1). */
+    /** {@code true} with the given probability (0..1). */
     public static boolean chance(double probability) {
         if (probability <= 0) {
             return false;
@@ -40,19 +40,19 @@ public final class Rng {
 
     public static <T> T pick(List<T> values) {
         if (values.isEmpty()) {
-            throw new IllegalArgumentException("No se puede elegir de una lista vacia");
+            throw new IllegalArgumentException("Cannot pick from an empty list");
         }
         return values.get(ThreadLocalRandom.current().nextInt(values.size()));
     }
 
     public static <T> T pick(T[] values) {
         if (values.length == 0) {
-            throw new IllegalArgumentException("No se puede elegir de un array vacio");
+            throw new IllegalArgumentException("Cannot pick from an empty array");
         }
         return values[ThreadLocalRandom.current().nextInt(values.length)];
     }
 
-    /** Mezcla in-place con Fisher-Yates. */
+    /** Shuffles in place with Fisher-Yates. */
     public static <T> void shuffle(List<T> values) {
         for (int i = values.size() - 1; i > 0; i--) {
             int j = ThreadLocalRandom.current().nextInt(i + 1);
@@ -62,7 +62,7 @@ public final class Rng {
         }
     }
 
-    /** Lanza {@code count} dados de {@code sides} caras. */
+    /** Rolls {@code count} dice with {@code sides} faces. */
     public static int[] dice(int count, int sides) {
         int[] out = new int[count];
         for (int i = 0; i < count; i++) {

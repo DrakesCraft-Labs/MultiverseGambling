@@ -7,9 +7,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import org.bukkit.entity.Player;
 
-/** Catalogo de juegos y punto unico para tick, cierre y anuncios. */
+/** Game catalogue and the single place that ticks, closes and announces. */
 public final class GameRegistry {
 
     private final MultiverseGamblingPlugin plugin;
@@ -22,7 +23,7 @@ public final class GameRegistry {
     public void register(Game game) {
         games.put(game.id(), game);
         if (game instanceof AbstractGroupGame group) {
-            // Los juegos en grupo comparten el reloj central del plugin.
+            // Group games share the single plugin clock.
             plugin.sessions().register(game.id(), group::tick);
         }
     }
@@ -31,7 +32,10 @@ public final class GameRegistry {
         return Optional.ofNullable(games.get(id));
     }
 
-    /** Busca por id o por nombre, ignorando mayusculas y espacios. */
+    /**
+     * Looks a game up by id or by name, ignoring case and spaces. The translated name
+     * counts too, so {@code /casino play ruleta} works on a Spanish server.
+     */
     public Optional<Game> search(String query) {
         if (query == null) {
             return Optional.empty();
@@ -42,9 +46,15 @@ public final class GameRegistry {
             return Optional.of(direct);
         }
         return games.values().stream()
-                .filter(game -> Text.strip(game.name()).toLowerCase().replace(' ', '_').contains(needle)
-                        || game.id().contains(needle))
+                .filter(game -> matches(game, needle))
                 .findFirst();
+    }
+
+    private boolean matches(Game game, String needle) {
+        String localized = plugin.messages().getOr("catalog." + game.id() + ".name", game.name());
+        return Text.strip(localized).toLowerCase().replace(' ', '_').contains(needle)
+                || Text.strip(game.name()).toLowerCase().replace(' ', '_').contains(needle)
+                || game.id().contains(needle);
     }
 
     public List<Game> all() {
@@ -59,8 +69,8 @@ public final class GameRegistry {
         return games.values().stream().filter(Game::enabled).toList();
     }
 
-    /** El juego en el que esta metido un jugador ahora mismo, si hay alguno. */
-    public Optional<Game> activeGameOf(java.util.UUID playerId) {
+    /** The game a player is currently inside, if any. */
+    public Optional<Game> activeGameOf(UUID playerId) {
         for (Game game : games.values()) {
             if (game.ownsPlayer(playerId)) {
                 return Optional.of(game);
@@ -69,25 +79,25 @@ public final class GameRegistry {
         return Optional.empty();
     }
 
-    /** Anuncia premios gordos para que el servidor lo vea. */
+    /** Announces big wins so the whole server sees them. */
     public void announceWin(Player player, double bet, double payout) {
         double profit = payout - bet;
         if (!plugin.config().announceWins() || profit < plugin.config().announceThreshold()) {
             return;
         }
-        plugin.getServer().broadcast(Text.c(plugin.messages().get("juegos.anuncio-global",
-                "jugador", player.getName(),
-                "premio", plugin.economy().format(payout),
-                "beneficio", plugin.economy().format(profit))));
+        plugin.getServer().broadcast(Text.c(plugin.messages().get("games.global-announcement",
+                "player", player.getName(),
+                "prize", plugin.economy().format(payout),
+                "profit", plugin.economy().format(profit))));
     }
 
-    /** Devuelve el dinero de las partidas a medias y para todos los relojes. */
+    /** Refunds unfinished games and stops every clock. */
     public void shutdownAll() {
         for (Game game : games.values()) {
             try {
                 game.shutdown();
             } catch (RuntimeException error) {
-                plugin.getLogger().severe("Error cerrando el juego " + game.id() + ": " + error);
+                plugin.getLogger().severe("Error while closing the game " + game.id() + ": " + error);
             }
         }
     }

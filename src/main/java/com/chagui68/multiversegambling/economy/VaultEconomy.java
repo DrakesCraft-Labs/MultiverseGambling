@@ -7,7 +7,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.plugin.RegisteredServiceProvider;
 
-/** Puente hacia la economia que ya tenga el servidor. Nunca se empaqueta Vault. */
+/** Bridge to whatever economy the server already has. Vault is never bundled. */
 public final class VaultEconomy implements EconomyProvider {
 
     private final Economy economy;
@@ -16,7 +16,7 @@ public final class VaultEconomy implements EconomyProvider {
         this.economy = economy;
     }
 
-    /** @return el puente, o {@code null} si no hay Vault o no hay economia registrada. */
+    /** @return the bridge, or {@code null} when there is no Vault or no economy registered. */
     public static EconomyProvider tryHook() {
         if (Bukkit.getPluginManager().getPlugin("Vault") == null) {
             return null;
@@ -29,7 +29,7 @@ public final class VaultEconomy implements EconomyProvider {
             }
             return new VaultEconomy(registration.getProvider());
         } catch (Throwable error) {
-            Bukkit.getLogger().warning("[MultiverseGambling] Vault presente pero la economia no respondio: " + error.getMessage());
+            Bukkit.getLogger().warning("[MultiverseGambling] Vault is present but the economy did not respond: " + error.getMessage());
             return null;
         }
     }

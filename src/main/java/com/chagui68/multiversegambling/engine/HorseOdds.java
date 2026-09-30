@@ -4,22 +4,22 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Carrera de caballos: cada caballo recibe una "fuerza" oculta, de la que salen
- * tanto las probabilidades que se muestran como el resultado real. Asi el pago
- * nunca se puede separar del riesgo real del caballo.
+ * Horse race: every horse gets a hidden "strength", which produces both the odds shown
+ * and the real result. That way the payout can never be separated from the real risk of
+ * the horse.
  */
 public final class HorseOdds {
 
     private HorseOdds() {
     }
 
-    /** Un caballo con su fuerza (probabilidad de ganar) y el pago asociado. */
+    /** A horse with its strength (chance of winning) and the associated payout. */
     public record Runner(int index, double strength, double odds) {
     }
 
     /**
-     * Genera un campo de {@code count} caballos con fuerzas aleatorias.
-     * Los pagos son justos recortados: {@code (1 - edge) / probabilidad}.
+     * Builds a field of {@code count} horses with random strengths.
+     * The payouts are fair, trimmed down: {@code (1 - edge) / probability}.
      */
     public static List<Runner> field(int count, double houseEdge) {
         List<Double> strengths = new ArrayList<>(count);
@@ -38,7 +38,7 @@ public final class HorseOdds {
         return field;
     }
 
-    /** Elige al ganador respetando las fuerzas de cada caballo. */
+    /** Picks the winner respecting the strength of every horse. */
     public static Runner winner(List<Runner> field) {
         WeightedTable<Runner> table = WeightedTable.of();
         for (Runner runner : field) {
@@ -48,8 +48,8 @@ public final class HorseOdds {
     }
 
     /**
-     * Simula el avance de los caballos durante {@code steps} pasos. Devuelve, por
-     * cada paso, la lista de posiciones.
+     * Simulates the horses advancing for {@code steps} steps. Returns, for every step,
+     * the list of positions.
      */
     public static List<double[]> simulate(List<Runner> field, int steps) {
         int runners = field.size();

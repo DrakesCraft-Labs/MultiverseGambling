@@ -19,12 +19,12 @@ import org.bukkit.entity.Player;
 import com.chagui68.multiversegambling.util.Text;
 
 /**
- * Rifa con tres premios.
+ * Raffle with three prizes.
  *
- * <p>Se venden boletas a precio fijo: cada boleta cuesta lo que marque la
- * configuracion y da una opcion mas. El sorteo reparte el bote en tres premios
- * (70%, 20% y 10%), asi que no basta con tener suerte una vez: hay que estar
- * arriba en el orden de salida.</p>
+ * <p>Tickets are sold at a fixed price: each one costs what the configuration says
+ * and gives one more chance. The draw splits the pot into three prizes (70%, 20% and
+ * 10%), so being lucky once is not enough: you want to be near the top of the
+ * draw order.</p>
  */
 public final class RaffleGame extends AbstractGroupGame {
 
@@ -34,10 +34,10 @@ public final class RaffleGame extends AbstractGroupGame {
     private final Map<UUID, Integer> tickets = new LinkedHashMap<>();
 
     public RaffleGame(MultiverseGamblingPlugin plugin) {
-        super(plugin, GameMeta.builder("rifa", "Rifa", GameCategory.GRUPO, Material.FIREWORK_STAR)
-                .desc("&7Boletas a precio fijo. El sorteo",
-                        "&7reparte el bote en tres premios:",
-                        "&f70%&7, &f20% &7y &f10%&7.")
+        super(plugin, GameMeta.builder("raffle", "Raffle", GameCategory.GROUP, Material.FIREWORK_STAR)
+                .desc("&7Fixed price tickets. The draw splits",
+                        "&7the pot into three prizes:",
+                        "&f70%&7, &f20% &7and &f10%&7.")
                 .players(2, 24)
                 .build());
     }
@@ -52,8 +52,8 @@ public final class RaffleGame extends AbstractGroupGame {
         int capped = Math.min(bought, plugin.config().raffleMaxTickets());
         tickets.put(player.getUniqueId(), capped);
         int total = tickets.values().stream().mapToInt(Integer::intValue).sum();
-        broadcastRaw("&8» &f" + player.getName() + " &7compro &f" + capped + " &7boleta(s) por &6"
-                + plugin.economy().format(amount) + "&7. Boletas vendidas: &f" + total);
+        broadcastRaw("&8» &f" + player.getName() + " &7bought &f" + capped + " &7ticket(s) for &6"
+                + plugin.economy().format(amount) + "&7. Tickets sold: &f" + total);
     }
 
     @Override
@@ -62,14 +62,14 @@ public final class RaffleGame extends AbstractGroupGame {
         broadcastRaw(roundHeader());
         int total = tickets.values().stream().mapToInt(Integer::intValue).sum();
         broadcastRaw("&7Boletas vendidas: &f" + total + " &7a &6"
-                + plugin.economy().format(ticketPrice()) + " &7cada una.");
-        broadcastRaw("&7Bote a repartir: &6" + plugin.economy().format(pot.total()));
+                + plugin.economy().format(ticketPrice()) + " &7each.");
+        broadcastRaw("&7Pot to be paid out: &6" + plugin.economy().format(pot.total()));
         for (Map.Entry<UUID, Integer> entry : tickets.entrySet()) {
             double share = pot.amountOf(entry.getKey()) / Math.max(0.0001, pot.total());
             broadcastRaw("&7  " + playerName(entry.getKey()) + ": &f" + entry.getValue()
                     + " &7boleta(s) &8(" + String.format("%.1f%%", share * 100) + ")");
         }
-        broadcastRaw("&7El sorteo empieza en unos segundos.");
+        broadcastRaw("&7The draw starts in a few seconds.");
     }
 
     @Override
@@ -78,7 +78,7 @@ public final class RaffleGame extends AbstractGroupGame {
         if (timer <= 40) {
             if (timer % 20 == 0) {
                 soundAll(Sound.BLOCK_NOTE_BLOCK_HAT, 0.5f, 1.2f);
-                actionBarAll("&7Preparando el bombo...");
+                actionBarAll("&7Preparing the draw...");
             }
             return;
         }
@@ -97,7 +97,7 @@ public final class RaffleGame extends AbstractGroupGame {
             return;
         }
 
-        // Sorteo sin reemplazo, ponderado por boletas y con azar verificable.
+        // Draw without replacement, weighted by tickets and with provably fair rolls.
         List<UUID> order = new ArrayList<>();
         WeightedTable<UUID> draw = new WeightedTable<>();
         Map<UUID, Integer> remaining = new LinkedHashMap<>(tickets);
@@ -118,9 +118,9 @@ public final class RaffleGame extends AbstractGroupGame {
         }
         pot.payoutByMultiplier(id -> prizes.getOrDefault(id, 0.0));
 
-        broadcastRaw("&8&m        &r &6SORTEO &8&m        ");
-        String[] labels = {"&6Primer premio &7(&f70%&7)", "&eSegundo premio &7(&f20%&7)",
-                "&7Tercer premio &7(&f10%&7)"};
+        broadcastRaw("&8&m        &r &6RAFFLE &8&m        ");
+        String[] labels = {"&6First prize &7(&f70%&7)", "&eSecond prize &7(&f20%&7)",
+                "&7Third prize &7(&f10%&7)"};
         for (int i = 0; i < order.size() && i < labels.length; i++) {
             broadcastRaw(labels[i] + ": &f" + playerName(order.get(i)) + " &8- &6"
                     + plugin.economy().format(total * PRIZES[i]));
@@ -129,7 +129,7 @@ public final class RaffleGame extends AbstractGroupGame {
         if (!order.isEmpty()) {
             Player first = online(order.get(0));
             if (first != null) {
-                first.showTitle(Title.title(Text.c("&6&lPRIMER PREMIO"),
+                first.showTitle(Title.title(Text.c("&6&lFIRST PRIZE"),
                         Text.c("&f" + plugin.economy().format(total * PRIZES[0])), Title.Times.times(
                                 java.time.Duration.ofMillis(200),
                                 java.time.Duration.ofMillis(2500),

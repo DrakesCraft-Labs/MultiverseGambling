@@ -12,17 +12,17 @@ import java.util.Map;
 class FairnessTest {
 
     @Test
-    void elAzarVerificableEsDeterminista() {
-        String server = "secreto-de-prueba";
-        String client = "jugador-1";
+    void provablyFairRandomnessIsDeterministic() {
+        String server = "test-secret";
+        String client = "player-1";
         double first = ProvablyFair.roll(server, client, 7, 0);
         assertEquals(first, ProvablyFair.roll(server, client, 7, 0), 0.0);
-        assertNotEquals(first, ProvablyFair.roll(server, client, 8, 0), "otro nonce, otra tirada");
-        assertNotEquals(first, ProvablyFair.roll(server, client, 7, 1), "otro cursor, otra tirada");
+        assertNotEquals(first, ProvablyFair.roll(server, client, 8, 0), "another nonce, another roll");
+        assertNotEquals(first, ProvablyFair.roll(server, client, 7, 1), "another cursor, another roll");
     }
 
     @Test
-    void lasTiradasEstanEnRangoYUnoSeRepite() {
+    void theRollsAreInRangeAndDoNotRepeat() {
         String server = ProvablyFair.randomSeed();
         Map<Long, Boolean> seen = new HashMap<>();
         for (long nonce = 0; nonce < 5_000; nonce++) {
@@ -30,22 +30,22 @@ class FairnessTest {
             assertTrue(value >= 0 && value < 1, "fuera de rango: " + value);
             seen.put((long) (value * 1_000_000), true);
         }
-        // Con 5000 tiradas al microsegundo, esperamos mucha variedad.
-        assertTrue(seen.size() > 4_900, "las tiradas parecen poco uniformes: " + seen.size());
+        // With 5000 rolls inside the same microsecond, plenty of variety is expected.
+        assertTrue(seen.size() > 4_900, "the rolls look far from uniform: " + seen.size());
     }
 
     @Test
-    void elHashDelSecretoPermiteAuditar() {
+    void theHashOfTheSecretAllowsAuditing() {
         String seed = ProvablyFair.randomSeed();
-        assertEquals(64, seed.length(), "la semilla deberia ser de 256 bits en hex");
+        assertEquals(64, seed.length(), "the seed should be 256 bits in hex");
         String hash = ProvablyFair.sha256(seed);
         assertEquals(64, hash.length());
-        assertEquals(hash, ProvablyFair.sha256(seed), "el hash debe ser estable");
+        assertEquals(hash, ProvablyFair.sha256(seed), "the hash must be stable");
         assertNotEquals(hash, ProvablyFair.sha256(seed + "x"));
     }
 
     @Test
-    void laDistribucionDeLasTiradasEsUniforme() {
+    void theDistributionOfRollsIsUniform() {
         String server = ProvablyFair.randomSeed();
         int[] buckets = new int[10];
         int samples = 100_000;
@@ -60,7 +60,7 @@ class FairnessTest {
     }
 
     @Test
-    void lasTiradasMultiplesSonIndependientesYReproducibles() {
+    void multiPointRollsAreIndependentAndReproducible() {
         String server = ProvablyFair.randomSeed();
         double[] many = ProvablyFair.rollMany(server, "c", 3, 5);
         assertEquals(5, many.length);
@@ -70,7 +70,7 @@ class FairnessTest {
     }
 
     @Test
-    void rollIntRespetaElLimite() {
+    void rollIntRespectsTheLimit() {
         String server = ProvablyFair.randomSeed();
         for (int i = 0; i < 10_000; i++) {
             int value = ProvablyFair.rollInt(server, "c", i, 0, 37);
@@ -80,9 +80,9 @@ class FairnessTest {
     }
 
     @Test
-    void laTablaPonderadaRespetaLosPesos() {
-        // Ojo: no se puede encadenar sobre of() porque Java no propaga el tipo
-        // hasta la asignacion; se construye paso a paso.
+    void theWeightedTableRespectsTheWeights() {
+        // Careful: you cannot chain on of() because Java does not propagate the type
+        // to the assignment; it is built step by step.
         WeightedTable<String> table = new WeightedTable<>();
         table.add("comun", 80).add("raro", 19).add("mitico", 1);
         assertEquals(100.0, table.totalWeight(), 1e-9);
@@ -99,7 +99,7 @@ class FairnessTest {
     }
 
     @Test
-    void losPesosInvalidosSeIgnoranYLaTablaVaciaFallaAlGirar() {
+    void invalidWeightsAreIgnoredAndAnEmptyTableFailsToSpin() {
         WeightedTable<String> table = new WeightedTable<>();
         table.add("valido", 5).add("cero", 0).add("negativo", -3);
         assertEquals(1, table.size());

@@ -6,13 +6,13 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Tragaperras de 3 rodillos. La tabla de simbolos es configurable y el retorno
- * teorico se calcula de forma exacta, de modo que {@code /casino rtp} puede
- * demostrar cuanto paga el slot que el administrador tenga puesto.
+ * Three reel slots. The symbol table is configurable and the theoretical return is
+ * computed exactly, so {@code /casino rtp} can prove how much the slot configured by
+ * the administrator really pays.
  */
 public final class SlotsTable {
 
-    /** Un simbolo del rodillo: aspecto, frecuencia y lo que paga. */
+    /** One reel symbol: look, frequency and what it pays. */
     public record Symbol(String id, String glyph, double weight, double triple, double pair) {
 
         public static Symbol of(String id, String glyph, double weight, double triple) {
@@ -21,9 +21,9 @@ public final class SlotsTable {
     }
 
     /**
-     * Tabla por defecto: premios pequenos frecuentes y un jackpot raro. Los pesos
-     * y los pagos estan ajustados a mano para un RTP cercano al 95%, que es lo
-     * normal en una tragaperras real. {@link #rtp()} lo demuestra y el test lo fija.
+     * Default table: frequent small prizes and a rare jackpot. Weights and payouts are
+     * tuned by hand for an RTP close to 95%, which is what a real slot machine does.
+     * {@link #rtp()} proves it and the test pins it.
      */
     public static final List<Symbol> DEFAULT = List.of(
             new Symbol("cereza", "\uD83C\uDF52", 30, 7.0, 1.55),
@@ -40,7 +40,7 @@ public final class SlotsTable {
 
     public SlotsTable(List<Symbol> symbols) {
         if (symbols.size() < 2) {
-            throw new IllegalArgumentException("Hacen falta al menos 2 simbolos");
+            throw new IllegalArgumentException("At least 2 symbols are needed");
         }
         this.symbols = List.copyOf(symbols);
         for (Symbol symbol : this.symbols) {
@@ -62,8 +62,8 @@ public final class SlotsTable {
     }
 
     /**
-     * Gira los rodillos con una fuente de uniformes externa. Es lo que permite
-     * alimentar la maquina con el azar verificable del casino.
+     * Spins the reels with an external source of uniforms. That is what lets the machine
+     * be fed with the provably fair randomness of the casino.
      */
     public List<Symbol> spin(java.util.function.DoubleSupplier uniforms) {
         List<Symbol> reels = new ArrayList<>(3);
@@ -73,10 +73,10 @@ public final class SlotsTable {
         return reels;
     }
 
-    /** Multiplicador pagado por una combinacion de 3 rodillos. */
+    /** Multiplier paid for a combination of 3 reels. */
     public double payout(List<Symbol> reels) {
         if (reels.size() != 3) {
-            throw new IllegalArgumentException("Se esperan 3 rodillos");
+            throw new IllegalArgumentException("3 reels are expected");
         }
         Symbol a = reels.get(0);
         Symbol b = reels.get(1);
@@ -92,8 +92,8 @@ public final class SlotsTable {
     }
 
     /**
-     * Retorno teorico exacto al jugador. Verificado en los tests: si alguien
-     * pone una tabla que devuelve mas de lo que cobra, el test lo canta.
+     * Exact theoretical return to the player. Verified in the tests: if somebody sets a
+     * table that returns more than it takes in, the test shouts about it.
      */
     public double rtp() {
         double expected = 0;
@@ -112,7 +112,7 @@ public final class SlotsTable {
         return expected;
     }
 
-    /** Probabilidad de cada simbolo, para mostrar en el menu. */
+    /** Chance of every symbol, to show in the menu. */
     public double chanceOf(String id) {
         Symbol symbol = byId.get(id);
         return symbol == null ? 0 : table.probability(symbol);

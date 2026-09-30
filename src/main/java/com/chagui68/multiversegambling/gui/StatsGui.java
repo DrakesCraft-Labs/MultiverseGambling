@@ -1,6 +1,7 @@
 package com.chagui68.multiversegambling.gui;
 
 import com.chagui68.multiversegambling.MultiverseGamblingPlugin;
+import com.chagui68.multiversegambling.config.Messages;
 import com.chagui68.multiversegambling.stats.PlayerStats;
 import com.chagui68.multiversegambling.stats.StatsStore;
 import com.chagui68.multiversegambling.util.Items;
@@ -11,81 +12,88 @@ import java.util.function.ToDoubleFunction;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 
-/** Resumen personal mas el ranking del servidor. */
+/** Personal summary plus the server ranking, in the player's language. */
 public final class StatsGui extends Gui {
 
     private static final int TOP_SIZE = 7;
 
     public StatsGui(MultiverseGamblingPlugin plugin, Player player) {
-        super(plugin, player, 6, "&8Casino &7· &6Estadisticas");
+        super(plugin, player, 6, plugin.messages().forSender(player, "gui.stats.title"));
+    }
+
+    private Messages messages() {
+        return plugin.messages();
     }
 
     @Override
     protected void render() {
         clearActions();
         fill(Items.of(Material.GRAY_STAINED_GLASS_PANE).name(" ").build());
+        Player viewer = player();
 
-        UUID id = player().getUniqueId();
+        UUID id = viewer.getUniqueId();
         PlayerStats stats = plugin.stats().of(id);
+        double profit = stats.profit();
 
         set(4, Items.of(Material.PLAYER_HEAD)
-                .name("&6" + player().getName())
-                .lore(
-                        "&7Partidas jugadas: &f" + stats.games,
-                        "&7Victorias: &f" + stats.wins + " &7(" + Text.percent(stats.winRate()) + ")",
-                        "&7Apostado: &f" + plugin.economy().format(stats.wagered),
-                        "&7Recuperado: &f" + plugin.economy().format(stats.returned),
-                        (stats.profit() >= 0 ? "&7Beneficio: &a" : "&7Beneficio: &c")
-                                + plugin.economy().format(stats.profit()),
-                        "&7Retorno real: &f" + Text.percent(stats.rtp()),
-                        "&7Mayor premio: &f" + plugin.economy().format(stats.biggestWin),
-                        "&7Juego favorito: &f" + stats.favouriteGame())
+                .name("&6" + viewer.getName())
+                .lore(messages().loreFor(viewer, "gui.stats.lore",
+                        "games", stats.games,
+                        "wins", stats.wins,
+                        "rate", Text.percent(stats.winRate()),
+                        "wagered", plugin.economy().format(stats.wagered),
+                        "returned", plugin.economy().format(stats.returned),
+                        "profit", (profit >= 0 ? "&a" : "&c") + plugin.economy().format(profit),
+                        "rtp", Text.percent(stats.rtp()),
+                        "biggest", plugin.economy().format(stats.biggestWin),
+                        "favourite", messages().gameName(viewer, stats.favouriteGame(),
+                                stats.favouriteGame())))
                 .glow(true)
                 .build());
 
         set(20, Items.of(Material.EMERALD)
-                .name("&aTop beneficios")
-                .lore(topLore(plugin.stats().topByProfit(TOP_SIZE), PlayerStats::profit))
+                .name(messages().forSender(viewer, "gui.stats.top-profit"))
+                .lore(topLore(viewer, plugin.stats().topByProfit(TOP_SIZE), PlayerStats::profit))
                 .build());
 
         set(22, Items.of(Material.GOLD_BLOCK)
-                .name("&6Top apostado")
-                .lore(topLore(plugin.stats().topByWagered(TOP_SIZE), entry -> entry.wagered))
+                .name(messages().forSender(viewer, "gui.stats.top-wagered"))
+                .lore(topLore(viewer, plugin.stats().topByWagered(TOP_SIZE), entry -> entry.wagered))
                 .build());
 
         set(24, Items.of(Material.DIAMOND)
-                .name("&bTop mayor premio")
-                .lore(topLore(plugin.stats().topByBiggestWin(TOP_SIZE), entry -> entry.biggestWin))
+                .name(messages().forSender(viewer, "gui.stats.top-prize"))
+                .lore(topLore(viewer, plugin.stats().topByBiggestWin(TOP_SIZE), entry -> entry.biggestWin))
                 .build());
 
         set(31, Items.of(Material.REDSTONE)
-                .name("&cGanancia de la casa")
-                .lore(
-                        "&7Total ganado por el casino: &f"
-                                + plugin.economy().format(plugin.stats().houseProfit()),
-                        "&7Ventaja configurada: &f"
-                                + Text.percent(plugin.config().houseEdge()))
+                .name(messages().forSender(viewer, "gui.stats.house"))
+                .lore(messages().loreFor(viewer, "gui.stats.house-lore",
+                        "profit", plugin.economy().format(plugin.stats().houseProfit()),
+                        "edge", Text.percent(plugin.config().houseEdge())))
                 .build());
 
         set(38, Items.of(Material.ARROW)
-                .name("&eVolver al menu")
+                .name(messages().forSender(viewer, "gui.stats.back"))
                 .build(), e -> {
             close();
-            plugin.guis().openHub(player());
+            plugin.guis().openHub(viewer);
         });
 
         set(42, Items.of(Material.BARRIER)
-                .name("&cCerrar")
+                .name(messages().forSender(viewer, "gui.hub.close"))
                 .build(), e -> close());
     }
 
-    private List<String> topLore(List<StatsStore.TopEntry> entries, ToDoubleFunction<PlayerStats> value) {
+    private List<String> topLore(Player viewer, List<StatsStore.TopEntry> entries,
+                                 ToDoubleFunction<PlayerStats> value) {
         if (entries.isEmpty()) {
-            return List.of("&7Todavia no hay datos.");
+            return messages().loreFor(viewer, "gui.stats.top-empty");
         }
         return entries.stream()
-                .map(entry -> "&7" + entry.name() + ": &f"
-                        + plugin.economy().format(value.applyAsDouble(entry.stats())))
+                .map(entry -> messages().forSender(viewer, "gui.stats.entry",
+                        "player", entry.name(),
+                        "value", plugin.economy().format(value.applyAsDouble(entry.stats()))))
                 .toList();
     }
 

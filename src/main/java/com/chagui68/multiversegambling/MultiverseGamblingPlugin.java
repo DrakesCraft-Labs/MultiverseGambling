@@ -1,10 +1,11 @@
 package com.chagui68.multiversegambling;
 
 import com.chagui68.multiversegambling.command.MultiverseGamblingCommand;
-import com.chagui68.multiversegambling.config.MultiverseGamblingConfig;
 import com.chagui68.multiversegambling.config.Messages;
+import com.chagui68.multiversegambling.config.MultiverseGamblingConfig;
 import com.chagui68.multiversegambling.economy.EconomyManager;
 import com.chagui68.multiversegambling.fair.FairnessService;
+import com.chagui68.multiversegambling.game.GameCategory;
 import com.chagui68.multiversegambling.game.GameRegistry;
 import com.chagui68.multiversegambling.games.group.BombBoardGame;
 import com.chagui68.multiversegambling.games.group.ColorRouletteGame;
@@ -29,30 +30,35 @@ import com.chagui68.multiversegambling.games.solo.SlotsGame;
 import com.chagui68.multiversegambling.games.solo.TowersGame;
 import com.chagui68.multiversegambling.gui.GuiListener;
 import com.chagui68.multiversegambling.gui.GuiManager;
+import com.chagui68.multiversegambling.i18n.LanguageStore;
 import com.chagui68.multiversegambling.listener.PlayerListener;
 import com.chagui68.multiversegambling.session.SessionManager;
 import com.chagui68.multiversegambling.stats.StatsStore;
+import com.chagui68.multiversegambling.world.CasinoWorldManager;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 
 /**
- * Motor de azar y apuestas para Paper.
+ * Chance and betting engine for Paper.
  *
- * <p>Todo el dinero pasa por {@link EconomyManager}, todo el azar jugable sale del
- * paquete {@code engine} (probado con tests) y todo el suspense pasa por el reloj
- * unico de {@link SessionManager}.</p>
+ * <p>All the money flows through {@link EconomyManager}, every playable roll comes
+ * from the {@code engine} package (pinned by unit tests) and all the suspense runs
+ * on the single clock of {@link SessionManager}. Text is resolved per player by
+ * {@link Messages}, so the whole plugin can be switched between languages in game.</p>
  */
 public final class MultiverseGamblingPlugin extends JavaPlugin {
 
     private MultiverseGamblingConfig config;
     private Messages messages;
+    private LanguageStore languages;
     private EconomyManager economy;
     private FairnessService fair;
     private StatsStore stats;
     private SessionManager sessions;
     private GuiManager guis;
     private GameRegistry games;
+    private CasinoWorldManager world;
     private BukkitTask autosave;
 
     @Override
@@ -61,6 +67,7 @@ public final class MultiverseGamblingPlugin extends JavaPlugin {
 
         config = new MultiverseGamblingConfig(this);
         messages = new Messages(this);
+        languages = new LanguageStore(this);
         economy = new EconomyManager(this);
         economy.setup();
         fair = new FairnessService(this);
@@ -71,6 +78,9 @@ public final class MultiverseGamblingPlugin extends JavaPlugin {
 
         registerGames();
 
+        world = new CasinoWorldManager(this);
+        world.setup();
+
         getServer().getPluginManager().registerEvents(new GuiListener(this), this);
         getServer().getPluginManager().registerEvents(new PlayerListener(this), this);
 
@@ -80,18 +90,20 @@ public final class MultiverseGamblingPlugin extends JavaPlugin {
             pluginCommand.setExecutor(command);
             pluginCommand.setTabCompleter(command);
         } else {
-            getLogger().severe("No se pudo registrar el comando /casino: revisa plugin.yml");
+            getLogger().severe("Could not register /casino; check plugin.yml");
         }
 
         sessions.start();
         scheduleAutosave();
 
-        long solo = games.byCategory(com.chagui68.multiversegambling.game.GameCategory.SOLO).size();
-        long grupo = games.byCategory(com.chagui68.multiversegambling.game.GameCategory.GRUPO).size();
-        getLogger().info("Catalogo cargado: " + solo + " juegos en solitario y " + grupo + " en grupo ("
-                + games.enabled().size() + " activos).");
-        getLogger().info("Azar verificable: " + (fair.enabled() ? "activado" : "desactivado")
-                + " | secreto actual " + fair.serverSeedHash().substring(0, 16) + "...");
+        long solo = games.byCategory(GameCategory.SOLO).size();
+        long group = games.byCategory(GameCategory.GROUP).size();
+        getLogger().info("Catalogue loaded: " + solo + " solo games and " + group
+                + " group games (" + games.enabled().size() + " enabled).");
+        getLogger().info("Provably fair rolls: " + (fair.enabled() ? "enabled" : "disabled")
+                + " | current secret " + fair.serverSeedHash().substring(0, 16) + "...");
+        getLogger().info("Languages available: " + messages.localeList()
+                + " | default " + messages.defaultLocale() + ".");
     }
 
     @Override
@@ -114,12 +126,15 @@ public final class MultiverseGamblingPlugin extends JavaPlugin {
         if (fair != null) {
             fair.save();
         }
-        getLogger().info("Plugin cerrado; se devolvio el dinero de las partidas a medias.");
+        if (languages != null) {
+            languages.save();
+        }
+        getLogger().info("Plugin disabled; money from unfinished games was refunded.");
     }
 
-    /** El catalogo entero. Añadir un juego nuevo es añadir una linea aqui. */
+    /** The whole catalogue. Adding a game is adding one line here. */
     private void registerGames() {
-        // --- En solitario ---
+        // --- Solo ---
         games.register(new ClassicRouletteGame(this));
         games.register(new SlotsGame(this));
         games.register(new CrashGame(this));
@@ -133,7 +148,7 @@ public final class MultiverseGamblingPlugin extends JavaPlugin {
         games.register(new ScratchCardGame(this));
         games.register(new CoinFlipGame(this));
 
-        // --- En grupo ---
+        // --- Group ---
         games.register(new ColorRouletteGame(this));
         games.register(new JackpotGame(this));
         games.register(new HotBombGame(this));
@@ -154,7 +169,7 @@ public final class MultiverseGamblingPlugin extends JavaPlugin {
         }, ticks, ticks);
     }
 
-    /** Recarga config y mensajes sin reiniciar la economia ni las partidas. */
+    /** Reloads config, messages and languages without touching balances or live games. */
     public void reloadAll() {
         reloadConfig();
         config.reload();
@@ -172,6 +187,10 @@ public final class MultiverseGamblingPlugin extends JavaPlugin {
 
     public Messages messages() {
         return messages;
+    }
+
+    public LanguageStore languages() {
+        return languages;
     }
 
     public EconomyManager economy() {
@@ -196,5 +215,9 @@ public final class MultiverseGamblingPlugin extends JavaPlugin {
 
     public GameRegistry games() {
         return games;
+    }
+
+    public CasinoWorldManager world() {
+        return world;
     }
 }

@@ -18,11 +18,11 @@ import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 
 /**
- * Crash: la curva sube sola y hay que salir antes de que reviente.
+ * Crash: the curve climbs on its own and you must cash out before it bursts.
  *
- * <p>El punto de explosion sale de una unica tirada verificable y la curva solo lo
- * representa. Por eso retirarse en cualquier objetivo tiene el mismo valor
- * esperado, propiedad que un test comprueba sobre 400.000 simulaciones.</p>
+ * <p>The crash point comes from a single provably fair roll and the curve only
+ * represents it. That is why cashing out at any target has the same expected value,
+ * a property a test checks over 400,000 simulations.</p>
  */
 public final class CrashGame extends AbstractSoloGame {
 
@@ -30,9 +30,9 @@ public final class CrashGame extends AbstractSoloGame {
 
     public CrashGame(MultiverseGamblingPlugin plugin) {
         super(plugin, GameMeta.builder("crash", "Crash", GameCategory.SOLO, Material.FIREWORK_ROCKET)
-                .desc("&7La curva sube y tu decides cuando salir.",
-                        "&7Si no te sales a tiempo lo pierdes todo.",
-                        "&7Ningun objetivo es mejor que otro.")
+                .desc("&7The curve climbs and you decide when to cash out.",
+                        "&7If you are too slow you lose everything.",
+                        "&7No target is better than another.")
                 .build());
     }
 
@@ -45,7 +45,7 @@ public final class CrashGame extends AbstractSoloGame {
         double growth = CrashTable.growthRate(plugin.config().crashDoubleEverySeconds());
         double crashPoint = Math.min(plugin.config().crashMaxMultiplier(),
                 CrashTable.crashPoint(plugin.fair().roll(player.getUniqueId()), plugin.config().houseEdge()));
-        // La ronda dura exactamente lo que tarda la curva en llegar al estallido.
+        // The round lasts exactly as long as the curve takes to reach the crash point.
         int ticks = (int) Math.ceil(CrashTable.secondsToReach(crashPoint, growth) * 20.0) + 1;
 
         CrashRound round = new CrashRound(player, wager, crashPoint, growth, Math.max(2, ticks));
@@ -58,7 +58,7 @@ public final class CrashGame extends AbstractSoloGame {
         return rounds.get(playerId);
     }
 
-    /** Retira al jugador en el multiplicador actual. */
+    /** Cashes the player out at the current multiplier. */
     void cashOut(Player player) {
         CrashRound round = rounds.get(player.getUniqueId());
         if (round != null) {
@@ -66,7 +66,7 @@ public final class CrashGame extends AbstractSoloGame {
         }
     }
 
-    /** Una partida de crash: sube mientras no estalle. */
+    /** A crash round: it climbs while it has not burst. */
     final class CrashRound extends TimedSession {
 
         private final Wager wager;
@@ -107,8 +107,8 @@ public final class CrashGame extends AbstractSoloGame {
             if (online == null) {
                 return;
             }
-            online.sendActionBar(Text.c("&7Multiplicador " + colour() + Text.multiplier(current)
-                    + " &8| &7Retirarse ahora paga &f"
+            online.sendActionBar(Text.c("&7Multiplier " + colour() + Text.multiplier(current)
+                    + " &8| &7Cashing out now pays &f"
                     + plugin.economy().format(wager.amount() * Math.min(current, crashPoint))));
             if (elapsed % 4 == 0) {
                 online.playSound(online.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 0.35f,
@@ -133,8 +133,8 @@ public final class CrashGame extends AbstractSoloGame {
             double payout = settle(online, wager, multiplier);
             announceResult(online, true, "&a" + Text.multiplier(multiplier));
             info(online, title());
-            info(online, "&7Te retiraste en &f" + Text.multiplier(multiplier)
-                    + "&7 y el avion habria estallado en &f" + Text.multiplier(crashPoint));
+            info(online, "&7You cashed out at &f" + Text.multiplier(multiplier)
+                    + "&7 and the plane would have burst at &f" + Text.multiplier(crashPoint));
             showResult(online, wager.amount(), payout);
             sound(online, Sound.ENTITY_PLAYER_LEVELUP, 0.9f, 1.3f);
             rounds.remove(playerId());
@@ -150,12 +150,12 @@ public final class CrashGame extends AbstractSoloGame {
                 rounds.remove(playerId());
                 return;
             }
-            // Nunca se retiro: el avion explota y se queda sin nada.
+            // Never cashed out: the plane bursts and they are left with nothing.
             double payout = settle(online, wager, 0);
-            announceResult(online, false, "&cestallo en " + Text.multiplier(crashPoint));
+            announceResult(online, false, "&cburst at " + Text.multiplier(crashPoint));
             info(online, title());
-            info(online, "&7El avion exploto en &f" + Text.multiplier(crashPoint)
-                    + "&7 y perdiste &f" + plugin.economy().format(wager.amount()));
+            info(online, "&7The plane burst at &f" + Text.multiplier(crashPoint)
+                    + "&7 and you lost &f" + plugin.economy().format(wager.amount()));
             showResult(online, wager.amount(), payout);
             sound(online, Sound.ENTITY_GENERIC_EXPLODE, 0.9f, 0.8f);
             rounds.remove(playerId());
@@ -165,7 +165,7 @@ public final class CrashGame extends AbstractSoloGame {
         @Override
         protected void onCancel() {
             if (!finished) {
-                // Desconexion o apagado del servidor: se devuelve el dinero.
+                // Disconnect or server shutdown: the money is refunded.
                 finished = true;
                 refund(wager);
                 rounds.remove(playerId());
@@ -173,13 +173,13 @@ public final class CrashGame extends AbstractSoloGame {
         }
     }
 
-    /** Panel de un solo boton: la curva se sigue en la barra de accion. */
-    private static final class CrashGui extends Gui {
+    /** Single button panel: the curve is followed on the action bar. */
+    private final class CrashGui extends Gui {
 
         private final CrashGame game;
 
         CrashGui(MultiverseGamblingPlugin plugin, Player player, CrashGame game) {
-            super(plugin, player, 3, "&8Crash &7· &6Sal antes del estallido");
+            super(plugin, player, 3, "&8" + displayName(player) + " &7· &6Cash out before it bursts");
             this.game = game;
         }
 
@@ -190,26 +190,26 @@ public final class CrashGame extends AbstractSoloGame {
 
             CrashRound round = game.roundOf(player().getUniqueId());
             if (round == null || round.finished()) {
-                set(13, Items.of(Material.BARRIER).name("&7La ronda ya termino").build());
-                set(22, Items.of(Material.ARROW).name("&eCerrar").build(), e -> close());
+                set(13, Items.of(Material.BARRIER).name("&7The round is already over").build());
+                set(22, Items.of(Material.ARROW).name("&eClose").build(), e -> close());
                 return;
             }
 
             set(4, Items.of(Material.FIREWORK_ROCKET)
-                    .name("&6Crash en curso")
+                    .name("&6Crash in progress")
                     .lore(
                             "&7Apostado: &f" + plugin.economy().format(round.bet()),
-                            "&7La curva se dobla cada &f"
+                            "&7The curve doubles every &f"
                                     + (int) plugin.config().crashDoubleEverySeconds() + "s&7.",
-                            "&7Mira la barra de accion para seguirla.",
+                            "&7Follow it on the action bar.",
                             "",
-                            "&cSi no te retiras, pierdes todo.")
+                            "&cIf you do not cash out, you lose everything.")
                     .glow(true)
                     .build());
 
             set(13, Items.of(Material.LIME_CONCRETE)
-                    .name("&a&lRETIRARSE")
-                    .lore("&7Cobra al multiplicador actual.", "", "&ePulsa rapido")
+                    .name("&a&lCASH OUT")
+                    .lore("&7Collect at the current multiplier.", "", "&eClick fast")
                     .glow(true)
                     .build(), e -> {
                 close();
@@ -217,8 +217,8 @@ public final class CrashGame extends AbstractSoloGame {
             });
 
             set(22, Items.of(Material.RED_CONCRETE)
-                    .name("&cCerrar sin retirarse")
-                    .lore("&7La ronda sigue si cierras el menu.")
+                    .name("&cClose without cashing out")
+                    .lore("&7The round keeps running if you close the menu.")
                     .build());
         }
 

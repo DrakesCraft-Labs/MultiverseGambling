@@ -19,17 +19,17 @@ import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 
 /**
- * Duelo 1 contra 1.
+ * Duel, one against one.
  *
- * <p>Se reta a otro jugador por una cantidad exacta. Los dos ponen el mismo dinero
- * y una moneda decide quien se lo lleva todo. Si el retado no acepta a tiempo, el
- * retador recupera su dinero automaticamente: nadie se queda con nada en garantia.</p>
+ * <p>A player challenges another one for an exact amount. Both stake the same money
+ * and a single roll decides who takes it all. If the challenged player does not
+ * accept in time the challenger is refunded automatically: nobody holds a deposit.</p>
  */
 public final class DuelGame extends AbstractGame {
 
     private final Map<UUID, Challenge> pending = new HashMap<>();
 
-    /** Un reto esperando respuesta. */
+    /** A challenge waiting for an answer. */
     private static final class Challenge {
         final UUID challenger;
         final UUID target;
@@ -47,13 +47,13 @@ public final class DuelGame extends AbstractGame {
     }
 
     public DuelGame(MultiverseGamblingPlugin plugin) {
-        super(plugin, GameMeta.builder("duelo", "Duelo 1v1", GameCategory.GRUPO, Material.IRON_SWORD)
-                .desc("&7Reta a otro jugador por una cantidad.",
-                        "&7Los dos ponen lo mismo y una moneda",
-                        "&7decide quien se lo lleva todo.")
+        super(plugin, GameMeta.builder("duel", "Duel 1v1", GameCategory.GROUP, Material.IRON_SWORD)
+                .desc("&7Challenge another player for an amount.",
+                        "&7Both stake the same and one roll",
+                        "&7decides who takes it all.")
                 .players(2, 2)
                 .build());
-        // Este juego se controla solo: no pasa por la sala de espera de los demas.
+        // This game runs by itself: it never uses the shared waiting room.
         plugin.sessions().register(id(), this::tick);
     }
 
@@ -66,89 +66,89 @@ public final class DuelGame extends AbstractGame {
     @Override
     public List<String> statusLore() {
         if (pending.isEmpty()) {
-            return List.of("&7Sin retos pendientes");
+            return List.of("&7No pending challenges");
         }
-        return List.of("&eRetos pendientes: &f" + pending.size());
+        return List.of("&ePending challenges: &f" + pending.size());
     }
 
-    /** Abre el menu para elegir rival. */
+    /** Opens the menu to pick a rival. */
     @Override
     public void open(Player player) {
         new RivalGui(plugin, player, this).show();
     }
 
-    /** Reta a otro jugador. */
+    /** Challenges another player. */
     public void challenge(Player challenger, Player target, double amount) {
         if (challenger.getUniqueId().equals(target.getUniqueId())) {
-            message(challenger, "duelo.a-ti-mismo");
+            message(challenger, "duel.self-duel");
             return;
         }
         if (!plugin.config().gameEnabled(id())) {
-            message(challenger, "juegos.desactivado", "juego", name());
+            message(challenger, "games.disabled", "game", name());
             return;
         }
         if (pending.containsKey(challenger.getUniqueId())
                 || pending.containsKey(target.getUniqueId())) {
-            message(challenger, "duelo.ya-ocupado");
+            message(challenger, "duel.already-busy");
             return;
         }
         double stake = Math.max(minBet(), Math.min(maxBet(), amount));
         if (!plugin.economy().has(target.getUniqueId(), stake)) {
-            message(challenger, "duelo.rival-sin-saldo", "jugador", target.getName());
+            message(challenger, "duel.rival-cannot-afford", "player", target.getName());
             return;
         }
         Wager wager = plugin.economy().stake(challenger, stake);
         if (wager == null) {
-            message(challenger, "economia.sin-saldo", "apuesta", plugin.economy().format(stake));
+            message(challenger, "economy.not-enough-money", "bet", plugin.economy().format(stake));
             return;
         }
         Challenge challenge = new Challenge(challenger.getUniqueId(), target.getUniqueId(), stake, wager,
                 plugin.config().duelTimeoutSeconds() * 20);
         pending.put(target.getUniqueId(), challenge);
 
-        message(challenger, "duelo.reto-enviado",
-                "jugador", target.getName(), "cantidad", plugin.economy().format(stake));
-        target.sendMessage(Text.c("&8» &f" + challenger.getName() + " &7te reta por &6"
-                        + plugin.economy().format(stake) + "&7. Tienes &f"
+        message(challenger, "duel.challenge-sent",
+                "player", target.getName(), "amount", plugin.economy().format(stake));
+        target.sendMessage(Text.c("&8» &f" + challenger.getName() + " &7challenges you for &6"
+                        + plugin.economy().format(stake) + "&7. You have &f"
                         + plugin.config().duelTimeoutSeconds() + "s&7.")
                 .append(Text.c(" "))
-                .append(Text.button("&a&lACEPTAR", "/casino accion aceptar", "&7Aceptar el duelo"))
+                .append(Text.button("&a&lACCEPT", "/casino action accept", "&7Accept the duel"))
                 .append(Text.c(" "))
-                .append(Text.button("&c&lRECHAZAR", "/casino accion rechazar", "&7Rechazar el duelo")));
+                .append(Text.button("&c&lDECLINE", "/casino action decline", "&7Decline the duel")));
         target.playSound(target.getLocation(), Sound.BLOCK_ANVIL_LAND, 0.8f, 1.4f);
     }
 
     @Override
     public void handleAction(Player player, String action, String[] args) {
         switch (action) {
-            case "aceptar" -> accept(player);
-            case "rechazar" -> decline(player);
-            default -> message(player, "grupo.accion-desconocida");
+            case "accept" -> accept(player);
+            case "decline" -> decline(player);
+            default -> message(player, "group.unknown-action");
         }
     }
 
     private void accept(Player target) {
         Challenge challenge = pending.remove(target.getUniqueId());
         if (challenge == null) {
-            message(target, "duelo.sin-reto");
+            message(target, "duel.no-challenge");
             return;
         }
         Wager defenderWager = plugin.economy().stake(target, challenge.amount);
         if (defenderWager == null) {
-            message(target, "economia.sin-saldo", "apuesta", plugin.economy().format(challenge.amount));
+            message(target, "economy.not-enough-money", "bet", plugin.economy().format(challenge.amount));
             refund(challenge.wager);
             Player challenger = online(challenge.challenger);
             if (challenger != null) {
-                message(challenger, "duelo.reto-sin-fondos");
+                message(challenger, "duel.challenge-no-funds");
             }
             return;
         }
 
         Player challenger = online(challenge.challenger);
-        // Tirada verificable: el ganador se decide aqui y con el mismo generador que todo lo demas.
+        // Provably fair roll: the winner is decided here with the same generator as everything else.
         boolean challengerWins = plugin.fair().roll(challenge.challenger) < 0.5;
-        // El duelo es jugador contra jugador: la casa solo se lleva la comision
-        // que configure el servidor (por defecto ninguna).
+        // A duel is player against player, so the house only keeps the commission
+        // the server configures (none by default).
         double total = challenge.amount * 2 * (1.0 - plugin.config().groupHouseCut());
 
         if (challengerWins) {
@@ -169,18 +169,18 @@ public final class DuelGame extends AbstractGame {
         announceBoth(winner, loser, total);
         if (challenger != null) {
             info(challenger, title());
-            info(challenger, (challengerWins ? "&aGanaste" : "&cPerdiste") + " &7el duelo contra &f"
-                    + target.getName() + "&7 por &6" + plugin.economy().format(challenge.amount));
+            info(challenger, (challengerWins ? "&aYou won" : "&cYou lost") + " &7the duel against &f"
+                    + target.getName() + "&7 for &6" + plugin.economy().format(challenge.amount));
         }
         info(target, title());
-        info(target, (challengerWins ? "&cPerdiste" : "&aGanaste") + " &7el duelo contra &f"
-                + playerName(challenge.challenger) + "&7 por &6"
+        info(target, (challengerWins ? "&cYou lost" : "&aYou won") + " &7the duel against &f"
+                + playerName(challenge.challenger) + "&7 for &6"
                 + plugin.economy().format(challenge.amount));
     }
 
     private void announceBoth(Player winner, Player loser, double total) {
         if (winner != null) {
-            winner.showTitle(Title.title(Text.c("&6&lGANASTE EL DUELO"),
+            winner.showTitle(Title.title(Text.c("&6&lYOU WON THE DUEL"),
                     Text.c("&f" + plugin.economy().format(total)), Title.Times.times(
                             java.time.Duration.ofMillis(150),
                             java.time.Duration.ofMillis(2000),
@@ -188,8 +188,8 @@ public final class DuelGame extends AbstractGame {
             winner.playSound(winner.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.2f);
         }
         if (loser != null) {
-            loser.showTitle(Title.title(Text.c("&c&lPERDISTE"),
-                    Text.c("&7La moneda no te acompano"), Title.Times.times(
+            loser.showTitle(Title.title(Text.c("&c&lYOU LOST"),
+                    Text.c("&7Luck was not on your side"), Title.Times.times(
                             java.time.Duration.ofMillis(150),
                             java.time.Duration.ofMillis(1600),
                             java.time.Duration.ofMillis(300))));
@@ -200,18 +200,18 @@ public final class DuelGame extends AbstractGame {
     private void decline(Player target) {
         Challenge challenge = pending.remove(target.getUniqueId());
         if (challenge == null) {
-            message(target, "duelo.sin-reto");
+            message(target, "duel.no-challenge");
             return;
         }
         refund(challenge.wager);
-        message(target, "duelo.rechazado");
+        message(target, "duel.declined");
         Player challenger = online(challenge.challenger);
         if (challenger != null) {
-            message(challenger, "duelo.reto-rechazado-por", "jugador", target.getName());
+            message(challenger, "duel.challenge-declined", "player", target.getName());
         }
     }
 
-    /** Reloj propio del duelo: expira los retos sin respuesta. */
+    /** The duel keeps its own clock: unanswered challenges expire. */
     private void tick() {
         if (pending.isEmpty()) {
             return;
@@ -232,11 +232,11 @@ public final class DuelGame extends AbstractGame {
             refund(challenge.wager);
             Player challenger = online(challenge.challenger);
             if (challenger != null) {
-                message(challenger, "duelo.reto-expirado", "jugador", playerName(target));
+                message(challenger, "duel.challenge-expired", "player", playerName(target));
             }
             Player targetPlayer = online(target);
             if (targetPlayer != null) {
-                message(targetPlayer, "duelo.reto-caducado");
+                message(targetPlayer, "duel.challenge-timed-out");
             }
         }
     }
@@ -254,12 +254,12 @@ public final class DuelGame extends AbstractGame {
         return plugin.getServer().getPlayer(playerId);
     }
 
-    private static final class RivalGui extends Gui {
+    private final class RivalGui extends Gui {
 
         private final DuelGame game;
 
         RivalGui(MultiverseGamblingPlugin plugin, Player player, DuelGame game) {
-            super(plugin, player, 5, "&8Duelo &7· &6Elige rival");
+            super(plugin, player, 5, "&8" + displayName(player) + " &7· &6Pick a rival");
             this.game = game;
         }
 
@@ -269,14 +269,14 @@ public final class DuelGame extends AbstractGame {
             fill(Items.of(Material.BLACK_STAINED_GLASS_PANE).name(" ").build());
 
             set(4, Items.of(Material.IRON_SWORD)
-                    .name("&6Duelo 1 contra 1")
+                    .name("&6Duel 1 vs 1")
                     .lore(
-                            "&7Elige a un jugador y una cantidad.",
-                            "&7El rival debe aceptar en &f"
+                            "&7Pick a player and an amount.",
+                            "&7The rival must accept within &f"
                                     + plugin.config().duelTimeoutSeconds() + "s&7.",
-                            "&7El ganador se lleva las dos apuestas.",
+                            "&7The winner takes both stakes.",
                             "",
-                            "&7Si el rival no acepta, recuperas tu dinero.")
+                            "&7If the rival does not accept, you get your money back.")
                     .glow(true)
                     .build());
 
@@ -295,9 +295,9 @@ public final class DuelGame extends AbstractGame {
                 set(slot, Items.of(Material.PLAYER_HEAD)
                         .name("&f" + target.getName())
                         .lore(
-                                "&7Saldo: &f" + plugin.economy().format(balance),
+                                "&7Balance: &f" + plugin.economy().format(balance),
                                 "",
-                                "&ePulsa para retarle")
+                                "&eClick to challenge them")
                         .build(), e -> {
                     close();
                     plugin.guis().openBetSelector(player(), game, amount ->
@@ -307,13 +307,13 @@ public final class DuelGame extends AbstractGame {
             }
 
             set(40, Items.of(Material.BARRIER)
-                    .name("&cCerrar")
+                    .name("&cClose")
                     .build(), e -> close());
         }
 
         @Override
         public String sessionId() {
-            return "duelo";
+            return "duel";
         }
     }
 }

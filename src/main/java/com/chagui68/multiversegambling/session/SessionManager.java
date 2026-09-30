@@ -9,11 +9,10 @@ import java.util.UUID;
 import org.bukkit.scheduler.BukkitTask;
 
 /**
- * Reloj unico de las partidas en solitario.
+ * The single clock of the solo games.
  *
- * <p>Un solo planificador para todo el plugin en vez de una tarea por jugador:
- * asi apagar el plugin cierra todas las partidas a la vez y ningun inventario se
- * queda huerfano.</p>
+ * <p>One scheduler for the whole plugin instead of one task per player: that way
+ * disabling the plugin closes every round at once and no inventory is left orphaned.</p>
  */
 public final class SessionManager {
 
@@ -22,7 +21,7 @@ public final class SessionManager {
     private final Map<String, AbstractGroupTicker> tickers = new LinkedHashMap<>();
     private BukkitTask task;
 
-    /** Permite que los juegos en grupo se enganchen al mismo reloj. */
+    /** Lets the group games hook into the same clock. */
     public interface AbstractGroupTicker {
         void tick();
     }
@@ -59,7 +58,7 @@ public final class SessionManager {
         return session != null && session.active();
     }
 
-    /** Cierra la sesion de un jugador, por ejemplo al desconectarse. */
+    /** Closes the session of one player, for example when they disconnect. */
     public void cancel(UUID playerId) {
         SoloSession session = sessions.remove(playerId);
         if (session != null) {
@@ -76,7 +75,7 @@ public final class SessionManager {
             try {
                 session.tick();
             } catch (RuntimeException error) {
-                plugin.getLogger().severe("Error en la sesion " + session.sessionId()
+                plugin.getLogger().severe("Error in the session " + session.sessionId()
                         + " de " + session.playerId() + ": " + error);
                 error.printStackTrace();
                 session.cancel();
@@ -87,7 +86,7 @@ public final class SessionManager {
             try {
                 ticker.tick();
             } catch (RuntimeException error) {
-                plugin.getLogger().severe("Error en un juego en grupo: " + error);
+                plugin.getLogger().severe("Error in a group game: " + error);
                 error.printStackTrace();
             }
         }

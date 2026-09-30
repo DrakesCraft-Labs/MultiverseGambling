@@ -10,7 +10,7 @@ import java.util.UUID;
 import java.util.function.DoubleConsumer;
 import org.bukkit.entity.Player;
 
-/** Fachada de menus: el resto del plugin solo pide "abre esto". */
+/** Menu facade: the rest of the plugin only asks "open this". */
 public final class GuiManager {
 
     private final MultiverseGamblingPlugin plugin;
@@ -41,7 +41,7 @@ public final class GuiManager {
         new StatsGui(plugin, player).show();
     }
 
-    /** Abre el selector de apuesta recordando cuanto aposto la ultima vez. */
+    /** Opens the bet selector, remembering how much the player staked last time. */
     public void openBetSelector(Player player, Game game, DoubleConsumer onConfirm) {
         if (!player.isOnline()) {
             return;
@@ -56,22 +56,23 @@ public final class GuiManager {
         }).show();
     }
 
-    /** Envia el bloque de auditoria de azar verificable. */
+    /** Sends the provably fair audit block. */
     public void sendVerify(Player player) {
         if (!player.isOnline()) {
             return;
         }
-        plugin.messages().sendRaw(player, "&8&m        &r &6Azar verificable &8&m        ");
+        plugin.messages().sendRaw(player, plugin.messages().forSender(player, "gui.verify.title"));
         for (String line : plugin.fair().auditLines(player.getUniqueId())) {
             plugin.messages().sendRaw(player, line);
         }
         plugin.messages().sendRaw(player, "");
-        plugin.messages().send(player, "azar.explicacion");
-        plugin.messages().send(player, "azar.tu-semilla", "semilla", plugin.fair().clientSeed(player.getUniqueId()));
+        plugin.messages().send(player, "fairness.explanation");
+        plugin.messages().send(player, "fairness.your-seed", "seed",
+                plugin.fair().clientSeed(player.getUniqueId()));
     }
 
-    /** Aviso rojo reutilizable. */
+    /** Reusable red warning. */
     public void error(Player player, String key, Object... replacements) {
-        player.sendMessage(Text.c(plugin.messages().prefix() + plugin.messages().get(key, replacements)));
+        player.sendMessage(Text.c(plugin.messages().prefixedFor(player, key, replacements)));
     }
 }

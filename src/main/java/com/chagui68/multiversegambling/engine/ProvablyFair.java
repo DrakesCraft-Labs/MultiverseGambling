@@ -9,12 +9,12 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
 /**
- * Azar verificable ("provably fair") al estilo de las casas de apuestas serias.
+ * Provably fair randomness, in the style of serious betting houses.
  *
- * <p>La casa publica el hash del secreto antes de jugar. Cada tirada se deriva de
- * {@code HMAC_SHA256(secreto, semillaCliente:nonce:cursor)}. Al rotar el secreto se
- * revela, y cualquiera puede recalcular todas las tiradas para comprobar que no hubo
- * manipulación. Es lo que permite que la ruleta, el crash o el plinko sean auditables.</p>
+ * <p>The house publishes the hash of its secret before you play. Every roll is derived
+ * from {@code HMAC_SHA256(secret, clientSeed:nonce:cursor)}. When the secret rotates it
+ * is revealed, and anybody can recompute every roll to check that nothing was touched.
+ * This is what makes roulette, crash or plinko auditable.</p>
  */
 public final class ProvablyFair {
 
@@ -24,14 +24,14 @@ public final class ProvablyFair {
     private ProvablyFair() {
     }
 
-    /** Secreto de servidor de 256 bits en hexadecimal. */
+    /** 256 bit server secret, in hexadecimal. */
     public static String randomSeed() {
         byte[] bytes = new byte[32];
         SECURE.nextBytes(bytes);
         return hex(bytes);
     }
 
-    /** Semilla de cliente razonable cuando el jugador no aporta la suya. */
+    /** Reasonable client seed for when the player does not bring their own. */
     public static String randomClientSeed() {
         byte[] bytes = new byte[8];
         SECURE.nextBytes(bytes);
@@ -43,7 +43,7 @@ public final class ProvablyFair {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             return hex(digest.digest(input.getBytes(StandardCharsets.UTF_8)));
         } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("SHA-256 no disponible", e);
+            throw new IllegalStateException("SHA-256 not available", e);
         }
     }
 
@@ -53,14 +53,14 @@ public final class ProvablyFair {
             mac.init(new SecretKeySpec(key.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
             return mac.doFinal(message.getBytes(StandardCharsets.UTF_8));
         } catch (Exception e) {
-            throw new IllegalStateException("HmacSHA256 no disponible", e);
+            throw new IllegalStateException("HmacSHA256 not available", e);
         }
     }
 
     private static double message(String serverSeed, String clientSeed, long nonce, int cursor) {
         byte[] mac = hmacSha256(serverSeed, clientSeed + ":" + nonce + ":" + cursor);
-        // Ojo: hay que pasar a long sin signo. Con un int, ">>> 0" no hace nada y
-        // la mitad de las tiradas saldrian negativas.
+        // Careful: this must be widened to an unsigned long. With an int, ">>> 0" does
+        // nothing and half of the rolls would come out negative.
         long value = ((long) (mac[0] & 0xFF) << 24)
                 | ((mac[1] & 0xFF) << 16)
                 | ((mac[2] & 0xFF) << 8)
@@ -68,20 +68,20 @@ public final class ProvablyFair {
         return value / 4294967296.0;
     }
 
-    /** Uniforme en [0, 1) para la tirada {@code cursor} de un mismo nonce. */
+    /** Uniform in [0, 1) for roll {@code cursor} of a given nonce. */
     public static double roll(String serverSeed, String clientSeed, long nonce, int cursor) {
         return message(serverSeed, clientSeed, nonce, cursor);
     }
 
-    /** Entero uniforme en [0, bound) verificado. */
+    /** Verified uniform integer in [0, bound). */
     public static int rollInt(String serverSeed, String clientSeed, long nonce, int cursor, int bound) {
         if (bound <= 0) {
-            throw new IllegalArgumentException("bound debe ser > 0");
+            throw new IllegalArgumentException("bound must be > 0");
         }
         return (int) Math.floor(message(serverSeed, clientSeed, nonce, cursor) * bound);
     }
 
-    /** Genera {@code count} valores uniformes consecutivos (una tirada multipunto). */
+    /** Generates {@code count} consecutive uniform values (a multi point roll). */
     public static double[] rollMany(String serverSeed, String clientSeed, long nonce, int count) {
         double[] out = new double[count];
         for (int i = 0; i < count; i++) {
@@ -100,7 +100,7 @@ public final class ProvablyFair {
         return new String(out);
     }
 
-    /** Utilidad de consola: {@code ProvablyFair <hash|seed|roll> ...}. */
+    /** Console helper: {@code ProvablyFair <hash|seed|roll> ...}. */
     public static void main(String[] args) {
         if (args.length == 0) {
             String seed = randomSeed();

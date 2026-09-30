@@ -15,10 +15,10 @@ import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 
 /**
- * Menu de cofre con acciones por slot.
+ * Chest menu with one action per slot.
  *
- * <p>Se registra como sesion, asi que un menu abierto sobrevive a los ticks, se
- * refresca sin parpadeos y se cierra solo si el jugador se va.</p>
+ * <p>It registers itself as a session, so an open menu survives ticks, refreshes without
+ * flickering and closes by itself when the player leaves.</p>
  */
 public abstract class Gui implements InventoryHolder, SoloSession {
 
@@ -54,10 +54,10 @@ public abstract class Gui implements InventoryHolder, SoloSession {
 
     // -------------------------------------------------------------- construccion
 
-    /** Pinta el contenido del menu. Se llama al abrir y en cada refresco. */
+    /** Paints the menu content. Called when opening and on every refresh. */
     protected abstract void render();
 
-    /** Coloca un item decorativo. */
+    /** Places a decorative item. */
     protected final void set(int slot, ItemStack item) {
         set(slot, item, null);
     }
@@ -91,7 +91,7 @@ public abstract class Gui implements InventoryHolder, SoloSession {
         }
     }
 
-    /** Rodea el borde del menu con un item, dejando hueco el interior. */
+    /** Wraps the border of the menu with an item, leaving the inside empty. */
     protected final void border(ItemStack item) {
         int rows = size() / 9;
         fillRow(0, item);
@@ -114,7 +114,7 @@ public abstract class Gui implements InventoryHolder, SoloSession {
         player.openInventory(inventory);
     }
 
-    /** Redibuja y reabre el menu manteniendo la accion en curso. */
+    /** Redraws and reopens the menu, keeping the running action alive. */
     public final void refresh() {
         if (!opened || !player.isOnline()) {
             return;
@@ -128,7 +128,7 @@ public abstract class Gui implements InventoryHolder, SoloSession {
         }
     }
 
-    /** Cierra el menu de forma intencionada, sin disparar la logica de salida. */
+    /** Closes the menu on purpose, without firing the exit logic. */
     public final void close() {
         cancel();
     }
@@ -142,7 +142,7 @@ public abstract class Gui implements InventoryHolder, SoloSession {
         }
     }
 
-    /** Llamado por el listener cuando el jugador cierra el menu a mano. */
+    /** Called by the listener when the player closes the menu by hand. */
     public final void handleClose() {
         if (swapping || !opened) {
             return;
@@ -174,7 +174,7 @@ public abstract class Gui implements InventoryHolder, SoloSession {
         onTick();
     }
 
-    /** Para menus animados. */
+    /** For animated menus. */
     protected void onTick() {
     }
 

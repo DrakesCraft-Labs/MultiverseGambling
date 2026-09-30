@@ -13,33 +13,33 @@ import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 
 /**
- * Juego en grupo con rondas encadenadas.
+ * Group game with chained rounds.
  *
- * <p>El ciclo lo lleva esta clase y es siempre el mismo, para que ningun juego
- * pueda saltarse el cobro ni la devolucion del dinero:</p>
+ * <p>This class drives the cycle and it is always the same one, so no game can skip
+ * either charging or refunding the money:</p>
  * <ol>
- *   <li>{@code ESPERA}: entra gente y apuesta. Al llegar al minimo se abre la veda.</li>
- *   <li>{@code APUESTAS}: cuenta atras visible; el que no apueste se queda fuera.</li>
- *   <li>{@code EN_JUEGO}: la subclase dirige la ronda y llama a {@link #endRound()}.</li>
+ *   <li>{@code WAITING}: people come in and stake. Reaching the minimum opens the round.</li>
+ *   <li>{@code BETTING}: visible countdown; whoever does not stake is left out.</li>
+ *   <li>{@code IN_GAME}: the subclass runs the round and calls {@link #endRound()}.</li>
  * </ol>
  *
- * <p>Los jugadores que se desconectan durante una ronda no recuperan su dinero: su
- * apuesta se queda en el bote y la pueden ganar los demas. Si se van antes de
- * empezar, se les devuelve integra.</p>
+ * <p>Players who disconnect during a round do not get their money back: their stake
+ * stays in the pot and somebody else can win it. If they leave before the round
+ * starts, it is refunded in full.</p>
  */
 public abstract class AbstractGroupGame extends AbstractGame {
 
     public enum Phase {
-        ESPERA, APUESTAS, EN_JUEGO
+        WAITING, BETTING, IN_GAME
     }
 
     protected final Pot pot;
-    /** Jugadores apuntados para la proxima ronda que aun no han apostado. */
+    /** Players queued for the next round who have not staked yet. */
     protected final Set<UUID> waiting = new LinkedHashSet<>();
-    /** Jugadores que se fueron en mitad de la ronda: siguen en el bote, pero no ganan. */
+    /** Players who left mid round: still in the pot, but they can no longer win. */
     protected final Set<UUID> gone = new LinkedHashSet<>();
 
-    protected Phase phase = Phase.ESPERA;
+    protected Phase phase = Phase.WAITING;
     protected int timer;
     protected int round;
 
@@ -53,128 +53,128 @@ public abstract class AbstractGroupGame extends AbstractGame {
     @Override
     public final void open(Player player) {
         if (!enabled()) {
-            message(player, "juegos.desactivado", "juego", name());
+            message(player, "games.disabled", "game", name());
             return;
         }
         if (!player.hasPermission(permission())) {
-            message(player, "general.sin-permiso");
+            message(player, "general.no-permission");
             return;
         }
         UUID id = player.getUniqueId();
 
-        if (phase == Phase.EN_JUEGO) {
+        if (phase == Phase.IN_GAME) {
             if (waiting.add(id)) {
-                message(player, "grupo.apuntado-proxima", "juego", name());
+                message(player, "group.queued-next", "game", name());
             } else {
-                message(player, "grupo.ya-apuntado");
+                message(player, "group.already-queued");
             }
             return;
         }
 
         int seated = pot.size() + waiting.size();
         if (maxPlayers() > 0 && seated >= maxPlayers() && !pot.contains(id) && !waiting.contains(id)) {
-            message(player, "grupo.lleno", "maximo", maxPlayers());
+            message(player, "group.room-full", "max", maxPlayers());
             return;
         }
 
         plugin.guis().openBetSelector(player, this, bet -> placeBet(player, bet));
     }
 
-    /** Registra (o reemplaza) la apuesta del jugador. */
+    /** Records (or replaces) the player's stake. */
     protected final void placeBet(Player player, double amount) {
-        if (phase == Phase.EN_JUEGO) {
-            message(player, "grupo.ronda-en-curso");
+        if (phase == Phase.IN_GAME) {
+            message(player, "group.round-in-progress");
             return;
         }
         UUID id = player.getUniqueId();
         if (!pot.add(player, amount)) {
-            message(player, "economia.sin-saldo", "apuesta", plugin.economy().format(amount));
+            message(player, "economy.not-enough-money", "bet", plugin.economy().format(amount));
             return;
         }
         waiting.remove(id);
         gone.remove(id);
-        message(player, "grupo.apuesta-registrada",
-                "cantidad", plugin.economy().format(amount), "juego", name());
+        message(player, "group.bet-accepted",
+                "amount", plugin.economy().format(amount), "game", name());
         onBetPlaced(player, amount);
         broadcastLobby();
-        if (phase == Phase.ESPERA && pot.size() >= minPlayers()) {
+        if (phase == Phase.WAITING && pot.size() >= minPlayers()) {
             startBettingWindow();
         }
     }
 
-    // -------------------------------------------------------------- ciclo de vida
+    // ---------------------------------------------------------------- life cycle
 
-    /** Llamado una vez por tick por el registro de juegos. */
+    /** Called once per tick by the game registry. */
     public final void tick() {
         switch (phase) {
-            case ESPERA -> {
+            case WAITING -> {
                 if (pot.size() >= minPlayers()) {
                     startBettingWindow();
                 }
             }
-            case APUESTAS -> {
+            case BETTING -> {
                 if (pot.size() < minPlayers()) {
-                    phase = Phase.ESPERA;
+                    phase = Phase.WAITING;
                     timer = 0;
-                    broadcast("grupo.ronda-cancelada", "minimo", minPlayers());
+                    broadcast("group.round-cancelled", "min", minPlayers());
                     return;
                 }
                 timer--;
                 if (timer <= 0) {
                     beginRound();
                 } else if (timer <= 5) {
-                    broadcast("grupo.cuenta-atras", "segundos", timer);
+                    broadcast("group.countdown", "seconds", timer);
                     tickSound();
                 } else if (timer % 10 == 0) {
-                    broadcast("grupo.tiempo-restante", "segundos", timer);
+                    broadcast("group.time-left", "seconds", timer);
                 }
             }
-            case EN_JUEGO -> tickRound();
+            case IN_GAME -> tickRound();
         }
     }
 
     private void startBettingWindow() {
-        phase = Phase.APUESTAS;
+        phase = Phase.BETTING;
         timer = plugin.config().groupBettingSeconds();
-        broadcast("grupo.apuestas-abiertas", "segundos", timer);
+        broadcast("group.betting-open", "seconds", timer);
     }
 
     private void beginRound() {
         round++;
-        phase = Phase.EN_JUEGO;
+        phase = Phase.IN_GAME;
         timer = 0;
-        broadcast("grupo.ronda-empezando", "ronda", round);
+        broadcast("group.round-starting", "round", round);
         onRoundStart();
     }
 
     /**
-     * Dirige la ronda. La subclase decide cuando termina y debe llamar a
-     * {@link #endRound()} despues de haber repartido el bote.
+     * Runs the round. The subclass decides when it ends and must call
+     * {@link #endRound()} after paying out the pot.
      */
     protected abstract void tickRound();
 
-    /** Prepara el estado de una ronda nueva. */
+    /** Sets up a fresh round. */
     protected abstract void onRoundStart();
 
-    /** Limpia el estado al terminar una ronda. */
+    /** Clears the state when a round ends. */
     protected void onRoundEnd() {
     }
 
-    /** Aviso opcional cuando alguien apuesta. */
+    /** Optional hook for when somebody stakes. */
     protected void onBetPlaced(Player player, double amount) {
     }
 
-    /** Aviso cuando alguien se va en mitad de la ronda. */
+    /** Hook for when somebody leaves mid round. */
     protected void onQuitDuringRound(UUID playerId) {
     }
 
     /**
-     * Accion pedida desde un boton del chat, por ejemplo
-     * {@code /casino accion disparar}. Es lo que permite jugar sin abrir menus.
+     * Action requested from a chat button, for example
+     * {@code /casino action shoot}. This is what lets people play without menus.
      */
     @Override
     public void handleAction(Player player, String action, String[] args) {
-        message(player, "grupo.accion-desconocida");
+        message(player, "group.unknown-action");
     }
 
     @Override
@@ -182,41 +182,41 @@ public abstract class AbstractGroupGame extends AbstractGame {
         return contains(playerId);
     }
 
-    /** @return true si el jugador esta apostando en este juego ahora mismo. */
+    /** @return true when the player is staking in this game right now. */
     public final boolean contains(UUID playerId) {
         return pot.contains(playerId) || waiting.contains(playerId);
     }
 
-    /** Etiqueta del boton de chat listo para enviar. */
+    /** Chat button label, ready to send. */
     protected final Component chatButton(String label, String action, String hover) {
         return Text.button(label, "/casino accion " + action, hover);
     }
 
-    /** Cierra la ronda: devuelve lo que no se haya liquidado y vuelve a la espera. */
+    /** Closes the round: refunds whatever was not settled and goes back to waiting. */
     protected final void endRound() {
         pot.refundAll();
         gone.clear();
-        phase = Phase.ESPERA;
+        phase = Phase.WAITING;
         timer = 0;
         onRoundEnd();
-        broadcast("grupo.ronda-terminada");
+        broadcast("group.round-finished");
         promptWaiting();
     }
 
-    /** Anula la ronda en curso y devuelve todo el dinero. */
+    /** Voids the running round and refunds all the money. */
     public final void abortRound() {
-        if (phase == Phase.EN_JUEGO) {
-            broadcast("grupo.ronda-anulada");
+        if (phase == Phase.IN_GAME) {
+            broadcast("group.round-voided");
         }
         pot.refundAll();
         waiting.clear();
         gone.clear();
-        phase = Phase.ESPERA;
+        phase = Phase.WAITING;
         timer = 0;
         onRoundEnd();
     }
 
-    /** Reabre el selector de apuesta a quien esperaba su turno. */
+    /** Reopens the bet selector for whoever was waiting for their turn. */
     private void promptWaiting() {
         for (UUID id : new ArrayList<>(waiting)) {
             Player player = plugin.getServer().getPlayer(id);
@@ -224,7 +224,7 @@ public abstract class AbstractGroupGame extends AbstractGame {
                 waiting.remove(id);
                 continue;
             }
-            message(player, "grupo.tu-turno-de-apostar", "juego", name());
+            message(player, "group.betting-open-again", "game", name());
         }
     }
 
@@ -235,15 +235,15 @@ public abstract class AbstractGroupGame extends AbstractGame {
 
     // ------------------------------------------------------------------ salidas
 
-    /** Gestiona la desconexion de un jugador. */
+    /** Handles a player disconnecting. */
     public final void handleQuit(UUID playerId) {
         waiting.remove(playerId);
         if (!pot.contains(playerId)) {
             gone.remove(playerId);
             return;
         }
-        if (phase == Phase.EN_JUEGO) {
-            // Su apuesta sigue en el bote pero ya no puede ganarla.
+        if (phase == Phase.IN_GAME) {
+            // Their stake stays in the pot but they can no longer win it.
             gone.add(playerId);
             onQuitDuringRound(playerId);
         } else {
@@ -261,16 +261,16 @@ public abstract class AbstractGroupGame extends AbstractGame {
     @Override
     public List<String> statusLore() {
         List<String> lore = new ArrayList<>();
-        if (phase == Phase.EN_JUEGO) {
-            lore.add("&eRonda " + round + " en curso");
-        } else if (phase == Phase.APUESTAS) {
-            lore.add("&aApuestas abiertas &7(" + timer + "s)");
+        if (phase == Phase.IN_GAME) {
+            lore.add("&eRound " + round + " in progress");
+        } else if (phase == Phase.BETTING) {
+            lore.add("&aBetting open &7(" + timer + "s)");
         } else {
-            lore.add("&7Esperando jugadores");
+            lore.add("&7Waiting for players");
         }
-        lore.add("&7En sala: &f" + activePlayers() + "&7/&f" + maxPlayers());
-        lore.add("&7Bote: &6" + plugin.economy().shortFormat(pot.total()));
-        lore.add("&7Minimo para empezar: &f" + minPlayers());
+        lore.add("&7In the room: &f" + activePlayers() + "&7/&f" + maxPlayers());
+        lore.add("&7Pot: &6" + plugin.economy().shortFormat(pot.total()));
+        lore.add("&7Minimum to start: &f" + minPlayers());
         return lore;
     }
 
@@ -280,7 +280,7 @@ public abstract class AbstractGroupGame extends AbstractGame {
         return gone.contains(playerId);
     }
 
-    /** Participantes que siguen presentes y por tanto pueden ganar. */
+    /** Participants still around, and therefore able to win. */
     protected final List<UUID> contenders() {
         List<UUID> out = new ArrayList<>();
         for (UUID id : pot.participants()) {
@@ -304,23 +304,22 @@ public abstract class AbstractGroupGame extends AbstractGame {
         return name == null ? playerId.toString().substring(0, 8) : name;
     }
 
+    /** Sends a language key with the prefix, each player reading it in their own language. */
     protected final void broadcast(String key, Object... replacements) {
-        Component component = plugin.messages().component(key, replacements);
         for (UUID id : audience()) {
             Player player = online(id);
             if (player != null) {
-                player.sendMessage(component);
+                player.sendMessage(plugin.messages().componentFor(player, key, replacements));
             }
         }
     }
 
-    /** Anuncia sin prefijo, para texto ya compuesto. */
-    /** Envia un texto ya compuesto a un jugador concreto de la sala. */
+    /** Sends already composed text to one player of the room. */
     protected final void tell(UUID playerId, String legacyText) {
         tell(playerId, Text.c(legacyText));
     }
 
-    /** Envia un componente (util para textos con botones) a un jugador de la sala. */
+    /** Sends a component (handy for text with buttons) to one player of the room. */
     protected final void tell(UUID playerId, Component component) {
         Player player = online(playerId);
         if (player != null) {
@@ -364,9 +363,9 @@ public abstract class AbstractGroupGame extends AbstractGame {
     }
 
     protected final void broadcastLobby() {
-        if (phase == Phase.ESPERA && pot.size() < minPlayers()) {
-            broadcast("grupo.esperando-jugadores",
-                    "actual", pot.size(), "minimo", minPlayers());
+        if (phase == Phase.WAITING && pot.size() < minPlayers()) {
+            broadcast("group.waiting-players",
+                    "current", pot.size(), "min", minPlayers());
         }
     }
 
@@ -374,8 +373,8 @@ public abstract class AbstractGroupGame extends AbstractGame {
         soundAll(Sound.BLOCK_NOTE_BLOCK_HAT, 0.6f, 1.4f);
     }
 
-    /** Texto de cabecera de ronda. */
+    /** Round header text. */
     protected final String roundHeader() {
-        return "&8&m     &r &6" + name() + " &7· ronda &f" + round + " &8&m     ";
+        return "&8&m     &r &6" + name() + " &7· round &f" + round + " &8&m     ";
     }
 }

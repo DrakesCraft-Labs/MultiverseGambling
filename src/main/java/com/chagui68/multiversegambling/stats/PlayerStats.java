@@ -3,7 +3,7 @@ package com.chagui68.multiversegambling.stats;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/** Estadisticas de un jugador. Se serializan a JSON tal cual. */
+/** Statistics of one player. Serialised to JSON as they are. */
 public final class PlayerStats {
 
     public long games;
@@ -14,7 +14,7 @@ public final class PlayerStats {
     public double biggestLoss;
     public Map<String, Integer> plays = new LinkedHashMap<>();
 
-    /** Ganancia neta: lo que ha devuelto el casino menos lo apostado. */
+    /** Net profit: what the casino returned minus what was staked. */
     public double profit() {
         return returned - wagered;
     }
@@ -23,7 +23,7 @@ public final class PlayerStats {
         return games == 0 ? 0 : (double) wins / games;
     }
 
-    /** Retorno real del jugador. 1.0 significa que recupera todo lo apostado. */
+    /** Real return of the player. 1.0 means they got back everything they staked. */
     public double rtp() {
         return wagered <= 0 ? 0 : returned / wagered;
     }

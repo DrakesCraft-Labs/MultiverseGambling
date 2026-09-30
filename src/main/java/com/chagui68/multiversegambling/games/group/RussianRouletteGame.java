@@ -17,12 +17,12 @@ import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 
 /**
- * Ruleta rusa por turnos.
+ * Turn based Russian roulette.
  *
- * <p>Cada jugador aprieta el gatillo cuando le toca. La probabilidad de que suene
- * el disparo es exactamente {@code balas / recamaras} en cada tirada, decidida por
- * el generador verificable, asi que la ronda es tan auditable como cualquier otra
- * apuesta del casino. El que cae deja su dinero en el bote del superviviente.</p>
+ * <p>Every player pulls the trigger on their turn. The chance of a shot is exactly
+ * {@code bullets / chambers} on each pull, decided by the provably fair generator, so
+ * the round is as auditable as any other casino bet. Whoever falls leaves their money
+ * in the pot for the survivor.</p>
  */
 public final class RussianRouletteGame extends AbstractGroupGame {
 
@@ -35,10 +35,10 @@ public final class RussianRouletteGame extends AbstractGroupGame {
     private boolean started;
 
     public RussianRouletteGame(MultiverseGamblingPlugin plugin) {
-        super(plugin, GameMeta.builder("ruleta-rusa", "Ruleta Rusa", GameCategory.GRUPO, Material.FLINT_AND_STEEL)
-                .desc("&7Por turnos, cada uno aprieta el gatillo.",
-                        "&7Con &f1 bala en 6 recamaras&7, la suerte",
-                        "&7decide quien queda en pie.")
+        super(plugin, GameMeta.builder("russian-roulette", "Russian Roulette", GameCategory.GROUP, Material.FLINT_AND_STEEL)
+                .desc("&7Players take turns pulling the trigger.",
+                        "&7With &f1 bullet in 6 chambers&7, luck",
+                        "&7decides who stays on their feet.")
                 .players(2, 8)
                 .build());
     }
@@ -70,11 +70,11 @@ public final class RussianRouletteGame extends AbstractGroupGame {
         timer = 0;
 
         broadcastRaw(roundHeader());
-        broadcastRaw("&7Bote: &6" + plugin.economy().format(pot.total()));
-        broadcastRaw("&7Revolver: &f" + bullets() + " bala(s) &7en &f" + chambers()
-                + " recamaras &8(&7" + Text.percent((double) bullets() / chambers())
-                + " por tirada&8)");
-        broadcastRaw("&7Turno de &f" + playerName(current()) + "&7. Tienes &f"
+        broadcastRaw("&7Pot: &6" + plugin.economy().format(pot.total()));
+        broadcastRaw("&7Revolver: &f" + bullets() + " bullet(s) &7in &f" + chambers()
+                + " chambers &8(&7" + Text.percent((double) bullets() / chambers())
+                + " per pull&8)");
+        broadcastRaw("&7Turn of &f" + playerName(current()) + "&7. You have &f"
                 + plugin.config().groupCountdownSeconds() + " &7segundos.");
         prompt();
     }
@@ -98,28 +98,28 @@ public final class RussianRouletteGame extends AbstractGroupGame {
         Player player = online(currentId);
         if (player != null) {
             int left = Math.max(0, plugin.config().groupCountdownSeconds() - turnTicks / 20);
-            player.sendActionBar(Text.c("&7Te toca &8| &f" + left
-                    + "s &8| &7bote &6" + plugin.economy().format(pot.total())));
+            player.sendActionBar(Text.c("&7Your turn &8| &f" + left
+                    + "s &8| &7pot &6" + plugin.economy().format(pot.total())));
         }
         if (turnTicks % 20 == 0 && turnTicks / 20 > 0) {
             soundAll(Sound.BLOCK_NOTE_BLOCK_HAT, 0.4f, 1.5f);
         }
         if (turnTicks >= plugin.config().groupCountdownSeconds() * 20) {
-            broadcastRaw("&7Se acabo el tiempo de &f" + playerName(currentId)
-                    + "&7, el gatillo se aprieta solo.");
+            broadcastRaw("&7Out of time for &f" + playerName(currentId)
+                    + "&7, the trigger is pulled for them.");
             pull(currentId);
         }
     }
 
-    /** Aprieta el gatillo. */
+    /** Pulls the trigger. */
     public void trigger(Player player, boolean fromChat) {
         if (alive.size() <= 1) {
-            message(player, "grupo.ruleta-rusa-terminada");
+            message(player, "group.russian-roulette-finished");
             return;
         }
         UUID currentId = current();
         if (!currentId.equals(player.getUniqueId())) {
-            message(player, "grupo.ruleta-rusa-no-es-tu-turno", "jugador", playerName(currentId));
+            message(player, "group.russian-roulette-not-your-turn", "player", playerName(currentId));
             return;
         }
         pull(currentId);
@@ -134,7 +134,7 @@ public final class RussianRouletteGame extends AbstractGroupGame {
             if (player != null) {
                 player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 0.8f, 0.6f);
             }
-            broadcastRaw("&8» &f" + playerName(shooter) + " &7aprieta el gatillo... &a&lclic&7.");
+            broadcastRaw("&8» &f" + playerName(shooter) + " &7pulls the trigger... &a&lclick&7.");
             advance();
             return;
         }
@@ -143,22 +143,22 @@ public final class RussianRouletteGame extends AbstractGroupGame {
         soundAll(Sound.ENTITY_GENERIC_EXPLODE, 1.0f, 0.8f);
         if (player != null) {
             player.showTitle(Title.title(Text.c("&c&lBANG"),
-                    Text.c("&7Tu apuesta engorda el bote"), Title.Times.times(
+                    Text.c("&7Your stake feeds the pot"), Title.Times.times(
                             java.time.Duration.ofMillis(100),
                             java.time.Duration.ofMillis(1400),
                             java.time.Duration.ofMillis(300))));
         }
         broadcastRaw("&c&lBANG &8» &f" + playerName(shooter)
                 + " &7cae y sus &6" + plugin.economy().format(pot.amountOf(shooter))
-                + " &7pasan al bote.");
-        broadcastRaw("&7Bote: &6" + plugin.economy().format(pot.total())
-                + " &8| &7quedan &f" + alive.size());
+                + " &7go to the pot.");
+        broadcastRaw("&7Pot: &6" + plugin.economy().format(pot.total())
+                + " &8| &7left: &f" + alive.size());
 
         if (alive.size() <= 1) {
             settle();
             return;
         }
-        // El tambor se vuelve a girar y el revolver pasa al siguiente.
+        // The cylinder spins again and the revolver moves on to the next player.
         order.remove(shooter);
         if (turnIndex >= order.size()) {
             turnIndex = 0;
@@ -183,15 +183,15 @@ public final class RussianRouletteGame extends AbstractGroupGame {
         if (player == null) {
             return;
         }
-        player.sendMessage(Text.c("&8» &7Te toca: aprieta el gatillo cuando quieras.")
-                .append(chatButton("&c&lAPRETAR EL GATILLO", "disparar",
-                        "&7Probabilidad de disparo: "
+        player.sendMessage(Text.c("&8» &7Your turn: pull the trigger whenever you want.")
+                .append(chatButton("&c&lPULL THE TRIGGER", "shoot",
+                        "&7Chance of a shot: "
                                 + Text.percent((double) bullets() / chambers()))));
     }
 
     private void settle() {
         if (alive.isEmpty()) {
-            broadcastRaw("&cNo quedo nadie en pie; el bote pasa a la casa.");
+            broadcastRaw("&cNobody was left standing; the pot goes to the house.");
             pot.burn();
             endRound();
             return;
@@ -200,7 +200,7 @@ public final class RussianRouletteGame extends AbstractGroupGame {
         double total = pot.total();
         pot.payAllTo(winner);
         broadcastRaw("&8&m        &r &6RULETA RUSA &8&m        ");
-        broadcastRaw("&a&f" + playerName(winner) + " &aes el unico en pie y se lleva &6"
+        broadcastRaw("&a&f" + playerName(winner) + " &ais the last one standing and takes &6"
                 + plugin.economy().format(total) + "&a.");
         soundAll(Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.1f);
         Player winnerPlayer = online(winner);
@@ -216,7 +216,7 @@ public final class RussianRouletteGame extends AbstractGroupGame {
 
     @Override
     public void handleAction(Player player, String action, String[] args) {
-        if ("disparar".equals(action)) {
+        if ("shoot".equals(action)) {
             trigger(player, true);
             return;
         }

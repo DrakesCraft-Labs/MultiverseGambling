@@ -18,19 +18,19 @@ import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 
 /**
- * Tragaperras de tres rodillos.
+ * Three reel slots.
  *
- * <p>El resultado sale del generador verificable y se paga con la tabla de
- * {@link SlotsTable}, cuyo retorno teorico esta fijado por un test en ~94.75%.
- * Durante el giro los rodillos solo son decoracion.</p>
+ * <p>The result comes from the provably fair generator and is paid with the
+ * {@link SlotsTable} table, whose theoretical return is pinned by a test at ~94.75%.
+ * While the reels spin they are only decoration.</p>
  */
 public final class SlotsGame extends AbstractSoloGame {
 
     public SlotsGame(MultiverseGamblingPlugin plugin) {
-        super(plugin, GameMeta.builder("tragamonedas", "Tragamonedas", GameCategory.SOLO, Material.LEVER)
-                .desc("&7Tres rodillos, siete simbolos y un",
-                        "&7jackpot de &f600x&7 en la corona.",
-                        "&7Devuelve cerca del &f95%&7 de lo apostado.")
+        super(plugin, GameMeta.builder("slots", "Slots", GameCategory.SOLO, Material.LEVER)
+                .desc("&7Three reels, seven symbols and a",
+                        "&7jackpot of &f600x&7 on the crown.",
+                        "&7It returns close to &f95%&7 of what is staked.")
                 .build());
     }
 
@@ -46,10 +46,10 @@ public final class SlotsGame extends AbstractSoloGame {
         }
     }
 
-    /** Gira una vez y abre el panel con el resultado. */
+    /** Spins once and opens the panel with the result. */
     void spin(Player player, Wager wager) {
         SlotsTable table = table();
-        // Los rodillos reales salen del azar verificable; los del giro son pintura.
+        // The real reels come from the provably fair roll; the spinning ones are paint.
         List<Symbol> result = table.spin(() -> plugin.fair().roll(player.getUniqueId()));
         int total = plugin.config().slotsSpinTicks();
 
@@ -86,11 +86,11 @@ public final class SlotsGame extends AbstractSoloGame {
                 online.sendActionBar(Text.c(reels));
 
                 announceResult(online, payout > wager.amount(),
-                        multiplier > 0 ? Text.multiplier(multiplier) : "sin premio");
+                        multiplier > 0 ? Text.multiplier(multiplier) : "no prize");
                 info(online, title());
                 info(online, reels);
                 if (multiplier > 0) {
-                    info(online, "&7Combinacion ganadora: &f" + Text.multiplier(multiplier));
+                    info(online, "&7Winning combination: &f" + Text.multiplier(multiplier));
                 }
                 showResult(online, wager.amount(), payout);
                 sound(online, payout > wager.amount() ? Sound.ENTITY_PLAYER_LEVELUP : Sound.ENTITY_VILLAGER_NO,
@@ -118,15 +118,15 @@ public final class SlotsGame extends AbstractSoloGame {
         };
     }
 
-    /** Panel de la maquina: muestra los rodillos y permite volver a tirar. */
-    private static final class SlotsGui extends Gui {
+    /** Machine panel: shows the reels and lets you spin again. */
+    private final class SlotsGui extends Gui {
 
         private final SlotsGame game;
         private final List<Symbol> reels;
         private final double lastPayout;
 
         SlotsGui(MultiverseGamblingPlugin plugin, Player player, SlotsGame game, List<Symbol> reels, double lastPayout) {
-            super(plugin, player, 5, "&8Tragamonedas");
+            super(plugin, player, 5, "&8Slots");
             this.game = game;
             this.reels = reels;
             this.lastPayout = lastPayout;
@@ -142,7 +142,7 @@ public final class SlotsGame extends AbstractSoloGame {
                 Symbol symbol = reels == null ? null : reels.get(i);
                 set(slots[i], Items.of(symbol == null ? Material.GRAY_DYE : iconOf(symbol.id()))
                         .name(symbol == null ? "&8?" : "&f" + symbol.glyph() + " " + symbol.id())
-                        .lore(symbol == null ? "&7Pulsa TIRAR" : "&7Tres iguales: &f"
+                        .lore(symbol == null ? "&7Click SPIN" : "&7Three of a kind: &f"
                                 + Text.multiplier(symbol.triple()))
                         .glow(symbol != null)
                         .build());
@@ -153,22 +153,22 @@ public final class SlotsGame extends AbstractSoloGame {
             boolean afford = balance >= game.minBet();
 
             set(4, Items.of(Material.PAPER)
-                    .name("&6Tabla de premios")
+                    .name("&6Prize table")
                     .lore(game.table().symbols().stream()
                             .map(s -> "&7" + s.glyph() + " " + s.id() + ": &f"
-                                    + Text.multiplier(s.triple()) + " &8(al " + Text.percent(
+                                    + Text.multiplier(s.triple()) + " &8(at " + Text.percent(
                                             game.table().chanceOf(s.id())) + ")")
                             .toList())
                     .build());
 
             set(40, Items.of(afford ? Material.EMERALD_BLOCK : Material.RED_CONCRETE)
-                    .name(afford ? "&a&lTIRAR" : "&c&lSIN SALDO")
+                    .name(afford ? "&a&lSPIN" : "&c&lNOT ENOUGH BALANCE")
                     .lore(
-                            "&7Se apostaran &6" + plugin.economy().format(bet),
-                            "&7Saldo: &f" + plugin.economy().format(balance),
-                            lastPayout > 0 ? "&7Ultimo premio: &f" + plugin.economy().format(lastPayout) : "",
+                            "&7You will stake &6" + plugin.economy().format(bet),
+                            "&7Balance: &f" + plugin.economy().format(balance),
+                            lastPayout > 0 ? "&7Last prize: &f" + plugin.economy().format(lastPayout) : "",
                             "",
-                            afford ? "&ePulsa para girar" : "&7Necesitas mas saldo")
+                            afford ? "&eClick to spin" : "&7You need more balance")
                     .glow(afford)
                     .build(), e -> {
                 if (!afford) {
@@ -183,11 +183,11 @@ public final class SlotsGame extends AbstractSoloGame {
             });
 
             set(36, Items.of(Material.BARRIER)
-                    .name("&cSalir")
+                    .name("&cClose")
                     .build(), e -> close());
 
             set(44, Items.of(Material.ARROW)
-                    .name("&eCambiar la apuesta")
+                    .name("&eChange the bet")
                     .build(), e -> {
                 close();
                 plugin.guis().openBetSelector(player(), game, amount -> game.start(player(), amount));
@@ -196,7 +196,7 @@ public final class SlotsGame extends AbstractSoloGame {
 
         @Override
         public String sessionId() {
-            return "tragamonedas";
+            return "slots";
         }
     }
 }

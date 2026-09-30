@@ -21,11 +21,11 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
 /**
- * Tablero de bombas.
+ * Bomb board.
  *
- * <p>Un unico tablero con bombas escondidas y jugadores que destapan por turnos.
- * El que pisa una bomba queda fuera y su dinero se queda en el bote. Las bombas se
- * colocan con la mezcla verificable del casino, asi que la posicion de cada una es
+ * <p>One single board with hidden bombs and players revealing tiles in turns.
+ * Whoever hits a bomb is out and their money stays in the pot. Bombs are placed with
+ * the provably fair mix of the casino, so the position of each one is
  * reproducible a posteriori.</p>
  */
 public final class BombBoardGame extends AbstractGroupGame {
@@ -40,10 +40,10 @@ public final class BombBoardGame extends AbstractGroupGame {
     private boolean counting;
 
     public BombBoardGame(MultiverseGamblingPlugin plugin) {
-        super(plugin, GameMeta.builder("tablero-bombas", "Tablero de Bombas", GameCategory.GRUPO, Material.GUNPOWDER)
-                .desc("&7Un tablero con bombas escondidas.",
-                        "&7Por turnos, cada uno destapa casilla.",
-                        "&7El ultimo en pie se lleva el bote.")
+        super(plugin, GameMeta.builder("bomb-board", "Bomb Board", GameCategory.GROUP, Material.GUNPOWDER)
+                .desc("&7A board with hidden bombs.",
+                        "&7Players take turns revealing one tile.",
+                        "&7The last one standing takes the pot.")
                 .players(2, 12)
                 .build());
     }
@@ -79,7 +79,7 @@ public final class BombBoardGame extends AbstractGroupGame {
         counting = true;
         timer = 0;
 
-        // Colocacion verificable: se ordenan las casillas por una tirada del casino.
+        // Provably fair placement: the tiles are shuffled with a casino roll.
         double[] rolls = plugin.fair().rolls(FairnessService.HOUSE, size());
         List<Integer> cells = new ArrayList<>(size());
         for (int i = 0; i < size(); i++) {
@@ -91,9 +91,9 @@ public final class BombBoardGame extends AbstractGroupGame {
         }
 
         broadcastRaw(roundHeader());
-        broadcastRaw("&7Bote: &6" + plugin.economy().format(pot.total())
-                + " &8| &7tablero de &f" + size() + " &7casillas con &c" + bombCount() + " &7bombas.");
-        broadcastRaw("&7Participan: &f" + order.size() + " &7jugadores.");
+        broadcastRaw("&7Pot: &6" + plugin.economy().format(pot.total())
+                + " &8| &7board of &f" + size() + " &7tiles with &c" + bombCount() + " &7bombs.");
+        broadcastRaw("&7Playing: &f" + order.size() + " &7players.");
     }
 
     @Override
@@ -105,7 +105,7 @@ public final class BombBoardGame extends AbstractGroupGame {
         if (counting) {
             timer++;
             if (timer % 20 == 0) {
-                actionBarAll("&7Preparados... &f" + (3 - timer / 20) + "s");
+                actionBarAll("&7Ready... &f" + (3 - timer / 20) + "s");
                 soundAll(Sound.BLOCK_NOTE_BLOCK_HAT, 0.5f, 1.3f);
             }
             if (timer >= 60) {
@@ -124,18 +124,18 @@ public final class BombBoardGame extends AbstractGroupGame {
         Player player = online(currentId);
         if (player != null) {
             int left = Math.max(0, (limit - turnTicks) / 20);
-            player.sendActionBar(Text.c("&7Tu turno &8| &f" + left + "s &8| &7bote &6"
+            player.sendActionBar(Text.c("&7Your turn &8| &f" + left + "s &8| &7pot &6"
                     + plugin.economy().format(pot.total())));
         }
         if (turnTicks >= limit) {
-            // Sin decision: se destapa una casilla al azar.
+            // No decision made: a random tile is revealed.
             List<Integer> free = freeCells();
             if (free.isEmpty()) {
                 settle();
                 return;
             }
-            broadcastRaw("&7Se agoto el tiempo de &f" + playerName(currentId)
-                    + "&7; destapa al azar.");
+            broadcastRaw("&7Out of time for &f" + playerName(currentId)
+                    + "&7; revealing a random tile.");
             reveal(currentId, Rng.pick(free));
         }
     }
@@ -164,11 +164,11 @@ public final class BombBoardGame extends AbstractGroupGame {
         }
         board = new BombBoardGui(plugin, player, this);
         board.show();
-        tell(currentId, "&7Te toca: &fpulsa una casilla&7. Bombas escondidas: &c" + bombCount());
+        tell(currentId, "&7Your turn: &fclick a tile&7. Hidden bombs: &c" + bombCount());
         soundAll(Sound.BLOCK_ANVIL_LAND, 0.6f, 1.2f);
     }
 
-    /** Un jugador destapa una casilla. */
+    /** A player reveals a tile. */
     public void reveal(UUID playerId, int cell) {
         if (cell < 0 || cell >= size() || revealed.contains(cell)) {
             return;
@@ -183,9 +183,9 @@ public final class BombBoardGame extends AbstractGroupGame {
         if (bombs.contains(cell)) {
             alive.remove(playerId);
             soundAll(Sound.ENTITY_GENERIC_EXPLODE, 1.0f, 0.8f);
-            broadcastRaw("&c&lBOOM &8» &f" + playerName(playerId) + " &7destapo una bomba en la casilla &f"
-                    + (cell + 1) + " &7y queda fuera con &6"
-                    + plugin.economy().format(pot.amountOf(playerId)) + " &7en el bote.");
+            broadcastRaw("&c&lBOOM &8» &f" + playerName(playerId) + " &7revealed a bomb on tile &f"
+                    + (cell + 1) + " &7and is out with &6"
+                    + plugin.economy().format(pot.amountOf(playerId)) + " &7in the pot.");
             if (board != null) {
                 board.close();
                 board = null;
@@ -198,8 +198,8 @@ public final class BombBoardGame extends AbstractGroupGame {
                 settle();
                 return;
             }
-            broadcastRaw("&7Bote: &6" + plugin.economy().format(pot.total())
-                    + " &8| &7quedan &f" + alive.size());
+            broadcastRaw("&7Pot: &6" + plugin.economy().format(pot.total())
+                    + " &8| &7left: &f" + alive.size());
             openBoard();
             return;
         }
@@ -208,8 +208,8 @@ public final class BombBoardGame extends AbstractGroupGame {
         if (player != null) {
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 0.7f, 1.4f);
         }
-        broadcastRaw("&8» &f" + playerName(playerId) + " &7destapo la casilla &f" + (cell + 1)
-                + "&7 y sigue vivo. &8(" + revealed.size() + "/" + size() + ")");
+        broadcastRaw("&8» &f" + playerName(playerId) + " &7revealed tile &f" + (cell + 1)
+                + "&7 and is still alive. &8(" + revealed.size() + "/" + size() + ")");
         turnIndex++;
         if (turnIndex >= order.size()) {
             turnIndex = 0;
@@ -227,7 +227,7 @@ public final class BombBoardGame extends AbstractGroupGame {
             board = null;
         }
         if (alive.isEmpty()) {
-            broadcastRaw("&cEl tablero se quedo sin supervivientes; el bote pasa a la casa.");
+            broadcastRaw("&cNobody survived the board; the pot goes to the house.");
             pot.burn();
             endRound();
             return;
@@ -235,12 +235,12 @@ public final class BombBoardGame extends AbstractGroupGame {
         UUID winner = alive.iterator().next();
         double total = pot.total();
         pot.payAllTo(winner);
-        broadcastRaw("&8&m        &r &6TABLERO DE BOMBAS &8&m        ");
+        broadcastRaw("&8&m        &r &6BOMB BOARD &8&m        ");
         broadcastRaw("&aGana &f" + playerName(winner) + " &acon &6" + plugin.economy().format(total));
         soundAll(Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.1f);
         Player winnerPlayer = online(winner);
         if (winnerPlayer != null) {
-            winnerPlayer.showTitle(Title.title(Text.c("&a&lULTIMO EN PIE"),
+            winnerPlayer.showTitle(Title.title(Text.c("&a&lLAST ONE STANDING"),
                     Text.c("&f" + plugin.economy().format(total)), Title.Times.times(
                             java.time.Duration.ofMillis(200),
                             java.time.Duration.ofMillis(2500),
@@ -251,11 +251,11 @@ public final class BombBoardGame extends AbstractGroupGame {
 
     @Override
     public void handleAction(Player player, String action, String[] args) {
-        if ("destapar".equals(action) && args.length > 0) {
+        if ("reveal".equals(action) && args.length > 0) {
             try {
                 reveal(player.getUniqueId(), Integer.parseInt(args[0]) - 1);
             } catch (NumberFormatException error) {
-                message(player, "grupo.casilla-invalida");
+                message(player, "group.invalid-tile");
             }
             return;
         }
@@ -293,15 +293,15 @@ public final class BombBoardGame extends AbstractGroupGame {
         counting = false;
     }
 
-    /** Tablero compartido que solo puede pulsar quien tiene el turno. */
-    private static final class BombBoardGui extends Gui {
+    /** Shared board that only the player holding the turn can click. */
+    private final class BombBoardGui extends Gui {
 
         private static final ItemStack FILLER = Items.of(Material.BLACK_STAINED_GLASS_PANE).name(" ").build();
 
         private final BombBoardGame game;
 
         BombBoardGui(MultiverseGamblingPlugin plugin, Player player, BombBoardGame game) {
-            super(plugin, player, 6, "&8Tablero de Bombas");
+            super(plugin, player, 6, "&8" + displayName(player));
             this.game = game;
         }
 
@@ -311,14 +311,14 @@ public final class BombBoardGame extends AbstractGroupGame {
             fill(FILLER);
 
             set(4, Items.of(Material.GUNPOWDER)
-                    .name("&6Tablero de bombas")
+                    .name("&6Bomb board")
                     .lore(
-                            "&7Bote: &6" + plugin.economy().format(game.pot.total()),
-                            "&7Bombas: &c" + game.bombCount() + " &7en &f" + game.size() + " &7casillas",
-                            "&7Destapadas: &f" + game.revealed.size(),
-                            "&7Jugadores vivos: &f" + game.alive.size(),
+                            "&7Pot: &6" + plugin.economy().format(game.pot.total()),
+                            "&7Bombs: &c" + game.bombCount() + " &7of &f" + game.size() + " &7cells",
+                            "&7Revealed: &f" + game.revealed.size(),
+                            "&7Players alive: &f" + game.alive.size(),
                             "",
-                            "&ePulsa una casilla para destaparla")
+                            "&eClick a tile to reveal it")
                     .glow(true)
                     .build());
 
@@ -328,13 +328,13 @@ public final class BombBoardGame extends AbstractGroupGame {
                 if (game.revealed.contains(cell)) {
                     boolean bomb = game.bombs.contains(cell);
                     set(slot, Items.of(bomb ? Material.TNT : Material.EMERALD)
-                            .name(bomb ? "&cBomba" : "&aSegura")
+                            .name(bomb ? "&cBomb" : "&aSafe")
                             .lore("&7Casilla " + (cell + 1))
                             .build());
                 } else {
                     set(slot, Items.of(Material.LIGHT_GRAY_STAINED_GLASS_PANE)
                             .name("&7Casilla " + (cell + 1))
-                            .lore("&7Pulsa para destapar")
+                            .lore("&7Click to reveal")
                             .build(), e -> {
                         close();
                         game.reveal(player().getUniqueId(), index);
@@ -343,14 +343,14 @@ public final class BombBoardGame extends AbstractGroupGame {
             }
 
             set(49, Items.of(Material.CLOCK)
-                    .name("&7Turno de &f" + game.playerName(game.current()))
-                    .lore("&7Si no elige a tiempo, se destapa al azar.")
+                    .name("&7Turn of &f" + game.playerName(game.current()))
+                    .lore("&7If they do not pick in time, a random tile is revealed.")
                     .build());
         }
 
         @Override
         public String sessionId() {
-            return "tablero-bombas";
+            return "tablero-bombs";
         }
     }
 }

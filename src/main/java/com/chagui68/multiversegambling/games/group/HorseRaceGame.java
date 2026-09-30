@@ -21,12 +21,12 @@ import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 
 /**
- * Carrera de caballos.
+ * Horse race.
  *
- * <p>Cada caballo recibe una fuerza oculta de la que salen a la vez las
- * probabilidades publicadas y el ganador real. El ganador se sortea con el azar
- * verificable ponderado por esa fuerza, asi que el pago de cada caballo es siempre
- * {@code (1 - ventaja) / probabilidad} y apostar a cualquiera vale lo mismo.</p>
+ * <p>Every horse gets a hidden strength that produces both the published odds and the
+ * real winner. The winner is drawn with the provably fair generator weighted by that
+ * strength, so the payout of each horse is always {@code (1 - edge) / probability}
+ * and backing any of them is worth the same.</p>
  */
 public final class HorseRaceGame extends AbstractGroupGame {
 
@@ -37,10 +37,10 @@ public final class HorseRaceGame extends AbstractGroupGame {
     private int step;
 
     public HorseRaceGame(MultiverseGamblingPlugin plugin) {
-        super(plugin, GameMeta.builder("carrera", "Carrera de Caballos", GameCategory.GRUPO, Material.SADDLE)
-                .desc("&7Ocho caballos con sus probabilidades.",
-                        "&7Apostar al favorito paga poco;",
-                        "&7al tapado, mucho.")
+        super(plugin, GameMeta.builder("race", "Horse Race", GameCategory.GROUP, Material.SADDLE)
+                .desc("&7Eight horses with their own odds.",
+                        "&7Betting on the favourite pays little;",
+                        "&7on the outsider, a lot.")
                 .players(2, 24)
                 .build());
     }
@@ -56,8 +56,8 @@ public final class HorseRaceGame extends AbstractGroupGame {
         for (int i = 0; i < runners; i++) {
             final int horse = i;
             String label = "&7[" + (i + 1) + "]";
-            tell(playerId, Text.c("&7Caballo &f" + (i + 1) + " &8- ")
-                    .append(chatButton(label, "caballo " + (i + 1), "&7Apostar al caballo " + (i + 1))));
+            tell(playerId, Text.c("&7Horse &f" + (i + 1) + " &8- ")
+                    .append(chatButton(label, "horse " + (i + 1), "&7Bet on horse " + (i + 1))));
         }
     }
 
@@ -73,24 +73,24 @@ public final class HorseRaceGame extends AbstractGroupGame {
         broadcastRaw(roundHeader());
         StringBuilder odds = new StringBuilder("&7Probabilidades: ");
         for (int i = 0; i < field.size(); i++) {
-            odds.append("&f[").append(i + 1).append("]&7 paga &f")
+            odds.append("&f[").append(i + 1).append("]&7 pays &f")
                     .append(Text.multiplier(field.get(i).odds())).append(" &8| ");
         }
         broadcastRaw(odds.toString());
-        broadcastRaw("&7Bote: &6" + plugin.economy().format(pot.total()));
+        broadcastRaw("&7Pot: &6" + plugin.economy().format(pot.total()));
 
-        // Quien no haya elegido caballo recupera el dinero.
+        // Whoever did not pick a horse gets their money back.
         for (UUID id : pot.participants()) {
             if (!picks.containsKey(id)) {
                 pot.remove(id);
-                tell(id, "&7No elegiste caballo, te devolvemos la apuesta.");
+                tell(id, "&7You did not pick a horse, so your stake is refunded.");
             }
         }
         if (pot.size() < minPlayers()) {
             endRound();
             return;
         }
-        broadcastRaw("&7¡Empieza la carrera!");
+        broadcastRaw("&7The race starts!");
         soundAll(Sound.ENTITY_FIREWORK_ROCKET_BLAST, 0.8f, 1.0f);
     }
 
@@ -102,7 +102,7 @@ public final class HorseRaceGame extends AbstractGroupGame {
         return draw.roll(plugin.fair().roll(FairnessService.HOUSE));
     }
 
-    /** Genera la carrera entera de golpe y garantiza que gane el caballo sorteado. */
+    /** Builds the whole race at once and makes sure the drawn horse is the winner. */
     private double[][] buildRace() {
         int runners = field.size();
         int steps = plugin.config().horseRaceSteps();
@@ -141,7 +141,7 @@ public final class HorseRaceGame extends AbstractGroupGame {
             }
         }
         if (timer % 5 == 0) {
-            actionBarAll("&7Carrera &8| &f" + leaderBoard());
+            actionBarAll("&7Race &8| &f" + leaderBoard());
         }
         if (timer >= steps * 3 + 5) {
             resolve();
@@ -174,24 +174,24 @@ public final class HorseRaceGame extends AbstractGroupGame {
             return horse != null && horse == winner ? odds[horse] : 0;
         });
 
-        broadcastRaw("&8&m        &r &6CARRERA &8&m        ");
-        broadcastRaw("&6Gana el caballo &f" + (winner + 1) + " &6(pagaba &f"
+        broadcastRaw("&8&m        &r &6RACE &8&m        ");
+        broadcastRaw("&6The winner is horse &f" + (winner + 1) + " &6(paying &f"
                 + Text.multiplier(odds[winner]) + "&6).");
         for (Map.Entry<UUID, Integer> entry : bets.entrySet()) {
             boolean won = entry.getValue() == winner;
             tell(entry.getKey(), won
-                    ? "&aGanaste con el caballo &f" + (winner + 1) + "&a: cobras &f"
+                    ? "&aYou won with horse &f" + (winner + 1) + "&a: you collect &f"
                             + Text.multiplier(odds[winner])
-                    : "&cTu caballo &f" + (entry.getValue() + 1) + " &cno gano.");
+                    : "&cYour horse &f" + (entry.getValue() + 1) + " &cdid not win.");
         }
-        broadcastRaw("&7Bote repartido: &f" + plugin.economy().format(total));
+        broadcastRaw("&7Pot paid out: &f" + plugin.economy().format(total));
         soundAll(Sound.ENTITY_FIREWORK_ROCKET_BLAST, 1.0f, 1.2f);
         for (Map.Entry<UUID, Integer> entry : bets.entrySet()) {
             if (entry.getValue() == winner) {
                 Player player = online(entry.getKey());
                 if (player != null) {
-                    player.showTitle(Title.title(Text.c("&6&l¡GANASTE!"),
-                            Text.c("&fCaballo " + (winner + 1)), Title.Times.times(
+                    player.showTitle(Title.title(Text.c("&6&lYOU WON!"),
+                            Text.c("&fHorse " + (winner + 1)), Title.Times.times(
                                     java.time.Duration.ofMillis(200),
                                     java.time.Duration.ofMillis(2200),
                                     java.time.Duration.ofMillis(400))));
@@ -203,25 +203,25 @@ public final class HorseRaceGame extends AbstractGroupGame {
 
     @Override
     public void handleAction(Player player, String action, String[] args) {
-        if ("caballo".equals(action) && args.length > 0) {
+        if ("horse".equals(action) && args.length > 0) {
             if (!pot.contains(player.getUniqueId())) {
-                message(player, "grupo.no-estas-en-la-ronda");
+                message(player, "group.not-betting-this-round");
                 return;
             }
             try {
                 int horse = Integer.parseInt(args[0]) - 1;
                 if (horse < 0 || horse >= plugin.config().horseRaceRunners()) {
-                    message(player, "grupo.caballo-invalido");
+                    message(player, "group.invalid-horse");
                     return;
                 }
                 picks.put(player.getUniqueId(), horse);
                 Player online = online(player.getUniqueId());
                 if (online != null) {
-                    online.sendMessage(Text.c("&7Has apostado al caballo &f" + (horse + 1) + "&7."));
+                    online.sendMessage(Text.c("&7You bet on horse &f" + (horse + 1) + "&7."));
                 }
-                broadcastRaw("&8» &f" + player.getName() + " &7va con el caballo &f" + (horse + 1) + "&7.");
+                broadcastRaw("&8» &f" + player.getName() + " &7goes with horse &f" + (horse + 1) + "&7.");
             } catch (NumberFormatException error) {
-                message(player, "grupo.caballo-invalido");
+                message(player, "group.invalid-horse");
             }
             return;
         }

@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.random.RandomGenerator;
 
-/** Una carta de la baraja francesa. */
+/** One card of the French deck. */
 public record Card(Suit suit, int rank) {
 
     public enum Suit {
@@ -49,7 +49,7 @@ public record Card(Suit suit, int rank) {
         };
     }
 
-    /** Valor de blackjack de esta carta suelta; el As cuenta como 11 y se ajusta en la mano. */
+    /** Blackjack value of this single card; an ace counts as 11 and is adjusted in the hand. */
     public int blackjackValue() {
         if (rank == ACE) {
             return 11;
@@ -70,7 +70,7 @@ public record Card(Suit suit, int rank) {
         return display();
     }
 
-    /** Baraja multi-mazo barajada con Fisher-Yates. */
+    /** Multi deck shoe shuffled with Fisher-Yates. */
     public static final class Deck {
 
         private final List<Card> cards = new ArrayList<>();

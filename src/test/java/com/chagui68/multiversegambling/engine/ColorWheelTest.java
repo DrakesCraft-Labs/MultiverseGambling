@@ -14,37 +14,37 @@ class ColorWheelTest {
     private final ColorWheel wheel = ColorWheel.european();
 
     @Test
-    void laRuedaEstandarTieneTreintaYSieteCasillas() {
+    void theStandardWheelHasThirtySevenPockets() {
         assertEquals(37, wheel.pockets());
-        assertEquals(18, wheel.pockets(Outcome.ROJO));
-        assertEquals(18, wheel.pockets(Outcome.NEGRO));
-        assertEquals(1, wheel.pockets(Outcome.VERDE));
+        assertEquals(18, wheel.pockets(Outcome.RED));
+        assertEquals(18, wheel.pockets(Outcome.BLACK));
+        assertEquals(1, wheel.pockets(Outcome.GREEN));
     }
 
     @Test
-    void elVerdePagaMuchoMasQueElRojoPorqueEsMuchoMasRaro() {
-        assertTrue(wheel.payout(Outcome.VERDE) > wheel.payout(Outcome.ROJO) * 15,
-                "el verde deberia pagar al menos 15 veces mas");
-        // Con una sola casilla verde de 37, el pago justo seria 37x; con el 2.7%
-        // de ventaja se queda en 36x, que sigue siendo el gran golpe de la rueda.
-        assertEquals(36.0, wheel.payout(Outcome.VERDE), 1e-9);
-        // El pago justo del rojo seria 37/18 = 2.055 y queda en 2.00.
-        assertEquals(2.0, wheel.payout(Outcome.ROJO), 1e-9);
-        assertEquals(2.0, wheel.payout(Outcome.NEGRO), 1e-9);
-        assertTrue(wheel.payout(Outcome.VERDE) > 35.0);
+    void greenPaysFarMoreThanRedBecauseItIsFarRarer() {
+        assertTrue(wheel.payout(Outcome.GREEN) > wheel.payout(Outcome.RED) * 15,
+                "green should pay at least 15 times more");
+        // With a single green pocket out of 37 the fair payout would be 37x; with the 2.7%
+        // edge it stays at 36x, which is still the big hit of the wheel.
+        assertEquals(36.0, wheel.payout(Outcome.GREEN), 1e-9);
+        // The fair payout for red would be 37/18 = 2.055 and it settles at 2.00.
+        assertEquals(2.0, wheel.payout(Outcome.RED), 1e-9);
+        assertEquals(2.0, wheel.payout(Outcome.BLACK), 1e-9);
+        assertTrue(wheel.payout(Outcome.GREEN) > 35.0);
     }
 
     @Test
-    void lasTresApuestasTienenExactamenteLaMismaVentaja() {
+    void theThreeBetsHaveExactlyTheSameEdge() {
         for (Outcome outcome : Outcome.values()) {
-            assertEquals(wheel.rtp(Outcome.ROJO), wheel.rtp(outcome), 1e-9,
-                    "el color " + outcome + " no cuadra");
+            assertEquals(wheel.rtp(Outcome.RED), wheel.rtp(outcome), 1e-9,
+                    "the colour " + outcome + " does not add up");
             assertTrue(wheel.rtp(outcome) < 1.0);
         }
     }
 
     @Test
-    void laFrecuenciaDeCadaColorCoincideConSusCasillas() {
+    void theFrequencyOfEveryColourMatchesItsPockets() {
         Map<Outcome, Integer> hits = new EnumMap<>(Outcome.class);
         int samples = 300_000;
         for (int i = 0; i < samples; i++) {
@@ -57,18 +57,18 @@ class ColorWheelTest {
     }
 
     @Test
-    void unaRuedaConMasVerdesReparteElRiesgoSinCambiarLaVentaja() {
+    void aWheelWithMoreGreensSpreadsTheRiskWithoutChangingTheEdge() {
         ColorWheel generosa = new ColorWheel(16, 16, 5, 0.027);
         assertEquals(37, generosa.pockets());
-        assertTrue(generosa.payout(Outcome.VERDE) < wheel.payout(Outcome.VERDE),
-                "si el verde sale mas a menudo debe pagar menos");
+        assertTrue(generosa.payout(Outcome.GREEN) < wheel.payout(Outcome.GREEN),
+                "if green comes up more often it must pay less");
         for (Outcome outcome : Outcome.values()) {
             assertTrue(generosa.rtp(outcome) <= 1.0);
         }
     }
 
     @Test
-    void lasRuedasInvalidasSeRechazan() {
+    void invalidWheelsAreRejected() {
         assertThrows(IllegalArgumentException.class, () -> new ColorWheel(0, 18, 1, 0.027));
         assertThrows(IllegalArgumentException.class, () -> new ColorWheel(18, 18, 1, 1.5));
     }

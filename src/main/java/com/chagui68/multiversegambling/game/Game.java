@@ -1,15 +1,17 @@
 package com.chagui68.multiversegambling.game;
 
 import java.util.List;
+import java.util.UUID;
 import org.bukkit.Material;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 /**
- * Un juego del casino.
+ * One casino game.
  *
- * <p>{@link #open(Player)} es siempre la puerta de entrada: en los juegos en
- * solitario abre el selector de apuesta, y en los de grupo mete al jugador en la
- * sala de espera de la ronda en curso.</p>
+ * <p>{@link #open(Player)} is always the single entry point: solo games open the bet
+ * selector, group games drop the player in the waiting room of the round in
+ * progress.</p>
  */
 public interface Game {
 
@@ -35,6 +37,12 @@ public interface Game {
         return meta().description();
     }
 
+    /** Game name in the language of the viewer. */
+    String displayName(CommandSender viewer);
+
+    /** Description in the language of the viewer, line by line. */
+    List<String> displayDescription(CommandSender viewer);
+
     default String permission() {
         return meta().permission();
     }
@@ -57,35 +65,35 @@ public interface Game {
 
     boolean enabled();
 
-    /** Entra al juego: abre la apuesta o la sala de espera. */
+    /** Enters the game: opens the bet selector or the waiting room. */
     void open(Player player);
 
     /**
-     * Accion lanzada desde un boton del chat ({@code /casino accion ...}).
-     * Por defecto no se hace nada: solo los juegos interactivos la usan.
+     * Action fired from a chat button ({@code /casino action ...}). Does nothing by
+     * default: only the interactive games use it.
      */
     default void handleAction(Player player, String action, String[] args) {
     }
 
     /**
-     * @return true si el jugador esta metido en este juego ahora mismo. Es lo que
-     *         permite que un boton de chat sepa a que partida pertenece.
+     * @return true when the player is currently inside this game. This is what lets a
+     * chat button know which round it belongs to.
      */
-    default boolean ownsPlayer(java.util.UUID playerId) {
+    default boolean ownsPlayer(UUID playerId) {
         return false;
     }
 
-    /** Linea extra en el menu con el estado actual. */
+    /** Extra menu line with the current state. */
     default List<String> statusLore() {
         return List.of();
     }
 
-    /** Cuanta gente hay esperando o jugando ahora mismo. */
+    /** How many people are waiting or playing right now. */
     default int activePlayers() {
         return 0;
     }
 
-    /** Cierre ordenado: devuelve el dinero de las partidas a medias. */
+    /** Orderly shutdown: refunds the money of unfinished games. */
     default void shutdown() {
     }
 }

@@ -5,7 +5,7 @@ import com.chagui68.multiversegambling.util.Text;
 import java.util.UUID;
 import org.bukkit.entity.Player;
 
-/** Unico punto por el que entra y sale dinero del casino. */
+/** The single place where casino money comes in and goes out. */
 public final class EconomyManager {
 
     private final MultiverseGamblingPlugin plugin;
@@ -16,20 +16,20 @@ public final class EconomyManager {
         this.plugin = plugin;
     }
 
-    /** Detecta Vault o cae al monedero interno. Se vuelve a llamar en cada /casino reload. */
+    /** Detects Vault or falls back to the internal wallet. Called again on /casino reload. */
     public void setup() {
         startingBalance = plugin.config().startingBalance();
         String mode = plugin.config().economyProvider();
-        EconomyProvider vault = "interno".equalsIgnoreCase(mode) ? null : VaultEconomy.tryHook();
+        EconomyProvider vault = "internal".equalsIgnoreCase(mode) ? null : VaultEconomy.tryHook();
         if (vault != null) {
             provider = vault;
             plugin.getLogger().info("Economia enlazada: " + provider.name());
         } else {
-            if (!"interno".equalsIgnoreCase(mode) && !"auto".equalsIgnoreCase(mode)) {
-                plugin.getLogger().warning("Proveedor de economia '" + mode + "' desconocido, se usa el interno.");
+            if (!"internal".equalsIgnoreCase(mode) && !"auto".equalsIgnoreCase(mode)) {
+                plugin.getLogger().warning("Unknown economy provider '" + mode + "'; using the internal wallet.");
             }
             provider = new InternalEconomy(plugin);
-            plugin.getLogger().info("Usando el monedero interno del casino (balances.json).");
+            plugin.getLogger().info("Using the internal casino wallet (balances.json).");
         }
     }
 
@@ -61,17 +61,17 @@ public final class EconomyManager {
         return provider.set(playerId, amount);
     }
 
-    /** Da la cuenta de bienvenida si es la primera vez que el jugador entra. */
+    /** Grants the welcome account the first time a player comes in. */
     public void ensureAccount(Player player) {
         if (provider.createAccountIfMissing(player.getUniqueId(), startingBalance)) {
-            plugin.messages().send(player, "economia.cuenta-creada", "saldo", format(startingBalance));
+            plugin.messages().send(player, "economy.account-created", "balance", format(startingBalance));
         }
     }
 
     /**
-     * Retira la apuesta del monedero y la envuelve en un {@link Wager}.
+     * Takes the bet out of the wallet and wraps it in a {@link Wager}.
      *
-     * @return {@code null} si el jugador no tiene saldo suficiente.
+     * @return {@code null} when the player cannot afford it.
      */
     public Wager stake(Player player, double amount) {
         if (amount <= 0 || !provider.has(player.getUniqueId(), amount)) {
@@ -83,7 +83,7 @@ public final class EconomyManager {
         return new Wager(this, player.getUniqueId(), amount);
     }
 
-    /** Crea una apuesta ya cobrada (para pagos internos o pruebas). */
+    /** Creates an already charged bet (for internal payouts or tests). */
     public Wager wager(UUID playerId, double amount) {
         return new Wager(this, playerId, amount);
     }
@@ -92,11 +92,11 @@ public final class EconomyManager {
         String format = plugin.config().currencyFormat();
         String formatted = Text.fill(format,
                 "amount", Text.number(amount),
-                "moneda", amount == 1 ? plugin.config().currencyName() : plugin.config().currencyName());
+                "currency", amount == 1 ? plugin.config().currencyName() : plugin.config().currencyName());
         return formatted;
     }
 
-    /** Formato compacto para lore de menu. */
+    /** Compact format for menu lore. */
     public String shortFormat(double amount) {
         if (Math.abs(amount) >= 1_000_000_000) {
             return String.format("%,.1fMM", amount / 1_000_000_000);

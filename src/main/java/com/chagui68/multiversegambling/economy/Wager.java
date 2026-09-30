@@ -3,11 +3,11 @@ package com.chagui68.multiversegambling.economy;
 import java.util.UUID;
 
 /**
- * Una apuesta ya retirada del monedero del jugador.
+ * A bet already taken out of the player's wallet.
  *
- * <p>Existe para hacer imposible el fallo clasico de un casino: pagar dos veces
- * la misma jugada. Todo el dinero de una partida pasa por aqui, y liquidar dos
- * veces no hace nada la segunda vez.</p>
+ * <p>It exists to make the classic casino bug impossible: paying the same round twice.
+ * All the money of a round goes through here, and settling twice does nothing the
+ * second time.</p>
  */
 public final class Wager {
 
@@ -34,7 +34,7 @@ public final class Wager {
         return settled;
     }
 
-    /** Paga {@code amount * multiplier}. Devuelve el dinero retirado al ganar. */
+    /** Pays {@code amount * multiplier}. Returns the money taken when it wins. */
     public boolean pay(double multiplier) {
         if (multiplier <= 0) {
             lose();
@@ -43,12 +43,12 @@ public final class Wager {
         return payAbsolute(amount * multiplier);
     }
 
-    /** Devuelve el capital (empate o anulacion de la ronda). */
+    /** Returns the capital (push or voided round). */
     public boolean refund() {
         return payAbsolute(amount);
     }
 
-    /** Paga una cantidad concreta, ignorando la apuesta original. */
+    /** Pays an exact amount, ignoring the original bet. */
     public boolean payAbsolute(double payout) {
         if (settled) {
             return false;
@@ -57,12 +57,12 @@ public final class Wager {
         return economy.provider().deposit(playerId, Math.max(0, payout));
     }
 
-    /** Marca la apuesta como perdida: el dinero ya salio del monedero. */
+    /** Marks the bet as lost: the money already left the wallet. */
     public void lose() {
         settled = true;
     }
 
-    /** Ganancia neta de esta apuesta, o 0 si aun no se ha liquidado. */
+    /** Net profit of this bet, or 0 when it has not been settled yet. */
     public double profit() {
         return settled ? -amount : 0;
     }

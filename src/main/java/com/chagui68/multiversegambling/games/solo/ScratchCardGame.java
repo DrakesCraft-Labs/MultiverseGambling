@@ -17,20 +17,20 @@ import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 
 /**
- * Rasca y gana.
+ * Scratch card.
  *
- * <p>Toda la matematica vive en {@link ScratchCardTable}, que es puro Java y esta
- * cubierta por tests: esta clase solo pinta el carton.</p>
+ * <p>All the math lives in {@link ScratchCardTable}, which is pure Java and covered by
+ * tests: this class only paints the card.</p>
  */
 public final class ScratchCardGame extends AbstractSoloGame {
 
     private final ScratchCardTable table = new ScratchCardTable();
 
     public ScratchCardGame(MultiverseGamblingPlugin plugin) {
-        super(plugin, GameMeta.builder("rasca", "Rasca y Gana", GameCategory.SOLO, Material.MAP)
-                .desc("&7Destapa tres casillas de nueve.",
-                        "&7Tres iguales pagan el premio del simbolo",
-                        "&7y dos iguales devuelven parte.")
+        super(plugin, GameMeta.builder("scratch", "Scratch Card", GameCategory.SOLO, Material.MAP)
+                .desc("&7Reveal three tiles out of nine.",
+                        "&7Three of a kind pay the symbol prize",
+                        "&7and two of a kind give part of it back.")
                 .build());
     }
 
@@ -44,7 +44,7 @@ public final class ScratchCardGame extends AbstractSoloGame {
         new ScratchGui(plugin, player, this, wager, card).show();
     }
 
-    /** Paga el carton segun los destapes del jugador. */
+    /** Pays the card according to the player's picks. */
     public double resolve(Player player, Wager wager, List<Face> picked) {
         return settle(player, wager, table.payout(picked));
     }
@@ -60,7 +60,7 @@ public final class ScratchCardGame extends AbstractSoloGame {
         };
     }
 
-    private static final class ScratchGui extends Gui {
+    private final class ScratchGui extends Gui {
 
         private final ScratchCardGame game;
         private final Wager wager;
@@ -69,7 +69,7 @@ public final class ScratchCardGame extends AbstractSoloGame {
         private boolean resolved;
 
         ScratchGui(MultiverseGamblingPlugin plugin, Player player, ScratchCardGame game, Wager wager, List<Face> card) {
-            super(plugin, player, 5, "&8Rasca y Gana &7· &6Elige 3 casillas");
+            super(plugin, player, 5, "&8" + displayName(player) + " &7· &6Pick 3 tiles");
             this.game = game;
             this.wager = wager;
             this.card = card;
@@ -81,15 +81,15 @@ public final class ScratchCardGame extends AbstractSoloGame {
             fill(Items.of(Material.BLACK_STAINED_GLASS_PANE).name(" ").build());
 
             set(4, Items.of(Material.MAP)
-                    .name("&6Tu carton")
+                    .name("&6Your card")
                     .lore(
-                            "&7Apuesta: &f" + plugin.economy().format(wager.amount()),
-                            "&7Destapadas: &f" + picked.size() + " &7de &f" + ScratchCardTable.PICKS,
-                            "&7Premios: &f3 iguales&7 y &f2 iguales &7a "
+                            "&7Bet: &f" + plugin.economy().format(wager.amount()),
+                            "&7Scratched: &f" + picked.size() + " &7of &f" + ScratchCardTable.PICKS,
+                            "&7Prizes: &f3 of a kind&7 and &f2 of a kind &7at "
                                     + Text.multiplier(ScratchCardTable.PAIR_PAYOUT),
                             "",
-                            "&7Un carton premiado sale &f"
-                                    + Text.percent(game.table.rtp()) + " &7de lo apostado.")
+                            "&7A winning card comes up &f"
+                                    + Text.percent(game.table.rtp()) + " &7of what is staked.")
                     .glow(true)
                     .build());
 
@@ -102,13 +102,13 @@ public final class ScratchCardGame extends AbstractSoloGame {
                 if (!shown) {
                     set(slot, Items.of(Material.GRAY_STAINED_GLASS_PANE)
                             .name("&8? ? ?")
-                            .lore("&7Pulsa para destapar")
+                            .lore("&7Click to reveal")
                             .build(), e -> reveal(cell));
                 } else {
                     set(slot, Items.of(iconOf(face))
                             .name(face.label())
-                            .lore(picked.contains(cell) ? "&7Elegida por ti" : "&7No la destapaste",
-                                    "&7Tres iguales pagan &f" + Text.multiplier(face.triple()))
+                            .lore(picked.contains(cell) ? "&7Picked by you" : "&7You did not reveal it",
+                                    "&7Three of a kind pay &f" + Text.multiplier(face.triple()))
                             .glow(picked.contains(cell))
                             .build());
                 }
@@ -116,13 +116,13 @@ public final class ScratchCardGame extends AbstractSoloGame {
 
             int remaining = ScratchCardTable.PICKS - picked.size();
             set(40, Items.of(remaining > 0 ? Material.CLOCK : Material.EMERALD_BLOCK)
-                    .name(remaining > 0 ? "&7Te quedan &f" + remaining + " &7destapes" : "&a&lCARTON COMPLETO")
-                    .lore("&7Con dos iguales ya recuperas algo de la apuesta.")
+                    .name(remaining > 0 ? "&7You have &f" + remaining + " &7picks left" : "&a&lCARD COMPLETE")
+                    .lore("&7Two of a kind already give part of the stake back.")
                     .build());
 
             set(36, Items.of(Material.BARRIER)
-                    .name("&cSalir")
-                    .lore(resolved ? "&7Carton ya resuelto." : "&7Recuperas tu apuesta.")
+                    .name("&cClose")
+                    .lore(resolved ? "&7Card already settled." : "&7You get your stake back.")
                     .build(), e -> close());
         }
 
@@ -143,9 +143,9 @@ public final class ScratchCardGame extends AbstractSoloGame {
             render();
 
             game.announceResult(player(), payout > wager.amount(),
-                    payout > 0 ? "&f" + plugin.economy().format(payout) : "sin premio");
+                    payout > 0 ? "&f" + plugin.economy().format(payout) : "no prize");
             game.info(player(), game.title());
-            game.info(player(), "&7Destapaste: &f" + chosen.stream()
+            game.info(player(), "&7You scratched: &f" + chosen.stream()
                     .map(Face::label).reduce((a, b) -> a + "&7, " + b).orElse("-"));
             game.showResult(player(), wager.amount(), payout);
             game.sound(player(), payout > wager.amount() ? Sound.ENTITY_PLAYER_LEVELUP : Sound.ENTITY_VILLAGER_NO,
@@ -162,7 +162,7 @@ public final class ScratchCardGame extends AbstractSoloGame {
 
         @Override
         public String sessionId() {
-            return "rasca";
+            return "scratch";
         }
     }
 }

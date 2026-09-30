@@ -4,34 +4,34 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Plinko: la bolita cae por una piramide y termina en un cubo. Los cubos no se
- * inventan, salen de la distribucion binomial real de los rebotes, asi que la
- * tabla siempre tiene sentido matematico.
+ * Plinko: the ball falls down a pyramid and ends in a bucket. The buckets are not
+ * invented, they come from the real binomial distribution of the bounces, so the table
+ * always makes mathematical sense.
  *
- * <p>Recortamos a la baja a dos decimales y aplicamos un tope configurable: ambas
- * cosas solo pueden <em>reducir</em> el retorno, nunca dar ventaja al jugador.</p>
+ * <p>We round down to two decimals and apply a configurable cap: both things can only
+ * <em>reduce</em> the return, never give the player an edge.</p>
  */
 public final class PlinkoTable {
 
     private PlinkoTable() {
     }
 
-    /** Probabilidad binomial de acabar en el cubo {@code bucket} con {@code rows} filas. */
+    /** Binomial chance of ending in {@code bucket} with {@code rows} rows. */
     public static double bucketChance(int rows, int bucket) {
         if (rows <= 0 || bucket < 0 || bucket > rows) {
-            throw new IllegalArgumentException("cubo fuera de rango");
+            throw new IllegalArgumentException("bucket out of range");
         }
         double combinations = combinations(rows, bucket);
         return combinations / Math.pow(2.0, rows);
     }
 
     /**
-     * Multiplicadores de pago por cubo, de izquierda a derecha.
+     * Payment multipliers per bucket, left to right.
      *
-     * <p>El jugador no elige cubo: la bolita decide. Por eso el retorno se calcula
-     * sobre la suma de todos los cubos y el pago justo lleva un divisor extra
-     * {@code filas + 1}. Olvidarlo hace que la tabla pague (filas + 1) veces de mas,
-     * que es exactamente el error que caza el test {@code laTablaNuncaDaVentajaAlJugador}.</p>
+     * <p>The player does not pick a bucket: the ball decides. That is why the return is
+     * computed over the sum of every bucket and the fair payout carries an extra
+     * {@code rows + 1} divisor. Forgetting it makes the table overpay (rows + 1) times,
+     * which is exactly the bug the test {@code theTableNeverFavoursThePlayer} catches.</p>
      */
     public static double[] multipliers(int rows, double houseEdge, double cap) {
         double[] out = new double[rows + 1];
@@ -45,8 +45,8 @@ public final class PlinkoTable {
     }
 
     /**
-     * Simula la caida: en cada fila la bolita va a izquierda o derecha y el
-     * ultimo cubo es el numero de desvios a la derecha.
+     * Simulates the fall: on every row the ball goes left or right and the final bucket
+     * is the number of bounces to the right.
      */
     public static int drop(int rows) {
         int bucket = 0;
@@ -58,7 +58,7 @@ public final class PlinkoTable {
         return bucket;
     }
 
-    /** Secuencia de direcciones (false = izquierda, true = derecha) para animar la caida. */
+    /** Sequence of directions (false = left, true = right) to animate the fall. */
     public static List<Boolean> path(int rows) {
         List<Boolean> out = new ArrayList<>(rows);
         for (int i = 0; i < rows; i++) {
@@ -67,7 +67,7 @@ public final class PlinkoTable {
         return out;
     }
 
-    /** Retorno teorico al jugador de una tabla concreta. */
+    /** Theoretical return to the player of a given table. */
     public static double rtp(double[] table, int rows, double cap) {
         double expected = 0;
         for (int bucket = 0; bucket < table.length; bucket++) {

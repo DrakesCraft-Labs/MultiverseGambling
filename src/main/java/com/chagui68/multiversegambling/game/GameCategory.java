@@ -2,20 +2,33 @@ package com.chagui68.multiversegambling.game;
 
 import org.bukkit.Material;
 
-/** Las dos familias del catalogo. */
+/**
+ * The two families of the catalogue.
+ *
+ * <p>The label and the description are only a fallback: the menus read
+ * {@code gui.category.<key>.name} and {@code gui.category.<key>.description} first,
+ * so a translated language file can rename the tabs.</p>
+ */
 public enum GameCategory {
 
-    SOLO("Solitario", "Apuestas contra la casa, a tu ritmo.", Material.PLAYER_HEAD),
-    GRUPO("En grupo", "Apuestas contra y con otros jugadores.", Material.PLAYER_HEAD);
+    SOLO("solo", "Solo", "Bets against the house, at your own pace.", Material.PLAYER_HEAD),
+    GROUP("group", "Group", "Bets against and with other players.", Material.PLAYER_HEAD);
 
+    private final String key;
     private final String label;
     private final String description;
     private final Material tabIcon;
 
-    GameCategory(String label, String description, Material tabIcon) {
+    GameCategory(String key, String label, String description, Material tabIcon) {
+        this.key = key;
         this.label = label;
         this.description = description;
         this.tabIcon = tabIcon;
+    }
+
+    /** Message key fragment: {@code gui.category.<key>.*}. */
+    public String key() {
+        return key;
     }
 
     public String label() {
@@ -31,6 +44,6 @@ public enum GameCategory {
     }
 
     public GameCategory other() {
-        return this == SOLO ? GRUPO : SOLO;
+        return this == SOLO ? GROUP : SOLO;
     }
 }

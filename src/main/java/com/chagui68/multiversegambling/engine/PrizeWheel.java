@@ -3,17 +3,17 @@ package com.chagui68.multiversegambling.engine;
 import java.util.function.DoubleSupplier;
 
 /**
- * Ruleta de la suerte: una rueda fisica de casillas.
+ * Lucky wheel: a physical wheel of tiles.
  *
- * <p>Cada casilla tiene su multiplicador y todas son igual de probables, asi que el
- * retorno es simplemente la media. Eso hace imposible "colar" una tabla que pague
- * de mas sin darse cuenta: {@link #rtp()} lo delata y un test lo fija.</p>
+ * <p>Every tile has its own multiplier and all of them are equally likely, so the
+ * return is simply the average. That makes it impossible to sneak in a table that
+ * overpays: {@link #rtp()} gives it away and a test pins it.</p>
  */
 public final class PrizeWheel {
 
     /**
-     * Rueda por defecto: 12 casillas, muchas de cero y un par de golpes grandes.
-     * La media es 0.95, o sea un 95% de retorno.
+     * Default wheel: 12 tiles, many of them zero and a couple of big hits.
+     * The average is 0.95, that is a 95% return.
      */
     private static final double[] DEFAULT = {0, 1.3, 0, 2.0, 0, 4.0, 0, 1.6, 0, 2.5, 0, 0};
 
@@ -21,11 +21,11 @@ public final class PrizeWheel {
 
     public PrizeWheel(double... pockets) {
         if (pockets.length < 2) {
-            throw new IllegalArgumentException("La rueda necesita al menos 2 casillas");
+            throw new IllegalArgumentException("The wheel needs at least 2 tiles");
         }
         for (double pocket : pockets) {
             if (pocket < 0) {
-                throw new IllegalArgumentException("Un multiplicador negativo no tiene sentido: " + pocket);
+                throw new IllegalArgumentException("A negative multiplier makes no sense: " + pocket);
             }
         }
         this.pockets = pockets.clone();
@@ -47,7 +47,7 @@ public final class PrizeWheel {
         return pockets.clone();
     }
 
-    /** Indice ganador: todas las casillas pesan lo mismo. */
+    /** Winning index: every tile weighs the same. */
     public int spin(DoubleSupplier uniforms) {
         double uniform = uniforms.getAsDouble();
         int index = (int) Math.floor(uniform * pockets.length);
@@ -74,7 +74,7 @@ public final class PrizeWheel {
         return best;
     }
 
-    /** Probabilidad de que salga la casilla mas alta. */
+    /** Chance of landing on the highest tile. */
     public double bestChance() {
         int count = 0;
         double best = best();

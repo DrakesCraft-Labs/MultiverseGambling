@@ -1,166 +1,194 @@
 # ============================================================================
-#  MultiverseGambling - configuracion
+#  MultiverseGambling - configuration
 #
-#  La ventaja de la casa vive en un solo sitio (juego.ventaja-casa) y de ahi la
-#  heredan casi todos los juegos. Si prefieres ajustar un juego concreto, cada
-#  apartado admite su propia apuesta minima y maxima.
+#  The house edge lives in a single place (game.house-edge) and almost every
+#  game inherits it. If you want to tune one game, each section accepts its
+#  own minimum and maximum bet.
 #
-#  Ojo con las tablas de premios: el retorno teorico de la tragaperras, el plinko,
-#  el rasca y la ruleta de la suerte esta fijado por tests automaticos. Si cambias
-#  pesos o pagos, ejecuta "mvn test" para ver el retorno real.
+#  Careful with the prize tables: the theoretical return of the slots, plinko,
+#  scratch card and lucky wheel is pinned by automatic tests. If you change
+#  weights or payouts, run "mvn test" to see the real return.
 # ============================================================================
 
-economia:
-  # auto  = usa Vault si el servidor lo tiene, si no el monedero interno
-  # vault = obliga a Vault (si falla, avisa y usa el interno)
-  # interno = usa siempre balances.json del propio plugin
-  proveedor: auto
-  moneda: monedas
-  # {amount} es la cantidad y {moneda} el nombre de arriba.
-  formato: '&6{amount} &7{moneda}'
-  # Saldo de bienvenida del monedero interno. Con Vault no se usa.
-  saldo-inicial: 1000
+economy:
+  # auto     = use Vault when the server has it, otherwise the internal wallet
+  # vault    = force Vault (if it fails, warn and fall back to the internal one)
+  # internal = always use the plugin's own balances.json
+  provider: auto
+  currency: coins
+  # {amount} is the quantity and {currency} the name above.
+  format: '&6{amount} &7{currency}'
+  # Welcome balance for the internal wallet. Unused with Vault.
+  starting-balance: 1000
 
-juego:
-  # Ventaja media de la casa para todos los juegos. 0.02 = 2%.
-  ventaja-casa: 0.02
-  apuesta-minima: 10
-  apuesta-maxima: 100000
-  anunciar-premios: true
-  anunciar-desde: 50000
+game:
+  # Average house edge for every game. 0.02 = 2%.
+  house-edge: 0.02
+  min-bet: 10
+  max-bet: 100000
+  announce-wins: true
+  announce-threshold: 50000
 
-azar:
-  # Azar verificable: publica el hash del secreto y permite auditar cada tirada
-  # con /casino verificar. Muy recomendable dejarlo activado.
-  verificable: true
+fairness:
+  # Provably fair: publish the hash of the secret and let anyone audit every
+  # roll with /casino verify. Leaving this on is strongly recommended.
+  provably-fair: true
 
-datos:
-  guardar-cada-minutos: 5
-
-# ---------------------------------------------------------------------------
-#  Juegos en grupo: valores comunes a todos
-# ---------------------------------------------------------------------------
-grupo:
-  # Segundos que dura la ventana de apuestas de cada ronda.
-  segundos-de-apuestas: 20
-  maximo-jugadores: 24
-  cuenta-atras: 5
-  # Comision que se queda la casa del bote comun, la rifa y el poker de dados.
-  comision-casa: 0.0
-
-  tablero-bombas:
-    casillas: 36
-    bombas: 4
-    segundos-por-turno: 10
-
-  bomba-caliente:
-    segundos-minimos: 5
-    segundos-maximos: 30
-
-  ruleta-rusa:
-    recamaras: 6
-    balas: 1
-
-  carrera:
-    caballos: 8
-    pasos: 60
-
-  rifa:
-    precio-boleta: 100
-    boletas-maximas: 20
-
-  duelo:
-    segundos-para-aceptar: 30
+data:
+  save-every-minutes: 5
 
 # ---------------------------------------------------------------------------
-#  Catalogo de juegos
+#  Language. One code per file in plugins/MultiverseGambling/lang/.
+#  Players switch it in game with /casino language <code>.
 # ---------------------------------------------------------------------------
-juegos:
+language:
+  # Used for the console, for players with no preference and for the world signs.
+  default: en
+  # A player who never picked a language follows their Minecraft client when the
+  # plugin ships that language.
+  follow-client: true
 
-  # --- En solitario ---------------------------------------------------------
+# ---------------------------------------------------------------------------
+#  The dedicated casino world: a flat stage of "size" x "size" blocks with the
+#  plaza, the road grid and one arena per game. The plugin creates the world on
+#  first start; point world.name at an existing world to reuse it.
+# ---------------------------------------------------------------------------
+world:
+  # Create (or load) the casino world when the plugin starts.
+  enabled: true
+  name: 'multiverse_gambling'
+  # Side of the square in blocks; the world border is centred on spawn.
+  size: 500
+  # Build the plaza, the arenas and the roads the first time the world is used.
+  build-structures: true
+  # Send players to the casino world when they join the server.
+  teleport-on-join: false
 
-  ruleta:
-    activo: true
-    americana: false
-    ticks-giro: 60
+# ---------------------------------------------------------------------------
+#  Group games: values shared by all of them
+# ---------------------------------------------------------------------------
+group:
+  # Seconds the betting window of each round stays open.
+  betting-seconds: 20
+  max-players: 24
+  countdown: 5
+  # Commission the house keeps from the jackpot, the raffle and dice poker.
+  house-commission: 0.0
 
-  tragamonedas:
-    activo: true
-    ticks-giro: 40
+  bomb-board:
+    tiles: 36
+    bombs: 4
+    seconds-per-turn: 10
+
+  hot-bomb:
+    min-seconds: 5
+    max-seconds: 30
+
+  russian-roulette:
+    chambers: 6
+    bullets: 1
+
+  race:
+    horses: 8
+    steps: 60
+
+  raffle:
+    ticket-price: 100
+    max-tickets: 20
+
+  duel:
+    accept-seconds: 30
+
+# ---------------------------------------------------------------------------
+#  Game catalogue
+# ---------------------------------------------------------------------------
+games:
+
+  # --- Solo ---------------------------------------------------------------
+
+  roulette:
+    enabled: true
+    american: false
+    spin-ticks: 60
+
+  slots:
+    enabled: true
+    spin-ticks: 40
 
   crash:
-    activo: true
-    segundos-para-doblar: 10.0
-    multiplicador-maximo: 1000.0
+    enabled: true
+    double-every-seconds: 10.0
+    max-multiplier: 1000.0
 
-  minas:
-    activo: true
-    casillas: 25
-    minas-por-defecto: 3
-    minas-maximas: 24
+  mines:
+    enabled: true
+    tiles: 25
+    default-mines: 3
+    max-mines: 24
 
-  torre:
-    activo: true
-    pisos: 9
-    casillas: 4
-    bombas: 1
+  towers:
+    enabled: true
+    levels: 9
+    tiles: 4
+    bombs: 1
 
   blackjack:
-    activo: true
-    barajas: 6
-    # Con true el crupier pide carta con 17 blando, que es peor para el jugador.
-    crupier-pide-con-17-blando: false
+    enabled: true
+    decks: 6
+    # With true the dealer hits on a soft 17, which is worse for the player.
+    dealer-hits-soft-17: false
 
-  mayor-menor:
-    activo: true
-    pasos-maximos: 5
+  high-low:
+    enabled: true
+    max-steps: 5
 
-  dados:
-    activo: true
+  dice:
+    enabled: true
 
   plinko:
-    activo: true
-    filas: 12
-    # Tope de seguridad: el cubo mas raro de 16 filas pagaria cifras absurdas.
-    multiplicador-maximo: 500.0
+    enabled: true
+    rows: 12
+    # Safety cap: the rarest bucket of 16 rows would pay absurd figures.
+    max-multiplier: 500.0
 
-  rasca:
-    activo: true
+  scratch:
+    enabled: true
+    picks: 3
 
-  ruleta-suerte:
-    activo: true
-    # Cada casilla tiene su multiplicador y todas son igual de probables.
-    # La media es el retorno, asi que mantenerla por debajo de 1 es la unica regla.
-    segmentos: [0.0, 1.3, 0.0, 2.0, 0.0, 4.0, 0.0, 1.6, 0.0, 2.5, 0.0, 0.0]
+  lucky-wheel:
+    enabled: true
+    # Every segment has its own multiplier and all of them are equally likely.
+    # The average is the return, so keeping it below 1 is the only rule.
+    segments: [0.0, 1.3, 0.0, 2.0, 0.0, 4.0, 0.0, 1.6, 0.0, 2.5, 0.0, 0.0]
 
-  cara-o-cruz:
-    activo: true
+  coin-flip:
+    enabled: true
 
-  # --- En grupo -------------------------------------------------------------
+  # --- Group --------------------------------------------------------------
 
-  ruleta-colores:
-    activo: true
+  color-roulette:
+    enabled: true
 
-  bote:
-    activo: true
+  jackpot:
+    enabled: true
 
-  bomba-caliente:
-    activo: true
+  hot-bomb:
+    enabled: true
 
-  tablero-bombas:
-    activo: true
+  bomb-board:
+    enabled: true
 
-  ruleta-rusa:
-    activo: true
+  russian-roulette:
+    enabled: true
 
-  carrera:
-    activo: true
+  race:
+    enabled: true
 
-  duelo:
-    activo: true
+  duel:
+    enabled: true
 
-  rifa:
-    activo: true
+  raffle:
+    enabled: true
 
-  poker-dados:
-    activo: true
+  dice-poker:
+    enabled: true

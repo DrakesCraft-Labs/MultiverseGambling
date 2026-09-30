@@ -13,24 +13,24 @@ class PrizeWheelTest {
     private final PrizeWheel wheel = PrizeWheel.defaultWheel();
 
     @Test
-    void laRuedaPorDefectoTieneDoceCasillas() {
+    void theDefaultWheelHasTwelveTiles() {
         assertEquals(12, wheel.size());
         assertEquals(4.0, wheel.best(), 1e-9);
     }
 
     @Test
-    void elRetornoEsLaMediaDeLasCasillasYEstaCalibrado() {
-        assertEquals(0.95, wheel.rtp(), 1e-9, "la rueda por defecto devuelve el 95%");
-        assertTrue(wheel.rtp() < 1.0, "una ruleta que devuelve mas de lo que cobra es un error");
+    void theReturnIsTheAverageOfTheTilesAndIsCalibrated() {
+        assertEquals(0.95, wheel.rtp(), 1e-9, "the default wheel returns 95%");
+        assertTrue(wheel.rtp() < 1.0, "a wheel that returns more than it takes is a bug");
     }
 
     @Test
-    void laCasillaMasAltaEsRara() {
+    void theHighestTileIsRare() {
         assertEquals(1.0 / 12.0, wheel.bestChance(), 1e-9);
     }
 
     @Test
-    void cadaCasillaSaleConLaFrecuenciaEsperada() {
+    void everyTileComesUpWithTheExpectedFrequency() {
         Map<Integer, Integer> hits = new HashMap<>();
         int samples = 240_000;
         for (int i = 0; i < samples; i++) {
@@ -43,24 +43,24 @@ class PrizeWheelTest {
     }
 
     @Test
-    void losGirosVerificablesSonReproducibles() {
+    void verifiableSpinsAreReproducible() {
         String serverSeed = ProvablyFair.randomSeed();
         for (long i = 0; i < 1_000; i++) {
             final long nonce = i;
             int a = wheel.spin(() -> ProvablyFair.roll(serverSeed, "cliente", nonce, 0));
             int b = wheel.spin(() -> ProvablyFair.roll(serverSeed, "cliente", nonce, 0));
-            assertEquals(a, b, "la misma tirada debe dar la misma casilla");
+            assertEquals(a, b, "the same roll must give the same pocket");
         }
     }
 
     @Test
-    void unaRuedaGenerosaSubeElRetornoYUnTestLoDetecta() {
+    void aGenerousWheelRaisesTheReturnAndATestCatchesIt() {
         PrizeWheel cheat = new PrizeWheel(10, 10, 10, 10);
-        assertTrue(cheat.rtp() > 1.0, "esta rueda regala dinero: el test debe poder verlo");
+        assertTrue(cheat.rtp() > 1.0, "this wheel gives money away: the test must be able to see it");
     }
 
     @Test
-    void lasRuedasInvalidasSeRechazan() {
+    void invalidWheelsAreRejected() {
         assertThrows(IllegalArgumentException.class, () -> new PrizeWheel(1.0));
         assertThrows(IllegalArgumentException.class, () -> new PrizeWheel(1.0, -2.0));
     }

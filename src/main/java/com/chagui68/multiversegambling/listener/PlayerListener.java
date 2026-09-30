@@ -10,7 +10,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
-/** Cierra partidas y salas cuando un jugador entra o sale del servidor. */
+/** Closes games and rooms when a player joins or leaves the server. */
 public final class PlayerListener implements Listener {
 
     private final MultiverseGamblingPlugin plugin;
@@ -22,14 +22,17 @@ public final class PlayerListener implements Listener {
     @EventHandler(priority = EventPriority.MONITOR)
     public void onJoin(PlayerJoinEvent event) {
         plugin.economy().ensureAccount(event.getPlayer());
+        if (plugin.world() != null) {
+            plugin.world().handleJoin(event.getPlayer());
+        }
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onQuit(PlayerQuitEvent event) {
         UUID id = event.getPlayer().getUniqueId();
-        // Primero cerrar la partida individual: devuelve lo que corresponda.
+        // Close the single player game first: it refunds whatever is left over.
         plugin.sessions().cancel(id);
-        // Despues sacar al jugador de cualquier sala activa.
+        // Then pull the player out of any open room.
         for (Game game : plugin.games().all()) {
             if (game instanceof AbstractGroupGame group) {
                 group.handleQuit(id);

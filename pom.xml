@@ -10,7 +10,7 @@
   <packaging>jar</packaging>
 
   <name>MultiverseGambling</name>
-  <description>Motor de azar y apuestas con un catálogo de minijuegos en solitario y en grupo.</description>
+  <description>Chance and betting engine with a catalogue of solo and group minigames.</description>
 
   <developers>
     <developer>
@@ -37,7 +37,7 @@
   </repositories>
 
   <dependencies>
-    <!-- El servidor aporta la API en tiempo de ejecución: nunca se empaqueta. -->
+    <!-- The server provides the API at runtime: it is never bundled. -->
     <dependency>
       <groupId>io.papermc.paper</groupId>
       <artifactId>paper-api</artifactId>
@@ -45,7 +45,7 @@
       <scope>provided</scope>
     </dependency>
 
-    <!-- Integración opcional con la economía del servidor. Si falta, se usa la interna. -->
+    <!-- Optional hook into the server economy. When missing, the internal wallet is used. -->
     <dependency>
       <groupId>com.github.MilkBowl</groupId>
       <artifactId>VaultAPI</artifactId>
@@ -70,7 +70,7 @@
   <build>
     <finalName>${project.name}-${project.version}</finalName>
     <resources>
-      <!-- Solo plugin.yml se filtra: el resto de YAML usa llaves de configuración. -->
+      <!-- Only plugin.yml is filtered: the other YAML files use raw config keys. -->
       <resource>
         <directory>src/main/resources</directory>
         <filtering>true</filtering>

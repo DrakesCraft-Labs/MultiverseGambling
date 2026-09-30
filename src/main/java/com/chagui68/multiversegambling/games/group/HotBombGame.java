@@ -18,12 +18,12 @@ import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 
 /**
- * Bomba caliente.
+ * Hot bomb.
  *
- * <p>La bomba va pasando de mano en mano y explota cuando menos te lo esperas. Quien
- * la tenga en ese momento se queda fuera y su dinero engrosa el bote, que se lleva
- * el ultimo en pie. La mecha se sortea con el generador verificable, asi que no se
- * puede saber de antemano cuanto va a durar.</p>
+ * <p>The bomb passes from hand to hand and blows up when you least expect it. Whoever
+ * is holding it at that moment is out and their money feeds the pot, which goes to
+ * the last one standing. The fuse is drawn with the provably fair generator, so
+ * nobody can know in advance how long it will last.</p>
  */
 public final class HotBombGame extends AbstractGroupGame {
 
@@ -33,10 +33,10 @@ public final class HotBombGame extends AbstractGroupGame {
     private int passTicks;
 
     public HotBombGame(MultiverseGamblingPlugin plugin) {
-        super(plugin, GameMeta.builder("bomba-caliente", "Bomba Caliente", GameCategory.GRUPO, Material.TNT)
-                .desc("&7La bomba pasa de mano en mano.",
-                        "&7Al que le pille con ella, fuera.",
-                        "&7El ultimo en pie se lleva el bote.")
+        super(plugin, GameMeta.builder("hot-bomb", "Hot Bomb", GameCategory.GROUP, Material.TNT)
+                .desc("&7The bomb passes from hand to hand.",
+                        "&7Whoever is holding it when it blows is out.",
+                        "&7The last one standing takes the pot.")
                 .players(2, 12)
                 .build());
     }
@@ -50,10 +50,10 @@ public final class HotBombGame extends AbstractGroupGame {
         fuseTicks = rollFuse();
         passTicks = 20;
         broadcastRaw(roundHeader());
-        broadcastRaw("&7Bote: &6" + plugin.economy().format(pot.total())
-                + " &8| &7jugadores: &f" + alive.size());
-        broadcastRaw("&cLa bomba empieza en manos de &f" + playerName(holder) + "&c.");
-        broadcastRaw("&7Mecha encendida: entre &f" + (int) plugin.config().hotBombMinSeconds()
+        broadcastRaw("&7Pot: &6" + plugin.economy().format(pot.total())
+                + " &8| &7players: &f" + alive.size());
+        broadcastRaw("&cThe bomb starts in the hands of &f" + playerName(holder) + "&c.");
+        broadcastRaw("&7Fuse lit: between &f" + (int) plugin.config().hotBombMinSeconds()
                 + " &7y &f" + (int) plugin.config().hotBombMaxSeconds() + " &7segundos.");
         soundAll(Sound.ENTITY_TNT_PRIMED, 0.8f, 1.0f);
     }
@@ -75,7 +75,7 @@ public final class HotBombGame extends AbstractGroupGame {
         if (candidates.isEmpty()) {
             return except;
         }
-        // Elegir al siguiente portador tambien es una tirada del casino.
+        // Picking the next holder is also a casino roll.
         return candidates.get(plugin.fair().rollInt(FairnessService.HOUSE, candidates.size()));
     }
 
@@ -94,12 +94,12 @@ public final class HotBombGame extends AbstractGroupGame {
             if (!next.equals(holder)) {
                 UUID previous = holder;
                 holder = next;
-                tell(previous, "&7Pasaste la bomba a &f" + playerName(holder) + "&7.");
+                tell(previous, "&7You passed the bomb to &f" + playerName(holder) + "&7.");
                 Player target = online(holder);
                 if (target != null) {
                     target.playSound(target.getLocation(), Sound.ENTITY_TNT_PRIMED, 0.9f, 1.4f);
-                    target.showTitle(Title.title(Text.c("&c¡LA TIENES!"),
-                            Text.c("&7Pasala rapido"), Title.Times.times(
+                    target.showTitle(Title.title(Text.c("&cYOU HAVE IT!"),
+                            Text.c("&7Pass it on, quick!"), Title.Times.times(
                                     java.time.Duration.ofMillis(100),
                                     java.time.Duration.ofMillis(600),
                                     java.time.Duration.ofMillis(100))));
@@ -111,13 +111,13 @@ public final class HotBombGame extends AbstractGroupGame {
         if (timer % 10 == 0) {
             Player current = online(holder);
             if (current != null) {
-                // Solo el portador ve el aviso constante de que la lleva encima.
-                current.sendActionBar(Text.c("&cBomba en tus manos &8| &7bote &6"
+                // Only the holder sees the constant reminder that they are carrying it.
+                current.sendActionBar(Text.c("&cBomb in your hands &8| &7pot &6"
                         + plugin.economy().format(pot.total())));
             }
         }
         if (fuseTicks <= 0) {
-            // Tirada verificable: decide si la mecha llega a su fin en este tick.
+            // Provably fair roll: decides whether the fuse runs out on this tick.
             if (plugin.fair().roll(FairnessService.HOUSE) < 0.25) {
                 explode();
             } else {
@@ -139,10 +139,10 @@ public final class HotBombGame extends AbstractGroupGame {
                             java.time.Duration.ofMillis(300))));
         }
         broadcastRaw("&c&lBOOM &8» &f" + playerName(victim)
-                + " &7vuelo por los aires y su apuesta de &6"
-                + plugin.economy().format(pot.amountOf(victim)) + " &7queda en el bote.");
-        broadcastRaw("&7Bote ahora: &6" + plugin.economy().format(pot.total())
-                + " &8| &7quedan &f" + alive.size());
+                + " &7blows up and their stake of &6"
+                + plugin.economy().format(pot.amountOf(victim)) + " &7stays in the pot.");
+        broadcastRaw("&7Pot now: &6" + plugin.economy().format(pot.total())
+                + " &8| &7left: &f" + alive.size());
 
         if (alive.size() <= 1) {
             settle();
@@ -151,13 +151,13 @@ public final class HotBombGame extends AbstractGroupGame {
         holder = pickHolder(victim);
         fuseTicks = rollFuse();
         passTicks = 20;
-        broadcastRaw("&7La bomba reaparece en manos de &f" + playerName(holder) + "&7.");
+        broadcastRaw("&7The bomb reappears in the hands of &f" + playerName(holder) + "&7.");
     }
 
     private void settle() {
         if (alive.isEmpty()) {
-            // Nadie sobrevivio: el bote se queda para la casa.
-            broadcastRaw("&cNadie sobrevivio; el bote pasa a la casa.");
+            // Nobody survived: the pot stays with the house.
+            broadcastRaw("&cNobody survived; the pot goes to the house.");
             pot.burn();
             endRound();
             return;
@@ -165,9 +165,9 @@ public final class HotBombGame extends AbstractGroupGame {
         UUID winner = alive.iterator().next();
         double total = pot.total();
         pot.payAllTo(winner);
-        broadcastRaw("&8&m        &r &6BOMBA CALIENTE &8&m        ");
+        broadcastRaw("&8&m        &r &6HOT BOMB &8&m        ");
         broadcastRaw("&aGana &f" + playerName(winner) + " &acon &6"
-                + plugin.economy().format(total) + " &adel bote.");
+                + plugin.economy().format(total) + " &adel jackpot.");
         soundAll(Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.1f);
         Player winnerPlayer = online(winner);
         if (winnerPlayer != null) {

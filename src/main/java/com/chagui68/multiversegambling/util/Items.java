@@ -6,7 +6,7 @@ import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
-/** Constructor de items para los menus, con color y brillo opcional. */
+/** Item builder for the menus, with colour and optional glow. */
 public final class Items {
 
     private Items() {
@@ -16,7 +16,7 @@ public final class Items {
         return new Builder(material);
     }
 
-    /** Item decorativo sin nombre ni acciones, para rellenar bordes. */
+    /** Decorative item with no name or actions, used to fill borders. */
     public static ItemStack filler(Material material) {
         return new Builder(material).name(" ").build();
     }

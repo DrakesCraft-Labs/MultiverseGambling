@@ -7,9 +7,9 @@ import java.util.Optional;
 import java.util.random.RandomGenerator;
 
 /**
- * Tabla de probabilidad ponderada reutilizable: sirve tanto para los rodillos de
- * la tragaperras como para el bote comun, la ruleta de la suerte o los botines.
- * Los pesos no tienen que sumar 1: se normalizan solos.
+ * Reusable weighted probability table: it serves the slot reels as well as the shared
+ * jackpot, the lucky wheel or any prize draw. The weights do not have to add up to 1:
+ * they normalise themselves.
  */
 public final class WeightedTable<T> {
 
@@ -23,7 +23,7 @@ public final class WeightedTable<T> {
         return new WeightedTable<>();
     }
 
-    /** Añade un valor con su peso. Pesos <= 0 se ignoran. */
+    /** Adds a value with its weight. Weights <= 0 are ignored. */
     public WeightedTable<T> add(T value, double weight) {
         if (weight <= 0 || Double.isNaN(weight)) {
             return this;
@@ -62,7 +62,7 @@ public final class WeightedTable<T> {
         return 0;
     }
 
-    /** Probabilidad exacta (0..1) de que salga {@code value}. */
+    /** Exact chance (0..1) of {@code value} coming up. */
     public double probability(T value) {
         return total <= 0 ? 0 : weightOf(value) / total;
     }
@@ -72,8 +72,8 @@ public final class WeightedTable<T> {
     }
 
     /**
-     * Devuelve el valor que corresponde a una tirada ya calculada en [0,1).
-     * Es lo que permite que el azar verificable alimente estas tablas.
+     * Returns the value matching a roll already computed in [0,1). This is what lets the
+     * provably fair randomness feed these tables.
      */
     public T roll(double uniform) {
         if (entries.isEmpty()) {

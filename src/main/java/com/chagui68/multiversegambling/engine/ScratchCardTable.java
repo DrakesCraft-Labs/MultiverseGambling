@@ -5,16 +5,16 @@ import java.util.List;
 import java.util.function.DoubleSupplier;
 
 /**
- * El rasca y gana.
+ * The scratch card.
  *
- * <p>Se destapan tres de nueve casillas. Tres simbolos iguales pagan el premio del
- * simbolo y dos iguales devuelven parte de la apuesta. Los numeros no estan
- * elegidos a ojo: {@link #rtp()} calcula el retorno exacto y un test lo fija, asi
- * que cambiar un pago sin recalcular se nota enseguida.</p>
+ * <p>Three tiles out of nine are revealed. Three equal symbols pay the prize of the
+ * symbol and two equal ones give part of the stake back. The numbers are not chosen by
+ * eye: {@link #rtp()} computes the exact return and a test pins it, so changing a
+ * payout without recomputing shows up immediately.</p>
  */
 public final class ScratchCardTable {
 
-    /** Caras del carton y su frecuencia. */
+    /** Faces of the card and how often they come up. */
     public enum Face {
         CEREZA("cereza", 40, 3.0, "&cCereza"),
         LIMON("limon", 30, 2.0, "&eLimon"),
@@ -43,7 +43,7 @@ public final class ScratchCardTable {
             return weight;
         }
 
-        /** Pago por acertar tres iguales. */
+        /** Payout for hitting three of a kind. */
         public double triple() {
             return triple;
         }
@@ -53,11 +53,11 @@ public final class ScratchCardTable {
         }
     }
 
-    /** Casillas del carton. */
+    /** Tiles on the card. */
     public static final int CELLS = 9;
-    /** Destapes que hace el jugador. */
+    /** Reveals the player makes. */
     public static final int PICKS = 3;
-    /** Pago por acertar exactamente dos iguales. */
+    /** Payout for hitting exactly two of a kind. */
     public static final double PAIR_PAYOUT = 1.15;
 
     private final WeightedTable<Face> table = build();
@@ -86,10 +86,10 @@ public final class ScratchCardTable {
         return table.probability(face);
     }
 
-    /** Pago segun las tres casillas que el jugador haya destapado. */
+    /** Payout according to the three tiles the player revealed. */
     public double payout(List<Face> picked) {
         if (picked.size() != PICKS) {
-            throw new IllegalArgumentException("Se destapan exactamente " + PICKS + " casillas");
+            throw new IllegalArgumentException("Exactly " + PICKS + " tiles are revealed");
         }
         int counts = 0;
         Face first = picked.get(0);
@@ -101,7 +101,7 @@ public final class ScratchCardTable {
         if (counts == PICKS) {
             return first.triple();
         }
-        // Dos iguales de cualquier pareja.
+        // Two of a kind with any pair.
         for (int i = 0; i < picked.size(); i++) {
             for (int j = i + 1; j < picked.size(); j++) {
                 if (picked.get(i) == picked.get(j)) {
@@ -112,7 +112,7 @@ public final class ScratchCardTable {
         return 0;
     }
 
-    /** Retorno teorico exacto al jugador. */
+    /** Exact theoretical return to the player. */
     public double rtp() {
         double expected = 0;
         for (Face face : Face.values()) {
@@ -126,7 +126,7 @@ public final class ScratchCardTable {
         return expected;
     }
 
-    /** Probabilidad de rascar algo, aunque sea la devolucion parcial. */
+    /** Chance of scratching something, even if it is only a partial refund. */
     public double hitChance() {
         double anyWin = 0;
         for (Face face : Face.values()) {

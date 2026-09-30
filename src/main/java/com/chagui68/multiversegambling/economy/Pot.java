@@ -9,11 +9,11 @@ import java.util.function.BiConsumer;
 import org.bukkit.entity.Player;
 
 /**
- * El bote comun de los juegos en grupo.
+ * The shared pot of the group games.
  *
- * <p>Guarda una {@link Wager} por jugador, de modo que el dinero ya esta fuera de
- * los monederos cuando empieza la partida. Repartir el bote vacia las apuestas,
- * asi que ningun camino de codigo puede pagar dos veces.</p>
+ * <p>It keeps one {@link Wager} per player, so the money is already out of the wallets
+ * when the round starts. Paying out the pot empties the bets, which means no code path
+ * can pay twice.</p>
  */
 public final class Pot {
 
@@ -24,7 +24,7 @@ public final class Pot {
         this.economy = economy;
     }
 
-    /** Cobra la apuesta y la mete en el bote. */
+    /** Charges the bet and puts it in the pot. */
     public boolean add(Player player, double amount) {
         Wager wager = economy.stake(player, amount);
         if (wager == null) {
@@ -37,12 +37,12 @@ public final class Pot {
         return true;
     }
 
-    /** Añade una apuesta ya creada (por ejemplo, la de un jugador que se desconecto). */
+    /** Adds an already created bet (for example, the one of a player who disconnected). */
     public void addRaw(UUID playerId, Wager wager) {
         wagers.put(playerId, wager);
     }
 
-    /** Saca la apuesta del bote y devuelve el dinero si aun no se habia liquidado. */
+    /** Takes the bet out of the pot and refunds the money if it was not settled yet. */
     public void remove(UUID playerId) {
         Wager wager = wagers.remove(playerId);
         if (wager != null && !wager.isSettled()) {
@@ -91,17 +91,17 @@ public final class Pot {
         return out;
     }
 
-    /** Devuelve todo el dinero y vacia el bote. */
+    /** Refunds all the money and empties the pot. */
     public void refundAll() {
         settle((id, wager) -> wager.refund());
     }
 
-    /** Todo el bote para un ganador. */
+    /** The whole pot for one winner. */
     public void payAllTo(UUID winner) {
         payAllTo(winner, 0);
     }
 
-    /** Todo el bote para un ganador, con una comision para la casa. */
+    /** The whole pot for one winner, with a commission for the house. */
     public void payAllTo(UUID winner, double houseCut) {
         double total = total();
         double prize = total * (1.0 - Math.max(0, Math.min(0.5, houseCut)));
@@ -114,7 +114,7 @@ public final class Pot {
         });
     }
 
-    /** Reparte el bote entre varios ganadores a partes iguales. */
+    /** Splits the pot evenly between several winners. */
     public void shareAmong(Set<UUID> winners) {
         if (winners.isEmpty()) {
             refundAll();
@@ -131,8 +131,8 @@ public final class Pot {
     }
 
     /**
-     * Reparte el bote segun lo que devuelva {@code prizeFor}: multiplicador sobre
-     * lo apostado, o 0 para perder. La cantidad se calcula antes de liquidar nada.
+     * Splits the pot according to what {@code prizeFor} returns: a multiplier over the
+     * stake, or 0 to lose. The amount is computed before settling anything.
      */
     public void payoutByMultiplier(java.util.function.ToDoubleFunction<UUID> prizeFor) {
         Map<UUID, Double> prizes = new LinkedHashMap<>();
@@ -147,13 +147,13 @@ public final class Pot {
         });
     }
 
-    /** Aplica un resultado a cada apuesta y vacia el bote. */
+    /** Applies a result to every bet and empties the pot. */
     public void settle(BiConsumer<UUID, Wager> settlement) {
         wagers.forEach(settlement);
         wagers.clear();
     }
 
-    /** Marca todas las apuestas como perdidas sin pagar a nadie. */
+    /** Marks every bet as lost without paying anybody. */
     public void burn() {
         settle((id, wager) -> wager.lose());
     }

@@ -10,8 +10,8 @@ import net.kyori.adventure.title.Title.Times;
 import org.bukkit.entity.Player;
 
 /**
- * Juego individual. La secuencia es siempre la misma: permisos, apuesta, ronda.
- * Las subclases solo escriben {@link #start}.
+ * Solo game. The sequence is always the same: permission, stake, round. Subclasses
+ * only implement {@link #start}.
  */
 public abstract class AbstractSoloGame extends AbstractGame {
 
@@ -22,80 +22,81 @@ public abstract class AbstractSoloGame extends AbstractGame {
     @Override
     public final void open(Player player) {
         if (!enabled()) {
-            message(player, "juegos.desactivado", "juego", name());
+            message(player, "games.disabled", "game", name());
             return;
         }
         if (!player.hasPermission(permission())) {
-            message(player, "general.sin-permiso");
+            message(player, "general.no-permission");
             return;
         }
         if (plugin.sessions().busy(player.getUniqueId())) {
-            message(player, "juegos.ya-jugando");
+            message(player, "games.already-playing");
             return;
         }
         if (!plugin.economy().has(player.getUniqueId(), minBet())) {
-            message(player, "economia.sin-saldo", "apuesta", plugin.economy().format(minBet()));
+            message(player, "economy.not-enough-money", "bet", plugin.economy().format(minBet()));
             return;
         }
         plugin.guis().openBetSelector(player, this, begin(player));
     }
 
-    /** Codigo de confirmacion de apuesta listo para pasar al GUI. */
+    /** Bet confirmation callback, ready to hand over to the menu. */
     protected final DoubleConsumer begin(Player player) {
         return bet -> start(player, bet);
     }
 
-    /** Ejecuta la ronda. Debe cobrar la apuesta con {@link #stake}. */
+    /** Runs the round. It must charge the stake with {@link #stake}. */
     protected abstract void start(Player player, double bet);
 
     /**
-     * Retira la apuesta del monedero.
+     * Takes the stake out of the wallet.
      *
-     * @return {@code null} si ya no hay saldo, en cuyo caso el jugador ya ha sido avisado.
+     * @return {@code null} when the balance is gone, in which case the player has
+     *         already been told about it
      */
     public final Wager stake(Player player, double bet) {
         Wager wager = plugin.economy().stake(player, bet);
         if (wager == null) {
-            message(player, "economia.sin-saldo", "apuesta", plugin.economy().format(bet));
+            message(player, "economy.not-enough-money", "bet", plugin.economy().format(bet));
         }
         return wager;
     }
 
-    /** Mensaje de resultado reutilizable por todos los juegos. */
+    /** Result message shared by every game. */
     public void showResult(Player player, double bet, double payout) {
         if (payout > bet) {
-            message(player, "juegos.ganaste",
-                    "apuesta", plugin.economy().format(bet),
-                    "premio", plugin.economy().format(payout),
-                    "beneficio", plugin.economy().format(payout - bet));
+            message(player, "games.win",
+                    "bet", plugin.economy().format(bet),
+                    "prize", plugin.economy().format(payout),
+                    "profit", plugin.economy().format(payout - bet));
         } else if (payout == bet) {
-            message(player, "juegos.empate", "apuesta", plugin.economy().format(bet));
+            message(player, "games.tie", "bet", plugin.economy().format(bet));
         } else {
-            message(player, "juegos.perdiste", "apuesta", plugin.economy().format(bet));
+            message(player, "games.lose", "bet", plugin.economy().format(bet));
         }
     }
 
-    /** Multiplicador que la casa puede pagar sin dejar los cofres vacios. */
+    /** Multiplier the house can pay without emptying its chests. */
     public double cappedMultiplier(double multiplier, double cap) {
         return Math.min(Math.max(0, multiplier), cap);
     }
 
-    /** Ofrece repetir la partida con un boton de chat, sin pasar por el menu. */
+    /** Offers another round with a chat button, without going back to the menu. */
     public void offerReplay(Player player) {
         if (!player.isOnline()) {
             return;
         }
-        player.sendMessage(Text.c(plugin.messages().get("juegos.repetir-pregunta"))
+        player.sendMessage(Text.c(plugin.messages().forSender(player, "games.play-again-prompt"))
                 .append(Text.button(
-                        plugin.messages().get("juegos.boton-repetir"),
-                        "/casino jugar " + id(),
-                        plugin.messages().get("juegos.boton-repetir-hover", "juego", name()))));
+                        plugin.messages().forSender(player, "games.play-again-button"),
+                        "/casino play " + id(),
+                        plugin.messages().forSender(player, "games.play-again-hover",
+                                "game", displayName(player)))));
     }
 
-    /** Encabezado de resultado con titulo en pantalla. */
+    /** Result header with the on screen title. */
     public void announceResult(Player player, boolean won, String detail) {
-        String title = won ? plugin.messages().get("juegos.titulo-ganaste")
-                : plugin.messages().get("juegos.titulo-perdiste");
+        String title = plugin.messages().forSender(player, won ? "games.win-title" : "games.lose-title");
         String subtitle = detail == null ? "" : detail;
         player.showTitle(Title.title(Text.c(title), Text.c(subtitle), Times.times(
                 Duration.ofMillis(150), Duration.ofMillis(1500), Duration.ofMillis(300))));

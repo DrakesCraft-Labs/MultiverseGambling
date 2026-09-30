@@ -16,19 +16,19 @@ import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 
 /**
- * Ruleta de la suerte: doce casillas con multiplicadores distintos.
+ * Lucky wheel: twelve tiles with different multipliers.
  *
- * <p>La casilla ganadora sale del generador verificable. El retorno es la media de
- * las casillas y esta fijado por un test, asi que editar la rueda en la
- * configuracion no puede romper la economia sin que se note.</p>
+ * <p>The winning tile comes from the provably fair generator. The return is the average
+ * of the tiles and is pinned by a test, so editing the wheel in the configuration
+ * cannot break the economy unnoticed.</p>
  */
 public final class LuckyWheelGame extends AbstractSoloGame {
 
     public LuckyWheelGame(MultiverseGamblingPlugin plugin) {
-        super(plugin, GameMeta.builder("ruleta-suerte", "Ruleta de la Suerte", GameCategory.SOLO, Material.COMPASS)
-                .desc("&7Doce casillas, muchas vacias y",
-                        "&7golpes de hasta &f4x&7. Una vuelta",
-                        "&7decide el premio.")
+        super(plugin, GameMeta.builder("lucky-wheel", "Lucky Wheel", GameCategory.SOLO, Material.COMPASS)
+                .desc("&7Twelve segments, many of them empty",
+                        "&7and hits of up to &f4x&7. One spin",
+                        "&7decides the prize.")
                 .build());
     }
 
@@ -70,7 +70,7 @@ public final class LuckyWheelGame extends AbstractSoloGame {
                 int wait = 1 + (int) (progress * progress * 10);
                 if (elapsed % wait == 0) {
                     int filler = (int) (elapsed * 1.7) % wheel.size();
-                    online.sendActionBar(Text.c("&7La ruleta gira... &f"
+                    online.sendActionBar(Text.c("&7The wheel spins... &f"
                             + Text.multiplier(wheel.multiplier(filler))));
                     online.playSound(online.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 0.4f,
                             0.9f + (float) progress * 0.9f);
@@ -87,10 +87,10 @@ public final class LuckyWheelGame extends AbstractSoloGame {
                 double multiplier = wheel.multiplier(winner);
                 double payout = settle(online, wager, multiplier);
                 announceResult(online, payout > wager.amount(),
-                        multiplier > 0 ? "&a" + Text.multiplier(multiplier) : "&csin premio");
+                        multiplier > 0 ? "&a" + Text.multiplier(multiplier) : "&cno prize");
                 info(online, title());
-                info(online, "&7La ruleta se paro en la casilla &f" + (winner + 1)
-                        + "&7, que paga &f" + Text.multiplier(multiplier));
+                info(online, "&7The wheel stopped on tile &f" + (winner + 1)
+                        + "&7, which pays &f" + Text.multiplier(multiplier));
                 showResult(online, wager.amount(), payout);
                 sound(online, payout > wager.amount() ? Sound.ENTITY_PLAYER_LEVELUP : Sound.ENTITY_VILLAGER_NO,
                         0.9f, payout > wager.amount() ? 1.3f : 0.9f);
@@ -100,14 +100,14 @@ public final class LuckyWheelGame extends AbstractSoloGame {
         animation.run();
     }
 
-    private static final class WheelGui extends Gui {
+    private final class WheelGui extends Gui {
 
         private final LuckyWheelGame game;
         private final Wager wager;
         private boolean armed;
 
         WheelGui(MultiverseGamblingPlugin plugin, Player player, LuckyWheelGame game, Wager wager) {
-            super(plugin, player, 5, "&8Ruleta de la Suerte");
+            super(plugin, player, 5, "&8" + displayName(player));
             this.game = game;
             this.wager = wager;
         }
@@ -119,25 +119,25 @@ public final class LuckyWheelGame extends AbstractSoloGame {
 
             PrizeWheel wheel = game.wheel();
             set(4, Items.of(Material.COMPASS)
-                    .name("&6Apuesta: &f" + plugin.economy().format(wager.amount()))
+                    .name("&6Bet: &f" + plugin.economy().format(wager.amount()))
                     .lore(
-                            "&7Casillas: &f" + wheel.size(),
-                            "&7Premio maximo: &f" + Text.multiplier(wheel.best()),
-                            "&7Retorno teorico: &f" + Text.percent(wheel.rtp()),
-                            "&7Probabilidad del premio maximo: &f"
+                            "&7Segments: &f" + wheel.size(),
+                            "&7Top prize: &f" + Text.multiplier(wheel.best()),
+                            "&7Theoretical return: &f" + Text.percent(wheel.rtp()),
+                            "&7Chance of the top prize: &f"
                                     + Text.percent(wheel.bestChance()),
                             "",
-                            "&7Todas las casillas son igual de probables.")
+                            "&7Every tile is equally likely.")
                     .glow(true)
                     .build());
 
-            // Las 12 casillas se dibujan en dos filas de seis.
+            // The 12 tiles are drawn in two rows of six.
             int[] slots = {19, 20, 21, 22, 23, 24, 28, 29, 30, 31, 32, 33};
             for (int i = 0; i < Math.min(slots.length, wheel.size()); i++) {
                 double multiplier = wheel.multiplier(i);
                 set(slots[i], Items.of(multiplier == 0 ? Material.GRAY_STAINED_GLASS_PANE
                                 : multiplier >= wheel.best() ? Material.GOLD_BLOCK : Material.LIME_STAINED_GLASS_PANE)
-                        .name(multiplier == 0 ? "&8Sin premio" : "&a" + Text.multiplier(multiplier))
+                        .name(multiplier == 0 ? "&8No prize" : "&a" + Text.multiplier(multiplier))
                         .lore("&7Probabilidad: &f" + Text.percent(1.0 / wheel.size()),
                                 "&7Pago: &f" + plugin.economy().format(wager.amount() * multiplier))
                         .glow(multiplier >= wheel.best())
@@ -145,10 +145,10 @@ public final class LuckyWheelGame extends AbstractSoloGame {
             }
 
             set(40, Items.of(Material.EMERALD_BLOCK)
-                    .name("&a&lGIRAR LA RULETA")
-                    .lore("&7Apuestas &6" + plugin.economy().format(wager.amount()),
-                            "&7Se juega todo a una vuelta.", "",
-                            "&ePulsa para girar")
+                    .name("&a&lSPIN THE WHEEL")
+                    .lore("&7You stake &6" + plugin.economy().format(wager.amount()),
+                            "&7Everything rides on one spin.", "",
+                            "&eClick to spin")
                     .glow(true)
                     .build(), e -> {
                 armed = true;
@@ -158,7 +158,7 @@ public final class LuckyWheelGame extends AbstractSoloGame {
 
             set(36, Items.of(Material.BARRIER)
                     .name("&cCancelar")
-                    .lore("&7Recuperas tu apuesta.")
+                    .lore("&7You get your stake back.")
                     .build(), e -> close());
         }
 
@@ -171,7 +171,7 @@ public final class LuckyWheelGame extends AbstractSoloGame {
 
         @Override
         public String sessionId() {
-            return "ruleta-suerte";
+            return "lucky-wheel";
         }
     }
 }

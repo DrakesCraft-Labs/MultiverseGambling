@@ -5,29 +5,29 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Ruleta europea (un solo 0) o americana (0 y 00). Mantiene la rueda como una
- * lista de bolsillos para que el 00 americano no rompa ninguna cuenta.
+ * European roulette (a single 0) or American (0 and 00). It keeps the wheel as a list
+ * of pockets so the American 00 breaks no arithmetic.
  */
 public final class RouletteTable {
 
     public enum Color {
-        VERDE, ROJO, NEGRO
+        GREEN, RED, BLACK
     }
 
     /**
-     * Modalidades de apuesta y lo que paga cada una cuando acierta.
+     * Bet types and what each one pays when it wins.
      *
-     * <p>COLOR cubre solo rojo (seleccion 0) y negro (seleccion 1). El verde no es
-     * una apuesta de color: en la ruleta de verdad el 0 se paga a caballo (NUMERO),
-     * y por eso aqui no se puede "apostar al verde a 2x", que seria un timo.</p>
+     * <p>COLOR only covers red (selection 0) and black (selection 1). Green is not a
+     * colour bet: in real roulette the 0 pays on the number itself (NUMBER), which is
+     * why this game never offers "bet green at 2x": that would be a scam.</p>
      */
     public enum Bet {
-        NUMERO(36.0),
+        NUMBER(36.0),
         COLOR(2.0),
-        PARIDAD(2.0),
-        MITAD(2.0),
-        DOCENA(3.0),
-        COLUMNA(3.0);
+        PARITY(2.0),
+        HALF(2.0),
+        DOZEN(3.0),
+        COLUMN(3.0);
 
         private final double payout;
 
@@ -35,13 +35,13 @@ public final class RouletteTable {
             this.payout = payout;
         }
 
-        /** Multiplicador sobre lo apostado, ya incluido el retorno del capital. */
+        /** Multiplier over the stake, already including the return of the capital. */
         public double payout() {
             return payout;
         }
     }
 
-    /** Representa el "00" en la ruleta americana. */
+    /** Represents "00" on the American wheel. */
     public static final int DOUBLE_ZERO = 37;
 
     private static final Set<Integer> RED = Set.of(
@@ -78,19 +78,19 @@ public final class RouletteTable {
         return pockets.size();
     }
 
-    /** Numero de casillas que hacen ganar a cada tipo de apuesta. */
+    /** Number of pockets that make each bet type win. */
     private static int winningPockets(Bet bet) {
         return switch (bet) {
-            case NUMERO -> 1;
-            case COLOR, PARIDAD, MITAD -> 18;
-            case DOCENA, COLUMNA -> 12;
+            case NUMBER -> 1;
+            case COLOR, PARITY, HALF -> 18;
+            case DOZEN, COLUMN -> 12;
         };
     }
 
     /**
-     * Retorno teorico de una apuesta. La gracia de la ruleta es que <em>todas</em>
-     * las apuestas comparten el mismo retorno: 36/37 en la europea (2.70% de
-     * ventaja) y 36/38 en la americana (5.26%). El test lo comprueba apuesta a apuesta.
+     * Theoretical return of a bet. The beauty of roulette is that <em>every</em> bet
+     * shares the same return: 36/37 on the European wheel (2.70% edge) and 36/38 on the
+     * American one (5.26%). The test checks it bet by bet.
      */
     public double rtp(Bet bet) {
         return bet.payout() * winningPockets(bet) / pocketCount();
@@ -114,9 +114,9 @@ public final class RouletteTable {
 
     public static Color colorOf(int pocket) {
         if (isGreen(pocket)) {
-            return Color.VERDE;
+            return Color.GREEN;
         }
-        return isRed(pocket) ? Color.ROJO : Color.NEGRO;
+        return isRed(pocket) ? Color.RED : Color.BLACK;
     }
 
     public static String label(int pocket) {
@@ -124,38 +124,38 @@ public final class RouletteTable {
     }
 
     /**
-     * Decide si la apuesta gana. {@code selection} significa:
+     * Decides whether the bet wins. {@code selection} means:
      * <ul>
-     *   <li>NUMERO: el propio numero (el 0 se paga a 36 y cubre el verde).</li>
-     *   <li>COLOR: 0 = rojo, 1 = negro.</li>
-     *   <li>PARIDAD: 0 = par, 1 = impar.</li>
-     *   <li>MITAD: 0 = 1-18 (bajo), 1 = 19-36 (alto).</li>
-     *   <li>DOCENA: 0 = 1-12, 1 = 13-24, 2 = 25-36.</li>
-     *   <li>COLUMNA: 0, 1 o 2.</li>
+     *   <li>NUMBER: the number itself (the 0 pays 36 and covers green).</li>
+     *   <li>COLOR: 0 = red, 1 = black.</li>
+     *   <li>PARITY: 0 = even, 1 = odd.</li>
+     *   <li>HALF: 0 = 1-18 (low), 1 = 19-36 (high).</li>
+     *   <li>DOZEN: 0 = 1-12, 1 = 13-24, 2 = 25-36.</li>
+     *   <li>COLUMN: 0, 1 or 2.</li>
      * </ul>
      *
-     * @return el multiplicador a pagar, o 0 si se pierde.
+     * @return the multiplier to pay, or 0 when the bet loses.
      */
     public static double payoutOf(Bet bet, int selection, int result) {
         boolean wins = switch (bet) {
-            case NUMERO -> selection == result;
+            case NUMBER -> selection == result;
             case COLOR -> !isGreen(result) && (selection == 0 ? isRed(result) : !isRed(result));
-            case PARIDAD -> !isGreen(result) && (result % 2 == 0) == (selection == 0);
-            case MITAD -> !isGreen(result) && (result <= 18) == (selection == 0);
-            case DOCENA -> !isGreen(result) && (result - 1) / 12 == selection;
-            case COLUMNA -> !isGreen(result) && result % 3 == (selection + 1) % 3;
+            case PARITY -> !isGreen(result) && (result % 2 == 0) == (selection == 0);
+            case HALF -> !isGreen(result) && (result <= 18) == (selection == 0);
+            case DOZEN -> !isGreen(result) && (result - 1) / 12 == selection;
+            case COLUMN -> !isGreen(result) && result % 3 == (selection + 1) % 3;
         };
         return wins ? bet.payout() : 0.0;
     }
 
     public static String describeBet(Bet bet, int selection) {
         return switch (bet) {
-            case NUMERO -> "Numero " + label(selection);
-            case COLOR -> selection == 0 ? "Rojo" : "Negro";
-            case PARIDAD -> selection == 0 ? "Par" : "Impar";
-            case MITAD -> selection == 0 ? "1-18" : "19-36";
-            case DOCENA -> "Docena " + (selection + 1) + " (" + (selection * 12 + 1) + "-" + (selection * 12 + 12) + ")";
-            case COLUMNA -> "Columna " + (selection + 1);
+            case NUMBER -> "Number " + label(selection);
+            case COLOR -> selection == 0 ? "Red" : "Black";
+            case PARITY -> selection == 0 ? "Even" : "Odd";
+            case HALF -> selection == 0 ? "1-18" : "19-36";
+            case DOZEN -> "Dozen " + (selection + 1) + " (" + (selection * 12 + 1) + "-" + (selection * 12 + 12) + ")";
+            case COLUMN -> "Column " + (selection + 1);
         };
     }
 }

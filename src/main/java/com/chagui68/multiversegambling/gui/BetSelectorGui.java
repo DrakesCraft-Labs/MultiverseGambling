@@ -1,9 +1,9 @@
 package com.chagui68.multiversegambling.gui;
 
 import com.chagui68.multiversegambling.MultiverseGamblingPlugin;
+import com.chagui68.multiversegambling.config.Messages;
 import com.chagui68.multiversegambling.game.Game;
 import com.chagui68.multiversegambling.util.Items;
-import com.chagui68.multiversegambling.util.Text;
 import java.util.function.DoubleConsumer;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -11,10 +11,10 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
 
 /**
- * Selector de apuesta comun a todos los juegos.
+ * Bet selector shared by every game.
  *
- * <p>Centralizarlo evita el clasico fallo de que un juego acepte una apuesta por
- * encima del saldo o por debajo del minimo. Aqui se acota siempre.</p>
+ * <p>Keeping it in one place avoids the classic bug of a game accepting a bet above
+ * the balance or below the minimum. Every path clamps here.</p>
  */
 public final class BetSelectorGui extends Gui {
 
@@ -25,11 +25,17 @@ public final class BetSelectorGui extends Gui {
     private final DoubleConsumer onConfirm;
     private double bet;
 
-    public BetSelectorGui(MultiverseGamblingPlugin plugin, Player player, Game game, double initial, DoubleConsumer onConfirm) {
-        super(plugin, player, 5, "&8Apuesta &7· &6" + game.name());
+    public BetSelectorGui(MultiverseGamblingPlugin plugin, Player player, Game game,
+                          double initial, DoubleConsumer onConfirm) {
+        super(plugin, player, 5, plugin.messages().forSender(player, "gui.bet.title",
+                "game", game.displayName(player)));
         this.game = game;
         this.onConfirm = onConfirm;
         this.bet = clamp(initial);
+    }
+
+    private Messages messages() {
+        return plugin.messages();
     }
 
     private double balance() {
@@ -59,68 +65,74 @@ public final class BetSelectorGui extends Gui {
     protected void render() {
         clearActions();
         fill(FILLER);
+        Player viewer = player();
 
         double balance = balance();
         double limit = upperLimit();
         boolean afford = balance + 1e-9 >= game.minBet();
 
-        // Cabecera: ficha con la apuesta actual.
         set(4, Items.of(Material.GOLD_INGOT)
-                .name("&6Apuesta: &f" + plugin.economy().format(bet))
-                .lore(
-                        "&7Juego: &f" + game.name(),
-                        "&7Saldo: &f" + plugin.economy().format(balance),
-                        "&7Minimo: &f" + plugin.economy().format(game.minBet()),
-                        "&7Maximo: &f" + plugin.economy().format(Math.min(game.maxBet(), balance)),
-                        "",
-                        "&7Sube o baja la apuesta con los botones.")
+                .name(messages().forSender(viewer, "gui.bet.current",
+                        "bet", plugin.economy().format(bet)))
+                .lore(messages().loreFor(viewer, "gui.bet.lore",
+                        "game", game.displayName(viewer),
+                        "balance", plugin.economy().format(balance),
+                        "min", plugin.economy().format(game.minBet()),
+                        "max", plugin.economy().format(Math.min(game.maxBet(), balance))))
                 .glow(true)
                 .build());
 
-        set(10, button(Material.RED_DYE, "&cMitad", "&7Divide la apuesta entre 2"), e -> adjust(0.5));
-        set(11, button(Material.GOLD_NUGGET, "&eBajar", "&7Resta un 10%"), e -> adjust(0.9));
-        set(12, button(Material.LIME_DYE, "&aSubir", "&7Suma un 10%"), e -> adjust(1.1));
-        set(13, button(Material.GOLD_BLOCK, "&6Doble", "&7Multiplica la apuesta por 2"), e -> adjust(2.0));
-        set(14, button(Material.IRON_NUGGET, "&7Minimo", "&7Apuesta lo mas bajo permitido"),
-                e -> setTo(game.minBet()));
-        set(15, button(Material.DIAMOND, "&bMitad del saldo", "&7Apuesta la mitad de lo que tienes"),
+        button(10, Material.RED_DYE, "gui.bet.half", "gui.bet.half-lore", e -> adjust(0.5));
+        button(11, Material.GOLD_NUGGET, "gui.bet.down", "gui.bet.down-lore", e -> adjust(0.9));
+        button(12, Material.LIME_DYE, "gui.bet.up", "gui.bet.up-lore", e -> adjust(1.1));
+        button(13, Material.GOLD_BLOCK, "gui.bet.double", "gui.bet.double-lore", e -> adjust(2.0));
+        button(14, Material.IRON_NUGGET, "gui.bet.min", "gui.bet.min-lore", e -> setTo(game.minBet()));
+        button(15, Material.DIAMOND, "gui.bet.half-balance", "gui.bet.half-balance-lore",
                 e -> setTo(balance / 2.0));
-        set(16, button(Material.EMERALD_BLOCK, "&aTodo", "&7Apuesta todo tu saldo"), e -> setTo(balance));
+        button(16, Material.EMERALD_BLOCK, "gui.bet.all", "gui.bet.all-lore", e -> setTo(balance));
 
         set(22, Items.of(Material.PAPER)
-                .name("&fCantidad seleccionada")
-                .lore(
-                        "&7Apostando: &6" + plugin.economy().format(bet),
-                        "&7Tope actual: &f" + plugin.economy().format(limit))
+                .name(messages().forSender(viewer, "gui.bet.selected"))
+                .lore(messages().loreFor(viewer, "gui.bet.selected-lore",
+                        "bet", plugin.economy().format(bet),
+                        "limit", plugin.economy().format(limit)))
                 .build());
 
         if (afford) {
             set(40, Items.of(Material.LIME_CONCRETE)
-                    .name("&a&lCONFIRMAR APUESTA")
-                    .lore(
-                            "&7Vas a apostar &6" + plugin.economy().format(bet),
-                            "&7en &f" + game.name() + "&7.",
-                            "",
-                            "&ePulsa para jugar")
+                    .name(messages().forSender(viewer, "gui.bet.confirm"))
+                    .lore(messages().loreFor(viewer, "gui.bet.confirm-lore",
+                            "bet", plugin.economy().format(bet),
+                            "game", game.displayName(viewer)))
                     .glow(true)
                     .build(), this::confirm);
         } else {
             set(40, Items.of(Material.RED_CONCRETE)
-                    .name("&c&lSIN SALDO SUFICIENTE")
-                    .lore(
-                            "&7Necesitas al menos &f" + plugin.economy().format(game.minBet()),
-                            "&7y tienes &f" + plugin.economy().format(balance) + "&7.")
+                    .name(messages().forSender(viewer, "gui.bet.no-funds"))
+                    .lore(messages().loreFor(viewer, "gui.bet.no-funds-lore",
+                            "min", plugin.economy().format(game.minBet()),
+                            "balance", plugin.economy().format(balance)))
                     .build());
         }
 
-        set(36, button(Material.BARRIER, "&cVolver al menu", "&7Cierra este menu"), e -> {
+        set(36, Items.of(Material.BARRIER)
+                .name(messages().forSender(viewer, "gui.bet.back"))
+                .lore(messages().loreFor(viewer, "gui.bet.back-lore"))
+                .build(), e -> {
             close();
-            plugin.guis().openHub(player());
+            plugin.guis().openHub(viewer);
         });
     }
 
-    private ItemStack button(Material material, String name, String lore) {
-        return Items.of(material).name(name).lore(lore).build();
+    /** Places a labelled button that runs the given action when clicked. */
+    private void button(int slot, Material material, String nameKey, String loreKey,
+                        java.util.function.Consumer<InventoryClickEvent> action) {
+        Player viewer = player();
+        ItemStack item = Items.of(material)
+                .name(messages().forSender(viewer, nameKey))
+                .lore(messages().loreFor(viewer, loreKey))
+                .build();
+        set(slot, item, action);
     }
 
     private void confirm(InventoryClickEvent event) {
@@ -136,6 +148,6 @@ public final class BetSelectorGui extends Gui {
 
     @Override
     protected void onClose() {
-        // Cerrar el selector sin confirmar no cuesta nada: no se ha cobrado aun.
+        // Closing the selector without confirming costs nothing: nothing was charged yet.
     }
 }

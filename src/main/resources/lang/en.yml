@@ -1,0 +1,234 @@
+# ============================================================================
+#  MultiverseGambling - messages (English)
+#
+#  One file per language, inside plugins/MultiverseGambling/lang/.
+#  Players switch language in game with: /casino language <code>
+#
+#  Colours use the classic ampersand format: &6 gold, &7 grey, &c red...
+#  Curly braces are placeholders the plugin fills in:
+#    {bet} {prize} {profit} {amount} {game} {player} {min} {max}
+#    {seconds} {round} {current} {balance} {currency} {seed} {value} {usage}
+#    {language} {languages} {native} {world} {hash} {state} {description}
+#    {games} {wins} {rate} {wagered} {returned} {rtp} {biggest} {favourite}
+#    {provider} {limit} {edge} {name} {entry}
+#
+#  Game names and descriptions are written in the code in English. To override or
+#  translate them, add a catalog.<game-id>.name / catalog.<game-id>.description
+#  block at the end of this file: see lang/es.yml for the full Spanish catalogue.
+# ============================================================================
+
+prefix: '&8[&6Casino&8] &r'
+
+general:
+  no-permission: '&cYou do not have permission to do that.'
+
+economy:
+  not-enough-money: '&cYou cannot afford a bet of {bet}.'
+  account-created: '&7Welcome to the casino. We opened an account for you with {balance}.'
+
+games:
+  disabled: '&cThe game &f{game} &cis disabled in the configuration.'
+  already-playing: '&cYou already have an open game. Finish or close it before starting another.'
+  win: '&aYou won &f{prize} &a(you bet {bet}, profit of {profit}).'
+  tie: '&ePush: you get your {bet} back.'
+  lose: '&cYou lost the {bet} you had staked.'
+  abandoned: '&cYou left the game and lost {bet}.'
+  global-announcement: '&8[&6Casino&8] &f{player} &7just won &6{prize} &7at the casino (profit of &6{profit}&7).'
+  play-again-prompt: '&7Another round? '
+  play-again-button: '&a&l[ PLAY AGAIN ]'
+  play-again-hover: '&7Play {game} again'
+  win-title: '&6&lYOU WON!'
+  lose-title: '&c&lNO PRIZE'
+
+group:
+  waiting-players: '&7Waiting for players to start: &f{current}&7/&f{min}&7.'
+  betting-open: '&aBetting is open for &f{seconds}s&a. You can join now.'
+  betting-hint: '&7Use &f/casino play <game> &7to join.'
+  countdown: '&eThe round starts in &f{seconds}&e...'
+  time-left: '&7&f{seconds}s &7left before betting closes.'
+  round-starting: '&6Round &f{round} &6is starting!'
+  round-finished: '&7Round finished. The next one starts when players join.'
+  round-voided: '&cThe round was voided and the money was refunded.'
+  round-cancelled: '&cNot enough players with a bet (minimum {min}); refunding everyone.'
+  round-in-progress: '&eThat round is in progress; we queued you for the next one.'
+  queued-next: '&7You are queued for the next round of &f{game}&7. We will let you know.'
+  already-queued: '&7You were already queued for the next round.'
+  bet-accepted: '&aBet of &f{amount} &aaccepted in &f{game}&a.'
+  betting-open-again: '&eA new round of &f{game} &eis starting: come back in and bet.'
+  room-full: '&cThe room is full (maximum {max}). Try the next round.'
+  not-in-table: '&cYou are not in any open game.'
+  not-in-color-round: '&cYou are not in this roulette round.'
+  not-betting-this-round: '&cYou are not betting in this round.'
+  unknown-action: '&cThat action does not exist in this game.'
+  invalid-tile: '&cThat tile is not valid.'
+  invalid-horse: '&cThat horse does not exist.'
+  russian-roulette-finished: '&7The game is already over.'
+  russian-roulette-not-your-turn: '&cIt is not your turn; &f{player} &cmust shoot.'
+
+duel:
+  self-duel: '&cYou cannot challenge yourself.'
+  already-busy: '&cBoth you and that player already have a pending duel.'
+  rival-cannot-afford: '&c{player} does not have enough balance to accept that duel.'
+  challenge-sent: '&aChallenge sent to &f{player} &afor &f{amount}&a. Wait for their answer.'
+  challenge-no-funds: '&cYour rival had no balance; here is your bet back.'
+  challenge-expired: '&c{player} did not answer the challenge and your bet is refunded.'
+  challenge-declined: '&c{player} declined your duel and your bet is refunded.'
+  challenge-timed-out: '&7The duel expired with no answer.'
+  declined: '&7You declined the duel.'
+  no-challenge: '&cYou have no pending duel.'
+
+fairness:
+  explanation: '&7Every roll is derived from a server secret and your seed. When the secret rotates you can recompute it and check that nothing was touched.'
+  your-seed: '&7Your current seed is &f{seed}&7. You can change it with &f/casino verify <text>&7.'
+  seed-changed: '&aYour seed is now &f{seed}&a.'
+
+# ---------------------------------------------------------------------------
+#  Language picker: /casino language [code|reset]
+# ---------------------------------------------------------------------------
+language:
+  current: '&7Your language is &f{language}&7. Available: &f{languages}&7.'
+  usage: '&7Change it with &f{usage}&7, or reset it to follow your Minecraft client.'
+  changed: '&aLanguage switched to &f{native} &7({language})&a.'
+  unknown: '&cThere is no language called &f{language}&c. Available: &f{languages}&c.'
+  reset: '&aYour language is back to automatic; you now read &f{language}&a.'
+
+# ---------------------------------------------------------------------------
+#  Casino world: /casino world [build]
+# ---------------------------------------------------------------------------
+world:
+  disabled: '&cThe casino world is disabled in the configuration.'
+  teleporting: '&aWelcome to the casino world &f{world}&a.'
+  unavailable: '&cThe casino world is not ready yet; check the server console.'
+  built: '&aCasino world &f{world} &arebuilt with the plaza, the roads and every arena.'
+  build-failed: '&cThe casino world &f{world} &ccould not be built; check the server console.'
+
+command:
+  players-only: '&cThis command is meant to be used in game.'
+  unknown: '&cUnknown subcommand: &f{subcommand}&c. Try &f/casino menu&c.'
+  play-help: '&7Play any game with &f/casino play <game>&7.'
+  unknown-game: '&cThere is no game called &f{game}&c.'
+  unknown-player: '&cI cannot find the player &f{player}&c.'
+  invalid-amount: '&c&f{value} &cis not a valid amount.'
+  usage: '&cCorrect usage: &f{usage}'
+  balance: '&7Your balance is &6{balance}&7.'
+  balance-other: '&7Balance of &f{player}&7 is &6{balance}&7.'
+  balance-updated: '&aBalance of &f{player} &aupdated to &6{balance}&a.'
+  reloaded: '&aConfiguration and messages reloaded. Active games: &f{games}&a.'
+  session-cancelled: '&aClosed the game of &f{player}&a and refunded their money.'
+
+# ---------------------------------------------------------------------------
+#  Menus. Lines starting with a dash are a list: each one is shown as a line of
+#  the item lore, so translators can reorder or add lines freely.
+# ---------------------------------------------------------------------------
+gui:
+  verify:
+    title: '&8&m        &r &6Provably fair &8&m        '
+  category:
+    solo:
+      name: 'Solo'
+      description: 'Bets against the house, at your own pace.'
+    group:
+      name: 'Group'
+      description: 'Bets against and with other players.'
+  hub:
+    title: '&8Casino &7· &6Main menu'
+    balance: '&6Your balance: &f{balance}'
+    balance-lore:
+      - '&7Economy: &f{provider}'
+      - '&7Minimum bet: &f{min}'
+      - ''
+      - '&7Pick a game below to start.'
+    stats: '&eYour statistics'
+    stats-lore:
+      - '&7Games played, net profit and ranking.'
+      - ''
+      - '&eClick to open them'
+    fairness: '&dProvably fair'
+    fairness-lore:
+      - '&7The casino publishes the hash of its secret'
+      - '&7before you play: you can audit every roll'
+      - '&7once the secret rotates.'
+      - ''
+      - '&7Current secret:'
+      - '&f{hash}...'
+      - ''
+      - '&e/casino verify'
+    bet: '&7Bet: &f{min} &7- &f{max}'
+    players: '&7Players: &f{min} &7- &f{max}'
+    play: '&eClick to play'
+    disabled: '&cDisabled in the configuration'
+    tab-lore:
+      - '&7{description}'
+      - '&7Games available: &f{amount}'
+      - ''
+      - '{state}'
+    tab-selected: '&aYou are viewing this tab'
+    tab-switch: '&eClick to switch'
+    group-lore:
+      - '&7Challenges against other players,'
+      - '&7with a shared pot and automatic rounds.'
+    solo-lore:
+      - '&7Bets against the house,'
+      - '&7with nobody else to wait for.'
+    close: '&cClose'
+  stats:
+    title: '&8Casino &7· &6Statistics'
+    lore:
+      - '&7Games played: &f{games}'
+      - '&7Wins: &f{wins} &7({rate})'
+      - '&7Wagered: &f{wagered}'
+      - '&7Returned: &f{returned}'
+      - '&7Profit: {profit}'
+      - '&7Actual return: &f{rtp}'
+      - '&7Biggest win: &f{biggest}'
+      - '&7Favourite game: &f{favourite}'
+    top-profit: '&aTop profit'
+    top-wagered: '&6Top wagered'
+    top-prize: '&bTop biggest win'
+    top-empty: '&7No data yet.'
+    entry: '&7{player}: &f{value}'
+    house: '&cHouse profit'
+    house-lore:
+      - '&7Total won by the casino: &f{profit}'
+      - '&7Configured edge: &f{edge}'
+    back: '&eBack to menu'
+  bet:
+    title: '&8Bet &7· &6{game}'
+    current: '&6Bet: &f{bet}'
+    lore:
+      - '&7Game: &f{game}'
+      - '&7Balance: &f{balance}'
+      - '&7Minimum: &f{min}'
+      - '&7Maximum: &f{max}'
+      - ''
+      - '&7Raise or lower the bet with the buttons.'
+    half: '&cHalf'
+    half-lore: '&7Cuts the bet in half'
+    down: '&eLower'
+    down-lore: '&7Takes 10% off'
+    up: '&aRaise'
+    up-lore: '&7Adds 10%'
+    double: '&6Double'
+    double-lore: '&7Multiplies the bet by 2'
+    min: '&7Minimum'
+    min-lore: '&7Stakes the lowest amount allowed'
+    half-balance: '&bHalf of my balance'
+    half-balance-lore: '&7Stakes half of what you have'
+    all: '&aEverything'
+    all-lore: '&7Stakes your whole balance'
+    selected: '&fSelected amount'
+    selected-lore:
+      - '&7Staking: &6{bet}'
+      - '&7Current cap: &f{limit}'
+    confirm: '&a&lCONFIRM BET'
+    confirm-lore:
+      - '&7You are about to stake &6{bet}'
+      - '&7on &f{game}&7.'
+      - ''
+      - '&eClick to play'
+    no-funds: '&c&lNOT ENOUGH BALANCE'
+    no-funds-lore:
+      - '&7You need at least &f{min}'
+      - '&7and you have &f{balance}&7.'
+    back: '&cBack to the menu'
+    back-lore: '&7Closes this menu'

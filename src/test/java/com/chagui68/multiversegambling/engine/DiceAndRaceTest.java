@@ -13,14 +13,14 @@ import java.util.Map;
 class DiceAndRaceTest {
 
     @Test
-    void laProbabilidadDeGanarEsLaComplementariaDelObjetivo() {
+    void theChanceOfWinningIsTheComplementOfTheTarget() {
         assertEquals(50.0, DiceTable.winChanceOver(50.0), 1e-9);
         assertEquals(25.0, DiceTable.winChanceOver(75.0), 1e-9);
         assertEquals(10.0, DiceTable.winChanceUnder(10.0), 1e-9);
     }
 
     @Test
-    void elPagoEsJustoRecortadoPorLaVentaja() {
+    void thePayoutIsFairTrimmedByTheEdge() {
         assertEquals(1.98, DiceTable.payout(50.0, 0.01), 1e-9);
         assertEquals(9.9, DiceTable.payout(10.0, 0.01), 1e-9);
         assertEquals(0.99 * 100.0 / 98.0, DiceTable.payout(98.0, 0.01), 1e-9);
@@ -28,16 +28,16 @@ class DiceAndRaceTest {
     }
 
     @Test
-    void laTiradaSiempreEstaEnRangoYSeComportaComoIndicaElObjetivo() {
+    void theRollIsAlwaysInRangeAndBehavesAsTheTargetSays() {
         for (int i = 0; i < 20_000; i++) {
             double roll = DiceTable.roll();
-            assertTrue(roll >= 0 && roll < 100, "tirada fuera de rango: " + roll);
-            assertEquals(roll, DiceTable.round2(roll), 1e-9, "la tirada deberia tener 2 decimales");
+            assertTrue(roll >= 0 && roll < 100, "roll out of range: " + roll);
+            assertEquals(roll, DiceTable.round2(roll), 1e-9, "the roll should have 2 decimals");
         }
     }
 
     @Test
-    void apostarPorEncimaDelCincuentaPorCientoGanaLaMitadDeLasVeces() {
+    void bettingOverFiftyPercentWinsHalfTheTime() {
         int wins = 0;
         int samples = 200_000;
         for (int i = 0; i < samples; i++) {
@@ -49,42 +49,42 @@ class DiceAndRaceTest {
     }
 
     @Test
-    void elRetornoDelJuegoDeDadosEsElMargenDeLaCasa() {
-        // Retirarse con objetivo 2 (prob 50%) paga 1.98 -> EV de 0.99 por unidad.
+    void theDiceReturnIsTheHouseMargin() {
+        // Cashing out at target 2 (50% chance) pays 1.98 -> an EV of 0.99 per unit.
         double chance = DiceTable.winChanceOver(50.0) / 100.0;
         double payout = DiceTable.payout(50.0, 0.01);
         assertEquals(0.99, chance * payout, 1e-9);
     }
 
     @Test
-    void caraOCruzNoPuedePagarDosFijo() {
-        // Pagar 2.0 con una moneda justa da ventaja cero a la casa: hay que
-        // recortarlo igual que en los dados.
+    void coinFlipCannotPayAFlatDouble() {
+        // Paying 2.0 on a fair coin gives the house no edge: it has to be
+        // trimmed exactly like the dice.
         assertEquals(1.96, DiceTable.payout(50.0, 0.02), 1e-9);
         assertTrue(DiceTable.payout(50.0, 0.02) < 2.0);
         assertEquals(1.0 - 0.02, 0.5 * DiceTable.payout(50.0, 0.02), 1e-9,
-                "el retorno de la moneda es 1 menos la ventaja");
+                "the coin return is 1 minus the edge");
     }
 
     @Test
-    void elCampoDeCaballosTienePagosCoherentesConSuFuerza() {
+    void theHorseFieldHasPayoutsConsistentWithItsStrength() {
         List<Runner> field = HorseOdds.field(8, 0.01);
         assertEquals(8, field.size());
         double totalStrength = field.stream().mapToDouble(Runner::strength).sum();
         for (Runner runner : field) {
-            // El retorno va por apuesta, no sumando caballos: quien apueste a uno
-            // cualquiera debe recuperar el 99% en media, gane el que gane.
+            // The return is per bet, not by adding up horses: whoever bets on any
+            // of them must get 99% back on average, whoever wins.
             double chance = runner.strength() / totalStrength;
-            assertEquals(0.99, chance * runner.odds(), 0.011, "caballo " + runner.index());
+            assertEquals(0.99, chance * runner.odds(), 0.011, "horse " + runner.index());
         }
-        // Y el caballo mas fuerte paga menos que el mas debil.
+        // And the strongest horse pays less than the weakest one.
         Runner favourite = field.stream().max((a, b) -> Double.compare(a.strength(), b.strength())).orElseThrow();
         Runner outsider = field.stream().min((a, b) -> Double.compare(a.strength(), b.strength())).orElseThrow();
-        assertTrue(favourite.odds() < outsider.odds(), "el favorito deberia pagar menos");
+        assertTrue(favourite.odds() < outsider.odds(), "the favourite should pay less");
     }
 
     @Test
-    void elGanadorSeEligeConLaFrecuenciaEsperada() {
+    void theWinnerIsPickedWithTheExpectedFrequency() {
         List<Runner> field = HorseOdds.field(4, 0.01);
         double totalStrength = field.stream().mapToDouble(Runner::strength).sum();
         Map<Integer, Integer> wins = new HashMap<>();
@@ -100,13 +100,13 @@ class DiceAndRaceTest {
     }
 
     @Test
-    void laSimulacionDeLaCarreraDevuelveUnCuadroPorPaso() {
+    void theRaceSimulationReturnsOneFramePerStep() {
         List<double[]> frames = HorseOdds.simulate(HorseOdds.field(6, 0.01), 40);
         assertEquals(40, frames.size());
         for (double[] frame : frames) {
             assertEquals(6, frame.length);
         }
-        // Las posiciones nunca retroceden.
+        // The positions never go backwards.
         for (int step = 1; step < frames.size(); step++) {
             for (int runner = 0; runner < 6; runner++) {
                 assertTrue(frames.get(step)[runner] >= frames.get(step - 1)[runner]);
@@ -115,7 +115,7 @@ class DiceAndRaceTest {
     }
 
     @Test
-    void unCampoVacioNoSePuedeSortear() {
+    void anEmptyFieldCannotBeDrawn() {
         assertThrows(IllegalStateException.class, () -> HorseOdds.winner(List.of()));
     }
 }

@@ -10,27 +10,27 @@ class CrashTableTest {
     private static final double EDGE = 0.01;
 
     @Test
-    void laVentajaDeLaCasaSeConcentraEnElEstallidoInstantaneo() {
-        // Todo u por debajo del margen revienta a 1.00x.
+    void theHouseEdgeIsConcentratedInTheInstantBurst() {
+        // Any u below the margin crashes at 1.00x.
         assertEquals(1.00, CrashTable.crashPoint(0.0, EDGE));
         assertEquals(1.00, CrashTable.crashPoint(0.009, EDGE));
         assertEquals(1.00, CrashTable.crashPoint(EDGE - 1e-9, EDGE));
     }
 
     @Test
-    void elPuntoDeExplosionEsMonotonoRespectoAlAzar() {
+    void theCrashPointIsMonotonicWithRespectToTheRoll() {
         double previous = 0;
         for (double u = EDGE; u < 1.0; u += 0.001) {
             double point = CrashTable.crashPoint(u, EDGE);
-            assertTrue(point >= previous, "la curva debe crecer con u");
+            assertTrue(point >= previous, "the curve must grow with u");
             assertTrue(point >= 1.0);
             previous = point;
         }
     }
 
     @Test
-    void retirarseEnCualquierObjetivoTieneElMismoValorEsperado() {
-        // Esta es la propiedad clave del juego: si falla, hay una estrategia ganadora.
+    void cashingOutAtAnyTargetHasTheSameExpectedValue() {
+        // This is the key property of the game: if it fails, there is a winning strategy.
         for (double target : new double[] {1.5, 2.0, 3.0, 10.0, 50.0}) {
             double chance = CrashTable.reachChance(target, EDGE);
             assertEquals(1.0 - EDGE, chance * target, 1e-12, "objetivo " + target);
@@ -38,7 +38,7 @@ class CrashTableTest {
     }
 
     @Test
-    void laFrecuenciaSimuladaDeLlegarADosEquivaleAlCuarentaYNueveYMedioPorCiento() {
+    void theSimulatedFrequencyOfLandingOnTwoIsFortyNineAndAHalfPercent() {
         int reached = 0;
         int samples = 400_000;
         for (int i = 0; i < samples; i++) {
@@ -51,8 +51,8 @@ class CrashTableTest {
     }
 
     @Test
-    void elValorEsperadoDeUnaApuestaFijaEsElMargenDeLaCasa() {
-        // Estrategia fija: retirarse siempre en 3x. El retorno medio debe ser 0.99.
+    void theExpectedValueOfAFixedBetIsTheHouseMargin() {
+        // Fixed strategy: always cash out at 3x. The average return must be 0.99.
         double target = 3.0;
         double totalReturn = 0;
         int samples = 400_000;
@@ -64,7 +64,7 @@ class CrashTableTest {
     }
 
     @Test
-    void laCurvaCreceYSePuedeInvertir() {
+    void theCurveGrowsAndCanBeInverted() {
         double growth = CrashTable.growthRate(10.0);
         assertEquals(2.0, CrashTable.multiplierAt(10.0, growth), 1e-9);
         assertEquals(10.0, CrashTable.secondsToReach(2.0, growth), 1e-9);
@@ -72,7 +72,7 @@ class CrashTableTest {
     }
 
     @Test
-    void unUInvalidoSeRechaza() {
+    void anInvalidUIsRejected() {
         assertThrows(IllegalArgumentException.class, () -> CrashTable.crashPoint(1.0, EDGE));
         assertThrows(IllegalArgumentException.class, () -> CrashTable.crashPoint(-0.1, EDGE));
     }

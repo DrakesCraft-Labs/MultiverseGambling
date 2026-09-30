@@ -2,17 +2,17 @@ package com.chagui68.multiversegambling.engine;
 
 import java.util.List;
 
-/** Reglas y evaluacion del Blackjack. */
+/** Blackjack rules and hand evaluation. */
 public final class BlackjackHand {
 
-    /** El crupier pide carta hasta llegar a esta puntuacion. */
+    /** The dealer hits until reaching this total. */
     public static final int DEALER_STAND = 17;
     public static final int TARGET = 21;
 
     private BlackjackHand() {
     }
 
-    /** Suma los valores tratando los Ases como 11 mientras no se pase. */
+    /** Adds the values, counting aces as 11 as long as that does not bust. */
     public static int value(List<Card> hand) {
         int total = 0;
         int aces = 0;
@@ -29,7 +29,7 @@ public final class BlackjackHand {
         return total;
     }
 
-    /** Hay un As contando como 11: la mano es "blanda" y pedir carta no puede romperla. */
+    /** An ace counts as 11: the hand is "soft" and hitting cannot bust it. */
     public static boolean isSoft(List<Card> hand) {
         int total = 0;
         int aces = 0;
@@ -46,12 +46,12 @@ public final class BlackjackHand {
         return value(hand) > TARGET;
     }
 
-    /** Blackjack natural: 21 con las dos primeras cartas. Paga 3:2. */
+    /** Natural blackjack: 21 with the first two cards. Pays 3:2. */
     public static boolean isBlackjack(List<Card> hand) {
         return hand.size() == 2 && value(hand) == TARGET;
     }
 
-    /** El crupier pide mientras no llegue a 17, pero se planta con 17 blando si se configura. */
+    /** The dealer hits below 17, but stands on a soft 17 when configured that way. */
     public static boolean dealerMustHit(List<Card> hand, boolean hitSoft17) {
         int total = value(hand);
         if (total < DEALER_STAND) {
@@ -61,12 +61,12 @@ public final class BlackjackHand {
     }
 
     /**
-     * Multiplicador sobre la apuesta para una mano ya terminada.
+     * Multiplier over the bet for a hand already finished.
      *
-     * @param playerBlackjack 21 natural del jugador (no cuenta si tambien doblo)
-     * @param dealerBlackjack 21 natural del crupier
-     * @param dealerBust       el crupier se paso y el jugador no
-     * @return 0 en empate (devolucion), 2.5 con natural, 2 en victoria normal
+     * @param playerBlackjack natural 21 for the player (does not count after doubling)
+     * @param dealerBlackjack natural 21 for the dealer
+     * @param dealerBust      the dealer busted and the player did not
+     * @return 0 on a push (refund), 2.5 with a natural, 2 on a normal win
      */
     public static double payout(List<Card> player, List<Card> dealer,
                                 boolean playerBlackjack, boolean dealerBlackjack, boolean dealerBust) {

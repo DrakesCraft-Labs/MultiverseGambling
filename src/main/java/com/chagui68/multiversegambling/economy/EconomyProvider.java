@@ -3,20 +3,20 @@ package com.chagui68.multiversegambling.economy;
 import java.util.UUID;
 
 /**
- * Fuente de dinero del casino. Existe para que el plugin funcione igual con la
- * economia del servidor (Vault) o con su propio monedero si no hay ninguna.
+ * Money source of the casino. It exists so the plugin behaves the same with the
+ * economy of the server (Vault) or with its own wallet when there is none.
  */
 public interface EconomyProvider {
 
-    /** Nombre legible del proveedor activo, para /casino info. */
+    /** Human readable name of the active provider, for /casino info. */
     String name();
 
     double balance(UUID playerId);
 
-    /** @return true si el cambio se aplico. */
+    /** @return true when the change was applied. */
     boolean set(UUID playerId, double amount);
 
-    /** @return true si habia saldo suficiente y se desconto. */
+    /** @return true when there was enough balance and it was withdrawn. */
     boolean withdraw(UUID playerId, double amount);
 
     boolean deposit(UUID playerId, double amount);
@@ -25,7 +25,7 @@ public interface EconomyProvider {
         return balance(playerId) >= amount;
     }
 
-    /** Da un saldo de bienvenida si el jugador nunca ha tenido cuenta. */
+    /** Grants a welcome balance when the player never had an account. */
     default boolean createAccountIfMissing(UUID playerId, double startingBalance) {
         return false;
     }

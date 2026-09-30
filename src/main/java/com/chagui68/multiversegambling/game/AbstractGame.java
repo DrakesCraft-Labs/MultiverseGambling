@@ -3,11 +3,13 @@ package com.chagui68.multiversegambling.game;
 import com.chagui68.multiversegambling.MultiverseGamblingPlugin;
 import com.chagui68.multiversegambling.economy.Wager;
 import com.chagui68.multiversegambling.util.Text;
+import java.util.List;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Sound;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-/** Base comun de todos los juegos: cobros, mensajes, sonido y anuncios. */
+/** Shared base for every game: stakes, messages, sound and announcements. */
 public abstract class AbstractGame implements Game {
 
     protected final MultiverseGamblingPlugin plugin;
@@ -38,10 +40,24 @@ public abstract class AbstractGame implements Game {
         return plugin.config().maxBet(id());
     }
 
-    // -------------------------------------------------------------- utilidades
+    // ---------------------------------------------------------------- localisation
 
-    // Estos ayudantes son publicos a proposito: los menus anidados de cada juego
-    // (clases dentro de otra clase) los necesitan y no son subclases de esta.
+    /** Game name in the language of the viewer; lang files may override {@code catalog.<id>.name}. */
+    @Override
+    public String displayName(CommandSender viewer) {
+        return plugin.messages().gameName(viewer, id(), name());
+    }
+
+    /** Description in the language of the viewer, falling back to the built in one. */
+    @Override
+    public List<String> displayDescription(CommandSender viewer) {
+        return plugin.messages().gameDescription(viewer, id(), description());
+    }
+
+    // ------------------------------------------------------------------ helpers
+
+    // These helpers are public on purpose: the nested menus of each game (classes
+    // inside another class) need them and are not subclasses of this one.
 
     public void message(Player player, String key, Object... replacements) {
         plugin.messages().send(player, key, replacements);
@@ -64,11 +80,11 @@ public abstract class AbstractGame implements Game {
     }
 
     /**
-     * Liquida una apuesta en solitario: paga, anota estadisticas y anuncia si el
-     * premio es digno de mencion.
+     * Settles a solo bet: pays out, records the statistics and announces the win when
+     * the prize is worth mentioning.
      *
-     * @param multiplier multiplicador sobre lo apostado; 0 o menos es perder
-     * @return el dinero devuelto al jugador
+     * @param multiplier multiplier over what was staked; 0 or less means a loss
+     * @return the money returned to the player
      */
     public double settle(Player player, Wager wager, double multiplier) {
         double payout = wager.amount() * Math.max(0, multiplier);
@@ -82,7 +98,7 @@ public abstract class AbstractGame implements Game {
         return payout;
     }
 
-    /** Devuelve la apuesta sin contar como jugada (cancelaciones y abandonos). */
+    /** Gives the stake back without counting it as a played round. */
     public double refund(Wager wager) {
         if (wager == null) {
             return 0;
@@ -91,7 +107,7 @@ public abstract class AbstractGame implements Game {
         return wager.amount();
     }
 
-    /** Texto de cabecera con el nombre del juego. */
+    /** Header line with the game name. */
     public String title() {
         return "&8&m        &r &6" + name() + " &8&m        ";
     }

@@ -18,11 +18,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.bukkit.Bukkit;
 
 /**
- * Monedero propio del casino, guardado en {@code balances.json}.
+ * The casino's own wallet, stored in {@code balances.json}.
  *
- * <p>Se usa cuando el servidor no tiene Vault. Todas las escrituras se hacen en
- * memoria y el volcado a disco es asincrono, porque el hilo principal no puede
- * permitirse tocar el disco en mitad de una tirada.</p>
+ * <p>It is used when the server has no Vault. Every write happens in memory and the
+ * dump to disk is asynchronous, because the main thread cannot afford to touch the
+ * disk in the middle of a roll.</p>
  */
 public final class InternalEconomy implements EconomyProvider {
 
@@ -42,7 +42,7 @@ public final class InternalEconomy implements EconomyProvider {
 
     @Override
     public String name() {
-        return "Monedero interno";
+        return "Internal wallet";
     }
 
     @Override
@@ -105,28 +105,28 @@ public final class InternalEconomy implements EconomyProvider {
                 try {
                     balances.put(UUID.fromString(key), value == null ? 0.0 : value);
                 } catch (IllegalArgumentException ignored) {
-                    plugin.getLogger().warning("UUID invalido en balances.json: " + key);
+                    plugin.getLogger().warning("Invalid UUID in balances.json: " + key);
                 }
             });
         } catch (IOException e) {
-            plugin.getLogger().warning("No se pudo leer balances.json: " + e.getMessage());
+            plugin.getLogger().warning("Could not read balances.json: " + e.getMessage());
         }
     }
 
-    /** Volcado a disco. Se puede llamar desde un hilo asincrono. */
+    /** Dumps to disk. Safe to call from an asynchronous thread. */
     public void save() {
         Map<String, Double> raw = new HashMap<>();
         balances.forEach((id, value) -> raw.put(id.toString(), value));
         try {
             File parent = file.getParentFile();
             if (parent != null && !parent.exists() && !parent.mkdirs()) {
-                plugin.getLogger().warning("No se pudo crear la carpeta de datos del casino");
+                plugin.getLogger().warning("Could not create the plugin data folder");
             }
             try (Writer writer = Files.newBufferedWriter(file.toPath(), StandardCharsets.UTF_8)) {
                 gson.toJson(raw, MAP_TYPE, writer);
             }
         } catch (IOException e) {
-            plugin.getLogger().warning("No se pudo guardar balances.json: " + e.getMessage());
+            plugin.getLogger().warning("Could not save balances.json: " + e.getMessage());
         }
     }
 

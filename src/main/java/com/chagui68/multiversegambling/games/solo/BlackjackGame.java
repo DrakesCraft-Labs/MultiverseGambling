@@ -19,11 +19,11 @@ import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 
 /**
- * Blackjack contra el crupier.
+ * Blackjack against the dealer.
  *
- * <p>Reglas completas: el natural paga 3:2, el empate devuelve la apuesta, se puede
- * doblar y el crupier pide hasta 17 (configurable para que pida con 17 blando).
- * La regla exacta esta en {@link BlackjackHand}, que tiene sus propios tests.</p>
+ * <p>Full rules: a natural pays 3:2, a push returns the stake, doubling is allowed and
+ * the dealer hits up to 17 (configurable to hit on a soft 17). The exact rule lives in
+ * {@link BlackjackHand}, which has its own tests.</p>
  */
 public final class BlackjackGame extends AbstractSoloGame {
 
@@ -34,9 +34,9 @@ public final class BlackjackGame extends AbstractSoloGame {
 
     public BlackjackGame(MultiverseGamblingPlugin plugin) {
         super(plugin, GameMeta.builder("blackjack", "Blackjack", GameCategory.SOLO, Material.BOOK)
-                .desc("&7Llega a 21 sin pasarte y gana al",
-                        "&7crupier. El natural paga &f3:2&7.",
-                        "&7Pide, plantate o dobla.")
+                .desc("&7Reach 21 without busting and beat",
+                        "&7the dealer. A natural pays &f3:2&7.",
+                        "&7Hit, stand or double down.")
                 .build());
     }
 
@@ -53,7 +53,7 @@ public final class BlackjackGame extends AbstractSoloGame {
         Table table = new Table(player, wager);
         tables.put(player.getUniqueId(), table);
         new BlackjackGui(plugin, player, this).show();
-        // Reparto inicial con suspense.
+        // Initial deal, with a bit of suspense.
         dealOpening(player, table);
     }
 
@@ -82,8 +82,8 @@ public final class BlackjackGame extends AbstractSoloGame {
                     finish(online, table);
                     return;
                 }
-                online.sendActionBar(Text.c("&7Tu mano: &f"
-                        + BlackjackHand.value(table.playerCards) + " &8| &7Crupier: &f"
+                online.sendActionBar(Text.c("&7Your hand: &f"
+                        + BlackjackHand.value(table.playerCards) + " &8| &7Dealer: &f"
                         + table.dealerCards.get(0).display() + " &7? ?"));
                 table.gui().ifPresent(Gui::refresh);
             }
@@ -91,7 +91,7 @@ public final class BlackjackGame extends AbstractSoloGame {
         animation.run();
     }
 
-    /** Pide carta para el jugador. */
+    /** Hits for the player. */
     void hit(Player player, Table table) {
         if (table.settled) {
             return;
@@ -106,7 +106,7 @@ public final class BlackjackGame extends AbstractSoloGame {
         table.gui().ifPresent(Gui::refresh);
     }
 
-    /** Se planta: juega el crupier. */
+    /** Stands: the dealer plays. */
     void stand(Player player, Table table) {
         if (table.settled) {
             return;
@@ -114,7 +114,7 @@ public final class BlackjackGame extends AbstractSoloGame {
         finish(player, table);
     }
 
-    /** Dobla la apuesta: retira otra igual y reparte una carta mas. */
+    /** Doubles down: takes another equal stake and deals one more card. */
     void doubleDown(Player player, Table table) {
         if (table.settled || table.hits > 0 || table.playerCards.size() != 2) {
             return;
@@ -130,7 +130,7 @@ public final class BlackjackGame extends AbstractSoloGame {
         finish(player, table);
     }
 
-    /** Juega el crupier y liquida. */
+    /** Plays the dealer and settles the hand. */
     private void finish(Player player, Table table) {
         if (table.settled) {
             return;
@@ -154,7 +154,7 @@ public final class BlackjackGame extends AbstractSoloGame {
 
         double payout = settle(player, table.wager, multiplier);
         if (table.extra != null) {
-            // La segunda mitad de la doblada se paga o se pierde con el mismo resultado.
+            // The second half of the double is paid or lost with the same result.
             if (multiplier > 0) {
                 table.extra.payAbsolute(table.extra.amount() * multiplier);
             } else {
@@ -164,16 +164,16 @@ public final class BlackjackGame extends AbstractSoloGame {
         tables.remove(player.getUniqueId());
 
         boolean won = payout > table.wager.amount() * (table.doubled ? 2 : 1);
-        announceResult(player, won, payout > 0 ? "&a" + plugin.economy().format(payout) : "&csin premio");
+        announceResult(player, won, payout > 0 ? "&a" + plugin.economy().format(payout) : "&cno prize");
         info(player, title());
-        info(player, "&7Tu mano: &f" + BlackjackHand.describe(table.playerCards)
+        info(player, "&7Your hand: &f" + BlackjackHand.describe(table.playerCards)
                 + " &7= &f" + BlackjackHand.value(table.playerCards));
-        info(player, "&7Crupier: &f" + BlackjackHand.describe(table.dealerCards)
+        info(player, "&7Dealer: &f" + BlackjackHand.describe(table.dealerCards)
                 + " &7= &f" + BlackjackHand.value(table.dealerCards));
         if (playerBlackjack && !dealerBlackjack) {
-            info(player, "&6Blackjack natural: paga 3 a 2.");
+            info(player, "&6Natural blackjack: pays 3 to 2.");
         } else if (dealerBust) {
-            info(player, "&aEl crupier se paso.");
+            info(player, "&aThe dealer busted.");
         }
         showResult(player, table.wager.amount() * (table.doubled ? 2 : 1), payout);
         sound(player, won ? Sound.ENTITY_PLAYER_LEVELUP : Sound.ENTITY_VILLAGER_NO,
@@ -182,7 +182,7 @@ public final class BlackjackGame extends AbstractSoloGame {
         offerReplay(player);
     }
 
-    /** Estado de una mesa de blackjack. */
+    /** State of one blackjack table. */
     final class Table {
 
         private final Card.Deck deck = new Card.Deck(BlackjackGame.this.plugin.config().blackjackDecks());
@@ -230,8 +230,8 @@ public final class BlackjackGame extends AbstractSoloGame {
         }
     }
 
-    /** Mesa: cartas arriba y acciones abajo. */
-    private static final class BlackjackGui extends Gui {
+    /** Table: cards on top and actions below. */
+    private final class BlackjackGui extends Gui {
 
         private final BlackjackGame game;
         private final BlackjackGame.Table table;
@@ -256,13 +256,13 @@ public final class BlackjackGame extends AbstractSoloGame {
             }
 
             set(4, Items.of(Material.GOLD_INGOT)
-                    .name("&6Apuesta: &f" + plugin.economy().format(table.bet()))
+                    .name("&6Bet: &f" + plugin.economy().format(table.bet()))
                     .lore(
-                            "&7Tu mano: &f" + BlackjackHand.value(table.playerCards()),
-                            "&7Crupier: &f" + BlackjackHand.value(table.dealerCards()),
-                            "&7Baraja: &f" + table.deck.remaining() + " &7cartas",
+                            "&7Your hand: &f" + BlackjackHand.value(table.playerCards()),
+                            "&7Dealer: &f" + BlackjackHand.value(table.dealerCards()),
+                            "&7Deck: &f" + table.deck.remaining() + " &7cards",
                             "",
-                            "&7Natural paga &f3:2&7; el empate devuelve.")
+                            "&7A natural pays &f3:2&7; a push returns the stake.")
                     .glow(true)
                     .build());
 
@@ -271,8 +271,8 @@ public final class BlackjackGame extends AbstractSoloGame {
 
             boolean settled = table.isSettled();
             set(36, Items.of(settled ? Material.GRAY_DYE : Material.LIME_CONCRETE)
-                    .name("&aPedir carta")
-                    .lore("&7Pide otra carta.", "&7Si pasas de 21 pierdes.")
+                    .name("&aHit")
+                    .lore("&7Take another card.", "&7Busting over 21 loses.")
                     .build(), e -> {
                 if (!settled) {
                     game.hit(player(), table);
@@ -280,8 +280,8 @@ public final class BlackjackGame extends AbstractSoloGame {
             });
 
             set(40, Items.of(settled ? Material.GRAY_DYE : Material.RED_CONCRETE)
-                    .name("&cPlantarse")
-                    .lore("&7El crupier juega su mano.")
+                    .name("&cStand")
+                    .lore("&7The dealer plays their hand.")
                     .build(), e -> {
                 if (!settled) {
                     game.stand(player(), table);
@@ -289,11 +289,11 @@ public final class BlackjackGame extends AbstractSoloGame {
             });
 
             set(44, Items.of(table.canDouble(player()) ? Material.GOLD_BLOCK : Material.GRAY_DYE)
-                    .name("&6Doblar")
-                    .lore("&7Dobla la apuesta y recibes",
-                            "&7una carta mas, obligado a plantarte.",
+                    .name("&6Double down")
+                    .lore("&7Double the bet and take",
+                            "&7one more card, then you must stand.",
                             "",
-                            table.canDouble(player()) ? "&ePulsa para doblar" : "&7No disponible")
+                            table.canDouble(player()) ? "&eClick to double" : "&7Not available")
                     .build(), e -> {
                 if (table.canDouble(player())) {
                     game.doubleDown(player(), table);
@@ -303,12 +303,12 @@ public final class BlackjackGame extends AbstractSoloGame {
 
         private void renderCards(int startSlot, List<Card> cards, boolean hideHole) {
             for (int i = 0; i < cards.size(); i++) {
-                // La segunda carta del crupier queda boca abajo hasta el final.
+                // The dealer's second card stays face down until the end.
                 boolean hole = hideHole && i == 1 && !table.isSettled();
                 Card card = cards.get(i);
                 set(startSlot + i, Items.of(hole ? Material.GRAY_STAINED_GLASS_PANE : cardMaterial(card))
                         .name(hole ? "&8? ? ?" : "&f" + card.display())
-                        .lore(hole ? "&7Carta oculta" : "&7Vale &f" + card.blackjackValue())
+                        .lore(hole ? "&7Face down card" : "&7Worth &f" + card.blackjackValue())
                         .build());
             }
         }
@@ -322,7 +322,7 @@ public final class BlackjackGame extends AbstractSoloGame {
 
         @Override
         protected void onClose() {
-            // Cerrar la mesa sin resolver equivale a abandonar la apuesta.
+            // Closing the table without resolving it means giving up the stake.
             if (table != null && !table.isSettled()) {
                 game.stand(player(), table);
             }

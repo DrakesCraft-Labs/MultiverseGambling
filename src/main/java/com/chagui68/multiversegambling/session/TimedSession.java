@@ -5,11 +5,11 @@ import java.util.UUID;
 import org.bukkit.entity.Player;
 
 /**
- * Animacion de duracion fija.
+ * Animation with a fixed duration.
  *
- * <p>Sirve para todo lo que necesita suspense: el giro de la ruleta, el rodillo de
- * la tragaperras, la bolita del plinko o la sacudida de la bomba. La sesion se
- * apaga sola al terminar y no deja tareas colgadas.</p>
+ * <p>It serves anything that needs suspense: the spin of the roulette, the slot reels,
+ * the plinko ball or the shaking bomb. The session shuts itself down when it finishes
+ * and leaves no dangling tasks.</p>
  */
 public abstract class TimedSession implements SoloSession {
 
@@ -28,7 +28,7 @@ public abstract class TimedSession implements SoloSession {
         this.duration = Math.max(1, duration);
     }
 
-    /** Arranca la animacion registrandola en el reloj central. */
+    /** Starts the animation, registering it on the central clock. */
     public final void run() {
         plugin.sessions().track(this);
     }
@@ -79,21 +79,21 @@ public abstract class TimedSession implements SoloSession {
         return plugin.getServer().getPlayer(playerId);
     }
 
-    /** Primer tick: sonido inicial, titulo, etc. */
+    /** First tick: opening sound, title and so on. */
     protected void onStart() {
     }
 
-    /** Se llama en cada tick con el indice actual y la duracion total. */
+    /** Called on every tick with the current index and the total duration. */
     protected abstract void onFrame(int elapsed, int duration);
 
-    /** Ultimo tick: aqui se entrega el resultado. */
+    /** Last tick: the result is handed over here. */
     protected abstract void onFinish();
 
-    /** El jugador se fue o el plugin se apago antes de terminar. */
+    /** The player left or the plugin shut down before finishing. */
     protected void onCancel() {
     }
 
-    /** Facilidad para animaciones que solo quieren saber el progreso. */
+    /** Helper for animations that only want to know the progress. */
     protected double progress(int elapsed) {
         return (double) elapsed / duration;
     }

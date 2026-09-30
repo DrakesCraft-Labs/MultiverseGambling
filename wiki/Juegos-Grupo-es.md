@@ -1,0 +1,58 @@
+# Juegos en grupo
+
+[English](Games-Group) · **Español**
+
+Nueve juegos con **rondas automáticas**. Nadie tiene que iniciar nada: un jugador entra con
+`/casino play <juego>`, apuesta durante la ventana y la ronda se juega sola. Cuando termina, la
+siguiente ventana de apuestas se abre por su cuenta para quien quiera entrar otra vez.
+
+El ciclo compartido es: **esperando jugadores → ventana de apuestas → en juego → reparto**.
+
+| Juego | Id | Reglas | Jugadores | Retorno |
+|---|---|---|---|---|
+| **Ruleta de Colores** | `color-roulette` | Cada uno apuesta a rojo, negro o verde; el verde es una casilla única, así que paga ~36x | 2-24 | 97.30% |
+| **Bote Común** | `jackpot` | Todos ponen dinero y las papeletas son proporcionales a lo apostado; un ganador se lo lleva todo | 2-24 | 100% − comisión |
+| **Bomba Caliente** | `hot-bomb` | La TNT pasa de mano en mano con una mecha sorteada; al que le pille queda fuera y su dinero sigue en el bote | 2-12 | 100% − comisión |
+| **Tablero de Bombas** | `bomb-board` | Tablero compartido con bombas escondidas; se destapa por turnos; el último en pie cobra | 2-12 | 100% − comisión |
+| **Ruleta Rusa** | `russian-roulette` | Por turnos cada uno aprieta el gatillo con 1 bala en 6 recámaras; el superviviente se lleva el bote | 2-8 | 100% − comisión |
+| **Carrera de Caballos** | `race` | 8 caballos con probabilidades publicadas; el favorito paga poco y el tapado mucho | 2-24 | 98.00% por caballo |
+| **Duelo 1v1** | `duel` | Retas a alguien por una cantidad; los dos ponen lo mismo y una moneda decide | 2 | 100% − comisión |
+| **Rifa** | `raffle` | Boletas a precio fijo y sorteo de tres premios: 70%, 20% y 10% del bote | 2-24 | 100% − comisión |
+| **Póker de Dados** | `dice-poker` | Cinco dados cada uno; gana la mejor mano y los empates reparten el bote | 2-16 | 100% − comisión |
+
+## Jugador contra jugador significa sin ventaja de la casa
+
+Estos juegos mueven dinero entre jugadores, así que por defecto la casa no se queda **nada**
+(`group.house-commission: 0.0`). Ponle un valor pequeño, por ejemplo `0.02`, si quieres que el
+casino se lleve una comisión del bote, la rifa y el póker de dados.
+
+## Rondas y bote
+
+- La ventana de apuestas dura `group.betting-seconds` (20 por defecto). El lobby anuncia la cuenta
+  atrás y después la ronda empieza sola.
+- El dinero sale de los monederos **cuando apuestas**, no cuando empieza la ronda: la apuesta
+  queda guardada en un `Pot` que mantiene un wager liquidable-una-sola-vez por jugador.
+- Una ronda necesita el mínimo de jugadores con apuesta; si no, se cancela y se devuelve todo.
+- Si entras con una ronda en marcha, quedas apuntado a la siguiente y se te avisa.
+- **Desconectarse a mitad de ronda no devuelve tu dinero.** Tu apuesta sigue en el bote y
+  cualquier otro la puede ganar, que es lo que hace inútil el rage quit. Irse **antes** de que
+  empiece la ronda sí te devuelve todo.
+- El límite de asientos es `group.max-players`; cuando la mesa está llena se te dice que pruebes
+  la siguiente ronda.
+
+## Juegos por turnos y botones del chat
+
+Bomba Caliente, Tablero de Bombas y Ruleta Rusa funcionan por turnos con un reloj
+(`group.bomb-board.seconds-per-turn`, y el rango de la mecha para la bomba caliente). Anuncian
+al jugador actual y, si no actúa a tiempo, el turno sigue solo, así que un jugador distraído no
+puede congelar la mesa.
+
+Algunas acciones también están en el chat: los botones clicables mandan
+`/casino action <accion>` (`reveal`, `horse 3`, `shoot`, `accept`, `decline`...), que es lo que
+hace que los juegos se puedan jugar desde el móvil o desde el chat sin abrir un menú.
+
+## Azar verificable
+
+Las rondas sacan su azar de la misma fuente verificable que los juegos en solitario, atribuida a
+la identidad fija del casino (UUID cero). Eso significa que una carrera o una ronda de bomba
+caliente se puede auditar después con `/casino verify`. Ver [Azar verificable](Justicia-es).

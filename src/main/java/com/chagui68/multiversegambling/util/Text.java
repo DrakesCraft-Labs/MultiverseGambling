@@ -7,7 +7,7 @@ import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
-/** Todo el texto del plugin pasa por aqui: color, placeholders y formato de numeros. */
+/** All plugin text goes through here: colours, placeholders and number formatting. */
 public final class Text {
 
     private static final LegacyComponentSerializer LEGACY =
@@ -16,7 +16,7 @@ public final class Text {
     private Text() {
     }
 
-    /** Convierte "&aHola" en un Component. */
+    /** Turns "&aHello" into a Component. */
     public static Component c(String legacy) {
         return LEGACY.deserialize(legacy == null ? "" : legacy);
     }
@@ -33,7 +33,7 @@ public final class Text {
         return lines(List.of(raw));
     }
 
-    /** Sustituye {clave} por su valor: {@code fill("Hola {player}", "player", nombre)}. */
+    /** Replaces {key} with its value: {@code fill("Hi {player}", "player", name)}. */
     public static String fill(String template, Object... replacements) {
         if (template == null) {
             return "";
@@ -48,7 +48,16 @@ public final class Text {
         return out;
     }
 
-    /** Numero con separador de miles y sin decimales si no hacen falta. */
+    /** Same as {@link #fill(String, Object...)} for a whole block of lines. */
+    public static List<String> fillAll(List<String> templates, Object... replacements) {
+        List<String> out = new ArrayList<>(templates.size());
+        for (String template : templates) {
+            out.add(fill(template, replacements));
+        }
+        return out;
+    }
+
+    /** Number with thousand separators and no decimals when they are not needed. */
     public static String number(double value) {
         if (Math.abs(value - Math.rint(value)) < 1e-9) {
             return String.format("%,.0f", value);
@@ -64,15 +73,15 @@ public final class Text {
         return String.format("%.1f%%", ratio * 100.0);
     }
 
-    /** Barra de progreso tipo chat, util para ventanas de apuestas. */
+    /** Chat progress bar, handy for the betting windows. */
     public static String bar(double ratio, int length, String filled, String empty) {
         int done = (int) Math.round(Math.max(0, Math.min(1, ratio)) * length);
         return filled.repeat(done) + empty.repeat(length - done);
     }
 
     /**
-     * Boton de chat: al pulsarlo ejecuta un comando. Es lo que permite jugar
-     * otra vez sin salir del chat.
+     * Chat button: clicking it runs a command. This is what lets a player play
+     * again without leaving the chat.
      */
     public static Component button(String label, String command, String hover) {
         Component component = c(label).clickEvent(ClickEvent.runCommand(command));
@@ -82,7 +91,7 @@ public final class Text {
         return component;
     }
 
-    /** Quita los codigos de color para medir o registrar texto plano. */
+    /** Strips colour codes so text can be measured or logged in plain form. */
     public static String strip(String legacy) {
         return legacy == null ? "" : legacy.replaceAll("(?i)&[0-9a-fk-or]", "");
     }

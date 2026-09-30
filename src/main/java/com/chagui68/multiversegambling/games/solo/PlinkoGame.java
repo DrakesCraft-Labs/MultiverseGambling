@@ -15,19 +15,19 @@ import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 
 /**
- * Plinko: la bolita cae por la piramide y acaba en un cubo.
+ * Plinko: the ball falls down the pyramid and lands in a bucket.
  *
- * <p>Los cubos no se inventan. Salen de la distribucion binomial real de los
- * rebotes, dividida por el numero de cubos para que el retorno sea el correcto:
- * un test comprueba que la tabla nunca devuelve mas de lo que cobra.</p>
+ * <p>The buckets are not invented. They come from the real binomial distribution of
+ * the bounces, divided by the number of buckets so the return is the right one: a
+ * test checks that the table never pays out more than it takes in.</p>
  */
 public final class PlinkoGame extends AbstractSoloGame {
 
     public PlinkoGame(MultiverseGamblingPlugin plugin) {
         super(plugin, GameMeta.builder("plinko", "Plinko", GameCategory.SOLO, Material.SNOWBALL)
-                .desc("&7Suelta la bolita y mira en que cubo",
-                        "&7cae. Los bordes pagan muchisimo",
-                        "&7y el centro casi nada.")
+                .desc("&7Drop the ball and watch which bucket",
+                        "&7it lands in. The edges pay a lot",
+                        "&7and the middle almost nothing.")
                 .build());
     }
 
@@ -53,10 +53,10 @@ public final class PlinkoGame extends AbstractSoloGame {
         new PlinkoGui(plugin, player, this, wager).show();
     }
 
-    /** Deja caer la bolita. */
+    /** Drops the ball. */
     void drop(Player player, Wager wager) {
         int rows = rows();
-        // La direccion de cada rebote sale del generador verificable.
+        // The direction of every bounce comes from the provably fair generator.
         double[] rolls = plugin.fair().rolls(player.getUniqueId(), rows);
         int finalBucket = bucketFor(rolls);
         TimedSession animation = new TimedSession(plugin, player, id(), rows * 3) {
@@ -71,7 +71,7 @@ public final class PlinkoGame extends AbstractSoloGame {
                 for (int i = 0; i < level; i++) {
                     path.append(rolls[i] < 0.5 ? "&e>" : "&b<");
                 }
-                online.sendActionBar(Text.c("&7Cae la bolita &8" + path + " &7(" + level + "/" + rows + ")"));
+                online.sendActionBar(Text.c("&7The ball falls &8" + path + " &7(" + level + "/" + rows + ")"));
                 if (elapsed % 3 == 0) {
                     online.playSound(online.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 0.4f,
                             0.9f + level * 0.05f);
@@ -90,9 +90,9 @@ public final class PlinkoGame extends AbstractSoloGame {
                 announceResult(online, payout > wager.amount(),
                         "&fCubo " + finalBucket + " &8· &a" + Text.multiplier(multiplier));
                 info(online, title());
-                info(online, "&7La bolita cayo en el cubo &f" + finalBucket + "&7/&f" + rows
+                info(online, "&7The ball landed in bucket &f" + finalBucket + "&7/&f" + rows
                         + " y pago &f" + Text.multiplier(multiplier));
-                info(online, "&7Probabilidad de ese cubo: &f"
+                info(online, "&7Chance of that bucket: &f"
                         + Text.percent(PlinkoTable.bucketChance(rows, finalBucket)));
                 showResult(online, wager.amount(), payout);
                 sound(online, payout > wager.amount() ? Sound.ENTITY_PLAYER_LEVELUP : Sound.ENTITY_VILLAGER_NO,
@@ -103,7 +103,7 @@ public final class PlinkoGame extends AbstractSoloGame {
         animation.run();
     }
 
-    /** Cuenta los rebotes a la derecha: ese es el cubo final. */
+    /** Counts the bounces to the right: that is the final bucket. */
     private static int bucketFor(double[] rolls) {
         int bucket = 0;
         for (double roll : rolls) {
@@ -114,14 +114,14 @@ public final class PlinkoGame extends AbstractSoloGame {
         return bucket;
     }
 
-    private static final class PlinkoGui extends Gui {
+    private final class PlinkoGui extends Gui {
 
         private final PlinkoGame game;
         private final Wager wager;
         private boolean armed;
 
         PlinkoGui(MultiverseGamblingPlugin plugin, Player player, PlinkoGame game, Wager wager) {
-            super(plugin, player, 5, "&8Plinko &7· &6Suelta la bolita");
+            super(plugin, player, 5, "&8" + displayName(player) + " &7· &6Drop the ball");
             this.game = game;
             this.wager = wager;
         }
@@ -134,18 +134,18 @@ public final class PlinkoGame extends AbstractSoloGame {
             int rows = game.rows();
             double[] table = game.table();
             set(4, Items.of(Material.SNOWBALL)
-                    .name("&6Tabla de &f" + rows + " &6filas")
+                    .name("&6Table of &f" + rows + " &6rows")
                     .lore(
-                            "&7Apuesta: &f" + plugin.economy().format(wager.amount()),
+                            "&7Bet: &f" + plugin.economy().format(wager.amount()),
                             "&7Cubos: &f" + (rows + 1),
-                            "&7Los bordes son rarisimos y pagan de sobra;",
-                            "&7el centro sale casi siempre y paga poco.",
-                            "&7Retorno teorico: &f"
+                            "&7The edges are very rare and pay a lot;",
+                            "&7the middle comes up almost always and pays little.",
+                            "&7Theoretical return: &f"
                                     + Text.percent(PlinkoTable.rtp(table, rows, 0)) + "&7.")
                     .glow(true)
                     .build());
 
-            // Los 9 cubos mas representativos, centrados.
+            // The 9 most representative buckets, centred.
             int shown = Math.min(9, rows + 1);
             int offset = (rows + 1 - shown) / 2;
             for (int i = 0; i < shown; i++) {
@@ -159,10 +159,10 @@ public final class PlinkoGame extends AbstractSoloGame {
             }
 
             set(40, Items.of(Material.EMERALD_BLOCK)
-                    .name("&a&lSOLTAR BOLITA")
-                    .lore("&7Apuestas &6" + plugin.economy().format(wager.amount()),
-                            "&7y la bolita cae sola.", "",
-                            "&ePulsa para soltar")
+                    .name("&a&lDROP THE BALL")
+                    .lore("&7You stake &6" + plugin.economy().format(wager.amount()),
+                            "&7and the ball falls on its own.", "",
+                            "&eClick to drop")
                     .glow(true)
                     .build(), e -> {
                 armed = true;
@@ -172,7 +172,7 @@ public final class PlinkoGame extends AbstractSoloGame {
 
             set(36, Items.of(Material.BARRIER)
                     .name("&cCancelar")
-                    .lore("&7Recuperas tu apuesta.")
+                    .lore("&7You get your stake back.")
                     .build(), e -> close());
         }
 
