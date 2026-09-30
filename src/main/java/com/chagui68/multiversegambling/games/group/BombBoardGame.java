@@ -4,10 +4,14 @@ import com.chagui68.multiversegambling.MultiverseGamblingPlugin;
 import com.chagui68.multiversegambling.engine.Rng;
 import com.chagui68.multiversegambling.fair.FairnessService;
 import com.chagui68.multiversegambling.game.AbstractGroupGame;
+import com.chagui68.multiversegambling.game.BoardGame;
 import com.chagui68.multiversegambling.game.GameCategory;
 import com.chagui68.multiversegambling.game.GameMeta;
 import com.chagui68.multiversegambling.gui.Gui;
 import com.chagui68.multiversegambling.util.Items;
+import com.chagui68.multiversegambling.world.anim.ArenaStage;
+import com.chagui68.multiversegambling.world.board.ArenaBoard;
+import com.chagui68.multiversegambling.world.board.BoardGrid;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -17,6 +21,7 @@ import java.util.UUID;
 
 import org.bukkit.Material;
 import org.bukkit.Sound;
+import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
@@ -28,7 +33,7 @@ import org.bukkit.inventory.ItemStack;
  * the provably fair mix of the casino, so the position of each one is
  * reproducible a posteriori.</p>
  */
-public final class BombBoardGame extends AbstractGroupGame {
+public final class BombBoardGame extends AbstractGroupGame implements BoardGame {
 
     private final Set<Integer> bombs = new LinkedHashSet<>();
     private final Set<Integer> revealed = new LinkedHashSet<>();
@@ -37,6 +42,8 @@ public final class BombBoardGame extends AbstractGroupGame {
     private int turnIndex;
     private int turnTicks;
     private BombBoardGui board;
+    /** Board of the round painted on the arena blocks, or null when it uses the menus. */
+    private BombBoardArena arena;
     private boolean counting;
 
     public BombBoardGame(MultiverseGamblingPlugin plugin) {
@@ -54,6 +61,21 @@ public final class BombBoardGame extends AbstractGroupGame {
 
     private int bombCount() {
         return Math.max(1, Math.min(size() - 1, plugin.config().bombBoardBombs()));
+    }
+
+    @Override
+    public BoardGrid boardGrid() {
+        return BoardGrid.centered(9, (int) Math.ceil(size() / 9.0));
+    }
+
+    @Override
+    public int boardCells() {
+        return size();
+    }
+
+    @Override
+    public Material boardTile() {
+        return Material.GRAY_CONCRETE;
     }
 
     private UUID current() {
@@ -95,6 +117,33 @@ public final class BombBoardGame extends AbstractGroupGame {
                 "pot", plugin.economy().format(pot.total()),
                 "tiles", size(), "bombs", bombCount());
         broadcastPlain("group.bomb-board.playing", "players", order.size());
+        arena = openArena();
+    }
+
+    /**
+     * The board painted on the arena blocks, or {@code null} when the round is played
+     * with the menus. Without {@code world.animations.teleport-players} the blocks are
+     * only used when the room is already standing in the arena.
+     */
+    private BombBoardArena openArena() {
+        ArenaStage stage = gatherArena();
+        if (stage == null || (!plugin.config().worldAnimationsTeleport() && !anyoneAtArena(stage))) {
+            return null;
+        }
+        BombBoardArena candidate = new BombBoardArena(stage);
+        return candidate.open() ? candidate : null;
+    }
+
+    private boolean anyoneAtArena(ArenaStage stage) {
+        for (UUID id : pot.participants()) {
+            Player player = online(id);
+            if (player != null && player.getWorld() == stage.world()
+                    && stage.arena().contains(player.getLocation().getBlockX(),
+                    player.getLocation().getBlockZ())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
@@ -157,6 +206,10 @@ public final class BombBoardGame extends AbstractGroupGame {
         }
         Player player = online(currentId);
         if (player == null) {
+            return;
+        }
+        if (arena != null) {
+            arena.beginTurn(player);
             return;
         }
         if (board != null) {
@@ -232,6 +285,11 @@ public final class BombBoardGame extends AbstractGroupGame {
             board.close();
             board = null;
         }
+        if (arena != null) {
+            // Last frame: the bombs are shown and the board is left standing a moment.
+            arena.finish();
+            arena = null;
+        }
         if (alive.isEmpty()) {
             broadcastPlain("group.bomb-board.no-survivors");
             pot.burn();
@@ -276,6 +334,11 @@ public final class BombBoardGame extends AbstractGroupGame {
         }
         if (alive.size() <= 1 && !alive.isEmpty()) {
             settle();
+            return;
+        }
+        if (arena != null) {
+            // The turn may have fallen on somebody else: pass it on.
+            openBoard();
         }
     }
 
@@ -284,6 +347,10 @@ public final class BombBoardGame extends AbstractGroupGame {
         if (board != null) {
             board.close();
             board = null;
+        }
+        if (arena != null) {
+            arena.close();
+            arena = null;
         }
         bombs.clear();
         revealed.clear();
@@ -356,6 +423,113 @@ public final class BombBoardGame extends AbstractGroupGame {
         @Override
         public String sessionId() {
             return "tablero-bombs";
+        }
+    }
+
+    /**
+     * The shared board painted on the arena: one tile per cell, the revealed safe
+     * tiles in green and the bombs in red, with the turn passing from player to
+     * player and the current one standing on the board.
+     */
+    private final class BombBoardArena extends ArenaBoard {
+
+        BombBoardArena(ArenaStage stage) {
+            super(plugin, "bomb-board", stage, boardGrid());
+        }
+
+        @Override
+        public boolean accepts(Player player) {
+            UUID turn = current();
+            return live() && turn != null && player.getUniqueId().equals(turn);
+        }
+
+        @Override
+        public void click(Player player, Block block, int cell) {
+            if (cell >= 0 && cell < size()) {
+                reveal(player.getUniqueId(), cell);
+                return;
+            }
+            hint(player);
+        }
+
+        @Override
+        public void hint(Player player) {
+            if (!live()) {
+                actionBarKey(player, "board.finished");
+                return;
+            }
+            if (counting) {
+                actionBarKey(player, "board.starting");
+                return;
+            }
+            UUID turn = current();
+            if (turn == null || player.getUniqueId().equals(turn)) {
+                actionBarKey(player, "group.bomb-board.turn-hint", "bombs", bombCount());
+            } else {
+                actionBarKey(player, "board.other-turn", "player", playerName(turn));
+            }
+        }
+
+        @Override
+        protected void onOpen() {
+            paint();
+        }
+
+        @Override
+        protected void onClose() {
+            arena = null;
+        }
+
+        /**
+         * Passes the turn: repaints and takes the player to the board, where every
+         * tile is within reach.
+         */
+        void beginTurn(Player player) {
+            paint();
+            bring(player);
+            player.sendMessage(plugin.messages().componentPlainFor(player,
+                    "group.bomb-board.turn-hint", "bombs", bombCount()));
+            soundAll(Sound.BLOCK_ANVIL_LAND, 0.6f, 1.2f);
+        }
+
+        /**
+         * Final frame: every bomb is shown and the board is left standing a moment.
+         */
+        void finish() {
+            paintFinal();
+            linger();
+        }
+
+        /**
+         * Paints the board as it stands: hidden tiles in grey and the revealed ones
+         * green or, when a bomb went off there, red.
+         */
+        void paint() {
+            for (int cell = 0; cell < size(); cell++) {
+                Material material = boardTile();
+                if (revealed.contains(cell)) {
+                    material = bombs.contains(cell) ? Material.TNT : Material.EMERALD_BLOCK;
+                }
+                paintCell(cell, material);
+            }
+            paintFiller();
+        }
+
+        private void paintFinal() {
+            for (int cell = 0; cell < size(); cell++) {
+                paintCell(cell, bombs.contains(cell) ? Material.TNT : Material.EMERALD_BLOCK);
+            }
+            paintFiller();
+        }
+
+        private void paintFiller() {
+            for (int cell = size(); cell < grid().cellCount(); cell++) {
+                paintCell(cell, boardFiller());
+            }
+        }
+
+        private boolean live() {
+            return phase == Phase.IN_GAME && !counting;
         }
     }
 }

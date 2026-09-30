@@ -45,7 +45,7 @@ casino** y **traducción dentro del juego** al inglés o al español.
 
 ```
 /mvgam                      → menú principal (pestañas solo / grupo)
-/mvgam play roulette        → jugar por id o por nombre
+/mvgam play roulette        → jugar por su id exacto
 /mvgam world                → viajar al mundo casino
 /mvgam language es          → leer todo en español desde ahora
 /mvgam verify               → auditar la justicia de cada tirada

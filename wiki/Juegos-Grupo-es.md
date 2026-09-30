@@ -3,7 +3,8 @@
 [English](Games-Group) · **Español**
 
 Nueve juegos con **rondas automáticas**. Nadie tiene que iniciar nada: un jugador entra con
-`/mvgam play <juego>`, apuesta durante la ventana y la ronda se juega sola. Cuando termina, la
+`/mvgam play <id>` (o pulsando el tablero de bombas en su arena), apuesta durante la ventana
+y la ronda se juega sola. Cuando termina, la
 siguiente ventana de apuestas se abre por su cuenta para quien quiera entrar otra vez.
 
 El ciclo compartido es: **esperando jugadores → ventana de apuestas → en juego → reparto**.

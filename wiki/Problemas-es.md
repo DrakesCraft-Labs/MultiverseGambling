@@ -17,7 +17,7 @@ Mira la consola. Las causas habituales:
 | `refuses to build in the main world` | `world.name` apunta a tu mundo de supervivencia: cámbialo |
 | `could not be created` | La carpeta no tiene permisos de escritura, o ya hay un mundo con ese nombre cargado con otros ajustes |
 
-Si solo querías los juegos, desactiva el mundo (`world.enabled: false`): `/mvgam play <juego>`
+Si solo querías los juegos, desactiva el mundo (`world.enabled: false`): `/mvgam play <id>`
 sigue funcionando desde cualquier sitio.
 
 ## Un juego dice que está desactivado

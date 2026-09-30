@@ -6,6 +6,7 @@ import com.chagui68.multiversegambling.util.Text;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -32,33 +33,14 @@ public final class GameRegistry {
         }
     }
 
-    public Optional<Game> byId(String id) {
-        return Optional.ofNullable(games.get(id));
-    }
-
     /**
-     * Looks a game up by id or by name, ignoring case and spaces. The translated name
-     * counts too, so {@code /mvgam play ruleta} works on a Spanish server.
+     * Looks a game up by its exact id, ignoring case. Display names, translated names and
+     * partial ids are deliberately rejected: {@code /mvgam play} only answers to the
+     * stable id shown by {@code /mvgam games}.
      */
-    public Optional<Game> search(String query) {
-        if (query == null) {
-            return Optional.empty();
-        }
-        String needle = query.toLowerCase().replace(' ', '_');
-        Game direct = games.get(needle);
-        if (direct != null) {
-            return Optional.of(direct);
-        }
-        return games.values().stream()
-                .filter(game -> matches(game, needle))
-                .findFirst();
-    }
-
-    private boolean matches(Game game, String needle) {
-        String localized = plugin.messages().getOr("catalog." + game.id() + ".name", game.name());
-        return Text.strip(localized).toLowerCase().replace(' ', '_').contains(needle)
-                || Text.strip(game.name()).toLowerCase().replace(' ', '_').contains(needle)
-                || game.id().contains(needle);
+    public Optional<Game> byId(String id) {
+        return id == null ? Optional.empty()
+                : Optional.ofNullable(games.get(id.toLowerCase(Locale.ROOT)));
     }
 
     public List<Game> all() {

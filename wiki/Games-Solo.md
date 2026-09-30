@@ -4,7 +4,8 @@
 
 Twelve games against the house. All of them open from `/mvgam`, from `/mvgam play <id>`, or
 from the solo tab of the main menu, and all of them share the same bet selector and the same
-"play again" button.
+"play again" button. Mines, towers and the scratch card are also played on the blocks of
+their arena: clicking the board opens the game and the tiles are the input.
 
 | Game | Id | Rules | Pays | Return |
 |---|---|---|---|---|

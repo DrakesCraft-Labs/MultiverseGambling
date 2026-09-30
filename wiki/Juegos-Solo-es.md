@@ -4,7 +4,8 @@
 
 Doce juegos contra la casa. Todos se abren desde `/mvgam`, desde `/mvgam play <id>` o desde
 la pestaña de solitario del menú, y todos comparten el mismo selector de apuesta y el mismo
-botón de "jugar otra vez".
+botón de "jugar otra vez". Minas, torres y rasca y gana también se juegan en los bloques de
+su arena: pulsar el tablero abre el juego y las casillas son la entrada.
 
 | Juego | Id | Reglas | Paga | Retorno |
 |---|---|---|---|---|

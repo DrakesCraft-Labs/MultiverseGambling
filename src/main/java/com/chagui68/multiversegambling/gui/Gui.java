@@ -30,6 +30,7 @@ public abstract class Gui implements InventoryHolder, SoloSession {
     private final Map<Integer, Consumer<InventoryClickEvent>> actions = new HashMap<>();
     private boolean opened;
     private boolean swapping;
+    private boolean headless;
 
     protected Gui(MultiverseGamblingPlugin plugin, Player player, int rows, String title) {
         this.plugin = plugin;
@@ -113,23 +114,42 @@ public abstract class Gui implements InventoryHolder, SoloSession {
     // ------------------------------------------------------------------ apertura
 
     public final void show() {
-        if (!player.isOnline()) {
-            return;
-        }
-        render();
-        opened = true;
-        plugin.sessions().track(this);
-        player.openInventory(inventory);
+        show(false);
     }
 
     /**
-     * Redraws and reopens the menu, keeping the running action alive.
+     * Registers the round without opening the menu: the game is painted on the blocks
+     * of its arena and those clicks are the input. Everything else (ticks, refresh,
+     * closing by hand or by the plug-in) works exactly like a normal menu.
+     */
+    public final void showOnArena() {
+        show(true);
+    }
+
+    private void show(boolean onArena) {
+        if (!player.isOnline()) {
+            return;
+        }
+        headless = onArena;
+        render();
+        opened = true;
+        plugin.sessions().track(this);
+        if (!onArena) {
+            player.openInventory(inventory);
+        }
+    }
+
+    /**
+     * Redraws, and reopens the menu when the round is not being played on an arena.
      */
     public final void refresh() {
         if (!opened || !player.isOnline()) {
             return;
         }
         render();
+        if (headless) {
+            return;
+        }
         swapping = true;
         try {
             player.openInventory(inventory);

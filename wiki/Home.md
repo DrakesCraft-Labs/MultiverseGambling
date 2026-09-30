@@ -45,7 +45,7 @@ world** and **in-game translation** into English or Spanish.
 
 ```
 /mvgam                      → main menu (solo / group tabs)
-/mvgam play roulette        → play a game by id or by name
+/mvgam play roulette        → play a game by its exact id
 /mvgam world                → travel to the casino world
 /mvgam language es          → read everything in Spanish from now on
 /mvgam verify               → audit the fairness of every roll

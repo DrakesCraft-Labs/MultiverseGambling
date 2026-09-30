@@ -18,7 +18,7 @@ Look at the console. The usual causes are:
 | `could not be created` | The folder is not writable, or a world by that name is already loaded with other settings |
 
 If you only wanted the games, disable the world entirely (`world.enabled: false`): `/mvgam
-play <game>` keeps working from anywhere.
+play <id>` keeps working from anywhere.
 
 ## A game says it is disabled
 

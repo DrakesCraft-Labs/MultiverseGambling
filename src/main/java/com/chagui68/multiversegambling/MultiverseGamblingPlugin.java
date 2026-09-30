@@ -31,11 +31,13 @@ import com.chagui68.multiversegambling.games.solo.TowersGame;
 import com.chagui68.multiversegambling.gui.GuiListener;
 import com.chagui68.multiversegambling.gui.GuiManager;
 import com.chagui68.multiversegambling.i18n.LanguageStore;
+import com.chagui68.multiversegambling.listener.BoardListener;
 import com.chagui68.multiversegambling.listener.PlayerListener;
 import com.chagui68.multiversegambling.session.SessionManager;
 import com.chagui68.multiversegambling.stats.StatsStore;
 import com.chagui68.multiversegambling.world.CasinoWorldManager;
 import com.chagui68.multiversegambling.world.anim.ArenaShow;
+import com.chagui68.multiversegambling.world.board.ArenaBoard;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
@@ -84,6 +86,7 @@ public final class MultiverseGamblingPlugin extends JavaPlugin {
 
         getServer().getPluginManager().registerEvents(new GuiListener(this), this);
         getServer().getPluginManager().registerEvents(new PlayerListener(this), this);
+        getServer().getPluginManager().registerEvents(new BoardListener(this), this);
 
         MultiverseGamblingCommand command = new MultiverseGamblingCommand(this);
         PluginCommand pluginCommand = getCommand("mvgam");
@@ -116,8 +119,10 @@ public final class MultiverseGamblingPlugin extends JavaPlugin {
             sessions.shutdown();
         }
         // Shows whose scenery was waiting to be taken down would lose their delayed
-        // cleanup with the scheduler, so they are cleared here instead.
+        // cleanup with the scheduler, so they are cleared here instead. Boards left on
+        // an arena are put back the same way.
         ArenaShow.clearAll();
+        ArenaBoard.clearAll();
         if (autosave != null) {
             autosave.cancel();
         }

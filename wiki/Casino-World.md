@@ -86,10 +86,26 @@ entities behind (the plug-in clears any show still standing on shutdown). Menus 
 used for everything that is a decision rather than a result (betting, picking a spot,
 cashing out).
 
-Four games deliberately keep only their menu, because their round is a **sequence of
-picks** rather than a result to watch: mines, towers, scratch cards and the group bomb
-board. Playing those in the world would mean clicking blocks in the arena, a different
-feature. Blackjack and high low stay in their card menus for the same reason.
+## Playing on the blocks
+
+Four games do not show a result: their round is a **sequence of picks**, so they are played
+on the blocks of their arena. Clicking any block of those four arenas opens the game (the
+bet selector, or the waiting room of the bomb board) and from then on the tiles are the
+input, exactly like the menu buttons they replace.
+
+| Game | Board | Playing it |
+|---|---|---|
+| **Mines** | A 5x5 grid of tiles, a cashier and a red and a green block to choose the mine count | Click tiles to reveal them; the gold block cashes out |
+| **Towers** | One row of tiles per floor, the floors already climbed turning green | Click a tile of the lit floor; the gold block cashes out |
+| **Scratch card** | A 3x3 card | Three clicks scratch three tiles |
+| **Bomb board** (group) | The shared 9x4 board | The turn passes player to player and the current one is stood on the board |
+
+The resting board is part of the world build: run `/mvgam world build` once after updating
+so every arena shows its board. Every round puts its tiles back into the exact block data
+they had, so a board never keeps the leftovers of a finished game. The mine count, the bet and everything else that is a decision are still
+menus; the same `world.animations` switches drive the boards, and with `enabled: false`
+the four games go back to their menus. Blackjack and high low stay in their card menus:
+their round is not a board either.
 
 ```yaml
 world:
@@ -101,7 +117,7 @@ world:
 
 | Key | Notes |
 |---|---|
-| `enabled` | With `false` every game keeps its classic action bar animation |
+| `enabled` | With `false` every game keeps its classic action bar animation and the four block boards fall back to their menus |
 | `teleport-players` | With `false` only players already in the casino world get a show; solo games gather one watcher in front of the table, group games spread the room in a circle round it |
 | `view-distance` | How far from the middle the spectator stands, looking down at the table |
 
@@ -133,4 +149,4 @@ world:
 ```
 
 Nothing is created or modified, and `/mvgam world` just tells players the world is disabled
-while `/mvgam play <game>` keeps working from anywhere.
+while `/mvgam play <id>` keeps working from anywhere.

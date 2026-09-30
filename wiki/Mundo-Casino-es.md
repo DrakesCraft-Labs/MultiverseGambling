@@ -88,11 +88,28 @@ entidades flotando (el plugin limpia al apagarse cualquier animación que siga e
 menús siguen usándose para todo lo que es una decisión y no un resultado (apostar, elegir
 casilla, retirarse).
 
-Cuatro juegos conservan solo su menú a propósito, porque su ronda es una **secuencia de
-elecciones** y no un resultado que mirar: minas, torres, rasca y gana y el tablero de
-bombas en grupo. Jugarlos en el mundo significaría hacer clic en bloques de la arena, que
-es otra función. El blackjack y el alto-bajo se quedan en sus menús de cartas por el mismo
-motivo.
+## Jugar sobre los bloques
+
+Cuatro juegos no muestran un resultado: su ronda es una **secuencia de elecciones**, así
+que se juegan en los bloques de su arena. Pulsar cualquier bloque de esas cuatro arenas
+abre el juego (el selector de apuesta, o la sala de espera del tablero de bombas) y a
+partir de ahí las casillas son la entrada, igual que los botones del menú a los que
+sustituyen.
+
+| Juego | Tablero | Cómo se juega |
+|---|---|---|
+| **Minas** | Una rejilla de 5x5, un cajero y un bloque rojo y otro verde para elegir cuántas minas hay | Pulsa casillas para destaparlas; el bloque dorado cobra |
+| **Torres** | Una fila de casillas por piso, con los pisos ya subidos en verde | Pulsa una casilla del piso encendido; el bloque dorado cobra |
+| **Rasca y Gana** | Una tarjeta de 3x3 | Tres clics rascan tres casillas |
+| **Tablero de Bombas** (grupo) | El tablero compartido de 9x4 | El turno pasa de jugador en jugador y al que le toca se le coloca sobre el tablero |
+
+El tablero en reposo forma parte de la construcción del mundo: ejecuta `/mvgam world build`
+una vez tras actualizar para que cada arena muestre su tablero. Cada ronda devuelve sus
+casillas exactamente a los datos de bloque que tenían, así que un tablero nunca guarda
+restos de una partida. El número de minas, la apuesta y todo lo demás
+que es una decisión siguen siendo menús; los mismos interruptores de `world.animations`
+gobiernan los tableros, y con `enabled: false` los cuatro juegos vuelven a sus menús. El
+blackjack y el alto-bajo se quedan en sus menús de cartas: su ronda tampoco es un tablero.
 
 ```yaml
 world:
@@ -104,7 +121,7 @@ world:
 
 | Clave | Notas |
 |---|---|
-| `enabled` | Con `false` cada juego conserva su animación clásica en la barra de acción |
+| `enabled` | Con `false` cada juego conserva su animación clásica en la barra de acción y los cuatro tableros vuelven a sus menús |
 | `teleport-players` | Con `false` solo ven la animación quienes ya estén en el mundo casino; los juegos individuales colocan a un espectador frente a la mesa y los de grupo reparten la sala en círculo alrededor |
 | `view-distance` | A cuántos bloques del centro se coloca el espectador, mirando hacia la mesa |
 
@@ -134,4 +151,4 @@ world:
 ```
 
 No se crea ni se modifica nada, y `/mvgam world` solo avisa de que el mundo está desactivado
-mientras `/mvgam play <juego>` sigue funcionando desde cualquier sitio.
+mientras `/mvgam play <id>` sigue funcionando desde cualquier sitio.

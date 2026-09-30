@@ -4,19 +4,25 @@ import com.chagui68.multiversegambling.MultiverseGamblingPlugin;
 import com.chagui68.multiversegambling.engine.MinesTable;
 import com.chagui68.multiversegambling.economy.Wager;
 import com.chagui68.multiversegambling.game.AbstractSoloGame;
+import com.chagui68.multiversegambling.game.BoardGame;
 import com.chagui68.multiversegambling.game.GameCategory;
 import com.chagui68.multiversegambling.game.GameMeta;
 import com.chagui68.multiversegambling.gui.Gui;
 import com.chagui68.multiversegambling.util.Items;
 import com.chagui68.multiversegambling.util.Text;
+import com.chagui68.multiversegambling.world.anim.ArenaStage;
+import com.chagui68.multiversegambling.world.board.ArenaBoard;
+import com.chagui68.multiversegambling.world.board.BoardGrid;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 import org.bukkit.Material;
 import org.bukkit.Sound;
+import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 
 /**
@@ -26,7 +32,7 @@ import org.bukkit.entity.Player;
  * inverse of the chance of surviving, so no number of mines is better than another
  * for the player.</p>
  */
-public final class MinesGame extends AbstractSoloGame {
+public final class MinesGame extends AbstractSoloGame implements BoardGame {
 
     public MinesGame(MultiverseGamblingPlugin plugin) {
         super(plugin, GameMeta.builder("mines", "Mines", GameCategory.SOLO, Material.STONE_BUTTON)
@@ -53,13 +59,41 @@ public final class MinesGame extends AbstractSoloGame {
     }
 
     @Override
+    public BoardGrid boardGrid() {
+        int columns = Math.min(5, tiles());
+        return BoardGrid.centered(columns, (int) Math.ceil(tiles() / (double) columns));
+    }
+
+    @Override
+    public int boardCells() {
+        return tiles();
+    }
+
+    @Override
+    public Material boardTile() {
+        return Material.LIGHT_GRAY_CONCRETE;
+    }
+
+    @Override
     protected void start(Player player, double bet) {
         Wager wager = stake(player, bet);
         if (wager == null) {
             return;
         }
-        new MinesGui(plugin, player, this, wager,
-                Math.min(maxMines(), Math.max(minMines(), plugin.config().minesDefaultMines()))).show();
+        MinesGui gui = new MinesGui(plugin, player, this, wager,
+                Math.min(maxMines(), Math.max(minMines(), plugin.config().minesDefaultMines())));
+        ArenaStage stage = boardStageFor(player);
+        if (stage != null) {
+            MinesBoard board = new MinesBoard(gui, stage);
+            gui.attach(board);
+            if (board.open()) {
+                board.bring(player);
+                gui.showOnArena();
+                return;
+            }
+            gui.attach(null);
+        }
+        gui.show();
     }
 
     private final class MinesGui extends Gui {
@@ -68,6 +102,8 @@ public final class MinesGame extends AbstractSoloGame {
         private final Wager wager;
         private final Set<Integer> mines = new LinkedHashSet<>();
         private final Set<Integer> revealed = new LinkedHashSet<>();
+        /** Arena board the round is painted on, or null when it uses this menu. */
+        private MinesBoard board;
         private int minesCount;
         private boolean placed;
         private boolean resolved;
@@ -116,6 +152,10 @@ public final class MinesGame extends AbstractSoloGame {
 
         @Override
         protected void render() {
+            if (board != null) {
+                board.paint();
+                return;
+            }
             clearActions();
             fill(Items.of(Material.GRAY_STAINED_GLASS_PANE).name(" ").build());
 
@@ -212,12 +252,58 @@ public final class MinesGame extends AbstractSoloGame {
                     .build(), e -> close());
         }
 
+        /**
+         * Hands the round over to the arena board, or takes it back when the board
+         * could not be taken.
+         */
+        private void attach(MinesBoard arenaBoard) {
+            this.board = arenaBoard;
+        }
+
+        /** Player the round belongs to. */
+        private Player owner() {
+            return player();
+        }
+
+        /** Line the action bar shows while the round is being played on the board. */
+        private void boardHint() {
+            if (board == null) {
+                return;
+            }
+            if (resolved) {
+                actionBarKey(player(), "board.finished");
+            } else if (revealed.isEmpty()) {
+                actionBarKey(player(), "board.mines-count", "count", minesCount, "tiles", tiles());
+            } else {
+                actionBarKey(player(), "board.cash-out",
+                        "prize", plugin.economy().format(wager.amount() * multiplier()));
+            }
+        }
+
+        /** Closes the board view once the round is over. */
+        private void boardDone() {
+            if (board == null) {
+                return;
+            }
+            boardHint();
+            board.linger();
+        }
+
+        /** Leaving the arena ends the round like closing the menu would. */
+        @Override
+        protected void onTick() {
+            if (board != null && !resolved && board.abandoned(player())) {
+                close();
+            }
+        }
+
         private void adjustMines(int delta) {
             if (placed || resolved) {
                 return;
             }
             minesCount = Math.max(game.minMines(), Math.min(game.maxMines(), minesCount + delta));
             refresh();
+            boardHint();
         }
 
         private void reveal(int index) {
@@ -237,6 +323,7 @@ public final class MinesGame extends AbstractSoloGame {
                 game.showResult(player(), wager.amount(), payout);
                 game.sound(player(), Sound.ENTITY_GENERIC_EXPLODE, 0.9f, 0.8f);
                 game.offerReplay(player());
+                boardDone();
                 return;
             }
             revealed.add(index);
@@ -247,6 +334,7 @@ public final class MinesGame extends AbstractSoloGame {
                 return;
             }
             refresh();
+            boardHint();
         }
 
         private void cashOut() {
@@ -267,10 +355,14 @@ public final class MinesGame extends AbstractSoloGame {
             game.showResult(player(), wager.amount(), payout);
             game.sound(player(), Sound.ENTITY_PLAYER_LEVELUP, 0.9f, 1.3f);
             game.offerReplay(player());
+            boardDone();
         }
 
         @Override
         protected void onClose() {
+            if (board != null) {
+                board.close();
+            }
             if (resolved) {
                 return;
             }
@@ -290,6 +382,115 @@ public final class MinesGame extends AbstractSoloGame {
         @Override
         public String sessionId() {
             return "mines";
+        }
+    }
+
+    /**
+     * The round painted on the arena: one tile per cell and the block on the frame
+     * south of the board as the cashier, gold whenever there is something to collect.
+     */
+    private final class MinesBoard extends ArenaBoard {
+
+        /** Blocks west and east of the cashier that raise and lower the mine count. */
+        private static final int MARKER = 2;
+
+        private final MinesGui gui;
+        private final UUID owner;
+        private final int collectDz;
+
+        MinesBoard(MinesGui gui, ArenaStage stage) {
+            super(plugin, "mines", stage, boardGrid());
+            this.gui = gui;
+            this.owner = gui.owner().getUniqueId();
+            this.collectDz = grid().originZ() + grid().rows();
+        }
+
+        @Override
+        public boolean accepts(Player player) {
+            return player.getUniqueId().equals(owner);
+        }
+
+        @Override
+        public void click(Player player, Block block, int cell) {
+            if (gui.resolved) {
+                hint(player);
+                return;
+            }
+            if (cell >= 0 && cell < tiles()) {
+                gui.reveal(cell);
+                return;
+            }
+            if (isAt(block, 0, 0, collectDz)) {
+                if (gui.revealed.isEmpty()) {
+                    hint(player);
+                    return;
+                }
+                gui.cashOut();
+                return;
+            }
+            if (!gui.placed && (isAt(block, -MARKER, 0, collectDz) || isAt(block, MARKER, 0, collectDz))) {
+                gui.adjustMines(isAt(block, -MARKER, 0, collectDz) ? -1 : 1);
+                return;
+            }
+            hint(player);
+        }
+
+        @Override
+        public void hint(Player player) {
+            if (!player.getUniqueId().equals(owner)) {
+                actionBarKey(player, "board.other-player", "player", gui.owner().getName());
+            } else if (gui.resolved) {
+                actionBarKey(player, "board.finished");
+            } else if (gui.revealed.isEmpty()) {
+                actionBarKey(player, "board.mines-count", "count", gui.minesCount, "tiles", tiles());
+            } else {
+                actionBarKey(player, "board.cash-out",
+                        "prize", plugin.economy().format(gui.wager.amount() * gui.multiplier()));
+            }
+        }
+
+        @Override
+        protected void onOpen() {
+            paint();
+            gui.boardHint();
+        }
+
+        @Override
+        protected void onClose() {
+            gui.close();
+        }
+
+        /**
+         * Paints the whole round: tiles, the filler of a grid the configuration does
+         * not fill, the cashier and the two blocks that choose how many mines there
+         * are, both of them only before the first reveal.
+         */
+        void paint() {
+            for (int cell = 0; cell < tiles(); cell++) {
+                paintCell(cell, cellMaterial(cell));
+            }
+            for (int cell = tiles(); cell < grid().cellCount(); cell++) {
+                paintCell(cell, boardFiller());
+            }
+            boolean choosing = !gui.placed && !gui.resolved;
+            paintAt(0, 0, collectDz, collectMaterial());
+            paintAt(-MARKER, 0, collectDz, choosing ? Material.RED_CONCRETE : Material.POLISHED_BLACKSTONE);
+            paintAt(MARKER, 0, collectDz, choosing ? Material.LIME_CONCRETE : Material.POLISHED_BLACKSTONE);
+        }
+
+        private Material cellMaterial(int cell) {
+            if (gui.revealed.contains(cell)) {
+                return Material.EMERALD_BLOCK;
+            }
+            if (gui.resolved && gui.mines.contains(cell)) {
+                return Material.TNT;
+            }
+            return boardTile();
+        }
+
+        private Material collectMaterial() {
+            return !gui.resolved && !gui.revealed.isEmpty()
+                    ? Material.GOLD_BLOCK : Material.POLISHED_BLACKSTONE;
         }
     }
 }

@@ -152,15 +152,30 @@ their own arena instead of just counting numbers in the action bar:
 Every one of them is **only paint**: the result is drawn by the provably fair generator
 before the show starts, so what the arena shows and what the wallet pays always match.
 
-Mines, towers, scratch cards and the bomb board keep their menus on purpose: the round is
-a sequence of picks, so playing them in the world means clicking blocks, which is a
-separate feature. Blackjack and high low stay in their card menus for the same reason.
+### Playing on the blocks
 
-The scenery is temporary: it appears when the round starts, stays a second after the
-result so there is time to see it, and is taken down afterwards, so an arena always goes
-back to its plain platform even if the player disconnects or the server is stopped mid
-spin. Menus are still there for what is not a result (betting, picking a spot, cashing
-out), and anyone playing with the world disabled keeps the classic action bar.
+Four games do not show a result but a **sequence of picks**, so they are played on the
+blocks of their arena instead: click any block of their arenas to open the game, and from
+then on the tiles themselves are the input.
+
+| Game | Board | Playing it |
+|---|---|---|
+| **Mines** | A 5x5 grid of tiles, a cashier and two blocks to choose the number of mines | Click tiles to reveal them; the gold block cashes out |
+| **Towers** | One row of tiles per floor, the floors already climbed turning green | Click a tile of the lit floor; the gold block cashes out |
+| **Scratch card** | A 3x3 card | Three clicks scratch three tiles |
+| **Bomb board** (group) | The shared 9x4 board | The turn passes player to player and the current one stands on the board |
+
+The boards are part of the world build: run `/mvgam world build` once after updating so
+every arena shows its resting board. Every round puts its tiles back as they were, and
+the same `world.animations` switches drive them: with `enabled: false` the four games go
+back to their menus. Blackjack and high low stay in
+their card menus for the same reason: their round is not a board.
+
+The scenery of the shows is temporary: it appears when the round starts, stays a second
+after the result so there is time to see it, and is taken down afterwards, so an arena
+always goes back to its plain platform even if the player disconnects or the server is
+stopped mid spin. Menus are still there for what is not a result or a pick (betting,
+choosing a spot), and anyone playing with the world disabled keeps the classic action bar.
 
 ```yaml
 world:
@@ -174,7 +189,8 @@ Notes worth knowing:
 
 - The **geometry is a pure class** (`CasinoLayout`) with no Bukkit, so it is unit tested:
   the suite checks that 21 games fit in 500 blocks, that no two arenas overlap, that
-  nothing covers spawn and that the entrance of every arena faces the plaza.
+  nothing covers spawn and that the entrance of every arena faces the plaza. The boards
+  use the same idea: `BoardGrid` maps a click on a block to the cell of a round.
 - If `world.size` is too small for the grid, the plugin **grows the world** in steps of 50
   blocks (up to 2000) instead of failing to build.
 - Point `world.name` at an existing world to reuse it, or set `enabled: false` and build
@@ -270,8 +286,9 @@ round plays itself and the next one starts without anybody typing a command.
 | **Raffle** | `raffle` | Tickets at a fixed price and a draw of **three prizes**: 70%, 20% and 10% of the pot. | 2-24 |
 | **Dice Poker** | `dice-poker` | Five dice each; the best hand wins. Ties split the pot. | 2-16 |
 
-Game ids are stable and also accept the localised name, so `/mvgam play ruleta` works on a
-Spanish server and `/mvgam play roulette` on an English one.
+Game ids are stable and `/mvgam play` takes exactly that id, never a name or a partial
+match: `/mvgam play lucky-wheel` works, `/mvgam play lucky` does not. Tab completion lists
+the ids.
 
 ---
 
@@ -326,7 +343,7 @@ bomb round or a horse race can be audited from start to finish.
 |---|---|
 | `/mvgam` | Opens the main menu with the two tabs |
 | `/mvgam games [solo\|group]` | Lists the catalogue with its betting limits |
-| `/mvgam play <game>` | Plays a game by id or by name |
+| `/mvgam play <id>` | Plays a game by its exact id |
 | `/mvgam action <action>` | Entry point for the **chat buttons** (shoot, horse 3, accept...) |
 | `/mvgam balance [player]` | Shows the balance |
 | `/mvgam stats [player]` | Statistics: games, real return, favourite game |

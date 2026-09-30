@@ -3,7 +3,8 @@
 **English** · [Español](Juegos-Grupo-es)
 
 Nine games with **automatic rounds**. Nobody has to start anything: a player joins with
-`/mvgam play <game>`, bets during the window, and the round plays itself. When it ends the
+`/mvgam play <id>` (or by clicking the bomb board in its arena), bets during the window,
+and the round plays itself. When it ends the
 next betting window opens on its own for whoever wants to join again.
 
 The shared round cycle is: **waiting for players → betting window → in game → payout**.

@@ -17,7 +17,7 @@ the casino world `mvgam_casino`.
 | `/mvgam` | Opens the main menu: a solo tab and a group tab |
 | `/mvgam menu` | Same as above |
 | `/mvgam games [solo\|group]` | Lists the catalogue with the betting limits of each game |
-| `/mvgam play <game>` | Plays a game by id or by name (`roulette`, `ruleta`, `slots`...) |
+| `/mvgam play <id>` | Plays a game by its exact id (`roulette`, `slots`, `lucky-wheel`...) |
 | `/mvgam action <action>` | Entry point of the **chat buttons** (`shoot`, `reveal`, `horse 3`, `accept`, `decline`) |
 
 Inside a game, every action has its own menu: the bet selector lets you halve, double or
@@ -92,9 +92,12 @@ only one way to write each command:
 
 ```
 /mvgam play crash            → open crash and pick your bet
-/mvgam play horse-race       → join the next race round
+/mvgam play race             → join the next race round
 /mvgam action shoot          → used by the russian roulette button
 /mvgam top prize             → ranking of biggest wins
 /mvgam language es           → everything you read is now Spanish
 /mvgam world build           → rebuild the casino world from scratch
 ```
+
+`play` only accepts the exact ids listed by `/mvgam games`: the horse race id is `race`, not
+`horse-race`.

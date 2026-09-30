@@ -244,11 +244,21 @@ world:
 command:
   players-only: '&cThis command is meant to be used in game.'
   unknown: '&cUnknown subcommand: &f{subcommand}&c. Try &f/mvgam menu&c.'
-  play-help: '&7Play any game with &f/mvgam play <game>&7.'
-  unknown-game: '&cThere is no game called &f{game}&c.'
+  play-help: '&7Play any game with &f/mvgam play <id>&7.'
+  unknown-game: '&cThere is no game with the id &f{game}&c. Use &f/mvgam games &cto list the ids.'
   unknown-player: '&cI cannot find the player &f{player}&c.'
   invalid-amount: '&c&f{value} &cis not a valid amount.'
   usage: '&cCorrect usage: &f{usage}'
+
+# Lines of the four games played by clicking the blocks of their arena.
+board:
+  finished: '&7Round over. Click the board to play again.'
+  mines-count: '&7Mines: &c{count}&7 of &f{tiles}&7. &aGreen &7adds and &cred &7removes; click a tile to reveal.'
+  cash-out: '&7Cashing out pays &f{prize}&7: click the &6gold block&7.'
+  floor-pick: '&7Floor &f{floor}&7/&f{levels}&7: click a tile of that row.'
+  other-player: '&cThis round belongs to &f{player}&c.'
+  starting: '&7The round is about to start...'
+  other-turn: '&7It is &f{player}&7''s turn.'
   balance: '&7Your balance is &6{balance}&7.'
   balance-other: '&7Balance of &f{player}&7 is &6{balance}&7.'
   balance-updated: '&aBalance of &f{player} &aupdated to &6{balance}&a.'

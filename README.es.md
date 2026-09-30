@@ -157,16 +157,31 @@ Todas son **solo pintura**: el resultado lo sortea el generador provablemente ju
 de que empiece la animación, así que lo que se ve en la arena y lo que paga la cartera
 siempre coinciden.
 
-Minas, torres, rasca y gana y el tablero de bombas conservan sus menús a propósito: la
-ronda es una secuencia de elecciones, así que jugarlos en el mundo significa hacer clic en
-bloques, que es una función aparte. El blackjack y el alto-bajo se quedan en sus menús de
-cartas por el mismo motivo.
+### Jugar sobre los bloques
 
-El decorado es temporal: aparece al empezar la ronda, se queda un segundo tras el
-resultado para que dé tiempo a verlo y luego se retira, así que la arena siempre vuelve a
-su plataforma limpia aunque el jugador se desconecte o el servidor se pare a mitad de
-giro. Los menús siguen ahí para lo que no es un resultado (apostar, elegir casilla,
-retirarse) y quien juegue con el mundo desactivado conserva la barra de acción de siempre.
+Cuatro juegos no muestran un resultado sino una **secuencia de elecciones**, así que se
+juegan en los bloques de su arena: pulsa cualquier bloque de sus arenas para abrir el
+juego y, a partir de ahí, las casillas son la entrada.
+
+| Juego | Tablero | Cómo se juega |
+|---|---|---|
+| **Minas** | Una rejilla de 5x5, un cajero y dos bloques para elegir cuántas minas hay | Pulsa casillas para destaparlas; el bloque dorado cobra |
+| **Torres** | Una fila de casillas por piso, con los pisos ya subidos en verde | Pulsa una casilla del piso encendido; el bloque dorado cobra |
+| **Rasca y Gana** | Una tarjeta de 3x3 | Tres clics rascan tres casillas |
+| **Tablero de Bombas** (grupo) | El tablero compartido de 9x4 | El turno pasa de jugador en jugador y al que le toca se coloca sobre el tablero |
+
+Los tableros forman parte de la construcción del mundo: ejecuta `/mvgam world build` una
+vez tras actualizar para que cada arena muestre su tablero en reposo. Cada ronda devuelve
+sus casillas a como estaban, y los mismos interruptores de `world.animations` los
+gobiernan: con `enabled: false` los cuatro juegos vuelven a sus menús. El blackjack y el
+alto-bajo se quedan en sus menús de cartas por el mismo motivo: su ronda no es un tablero.
+
+El decorado de las animaciones es temporal: aparece al empezar la ronda, se queda un
+segundo tras el resultado para que dé tiempo a verlo y luego se retira, así que la arena
+siempre vuelve a su plataforma limpia aunque el jugador se desconecte o el servidor se
+pare a mitad de giro. Los menús siguen ahí para lo que no es un resultado ni una elección
+(apostar, elegir casilla) y quien juegue con el mundo desactivado conserva la barra de
+acción de siempre.
 
 ```yaml
 world:
@@ -180,7 +195,8 @@ Cosas que conviene saber:
 
 - La **geometría es una clase pura** (`CasinoLayout`) sin Bukkit, así que está testeada: la
   suite comprueba que los 21 juegos caben en 500 bloques, que ninguna arena se solapa, que
-  nada tapa el spawn y que la entrada de cada arena mira a la plaza.
+  nada tapa el spawn y que la entrada de cada arena mira a la plaza. Los tableros usan la
+  misma idea: `BoardGrid` traduce un clic en un bloque a la casilla de una ronda.
 - Si `world.size` es pequeño para la rejilla, el plugin **agranda el mundo** en pasos de 50
   bloques (hasta 2000) en vez de fallar.
 - Apunta `world.name` a un mundo existente para reutilizarlo, o pon `enabled: false` y
@@ -278,8 +294,9 @@ ronda se juega sola y la siguiente arranca sin que nadie lance comandos.
 | **Rifa** | `raffle` | Boletas a precio fijo y sorteo de **tres premios**: 70%, 20% y 10% del bote. | 2-24 |
 | **Póker de Dados** | `dice-poker` | Cinco dados cada uno; gana la mejor mano. Los empates reparten el bote. | 2-16 |
 
-Los ids son estables y también aceptan el nombre traducido, así que `/mvgam play ruleta`
-funciona en un servidor en español y `/mvgam play roulette` en uno en inglés.
+Los ids son estables y `/mvgam play` exige exactamente ese id, nunca un nombre ni una
+coincidencia parcial: `/mvgam play lucky-wheel` funciona, `/mvgam play lucky` no. El
+autocompletado lista los ids.
 
 ---
 
@@ -335,7 +352,7 @@ paso.
 |---|---|
 | `/mvgam` | Abre el menú principal con las dos pestañas |
 | `/mvgam games [solo\|group]` | Lista el catálogo con sus límites de apuesta |
-| `/mvgam play <juego>` | Juega a un juego por su id o su nombre |
+| `/mvgam play <id>` | Juega a un juego por su id exacto |
 | `/mvgam action <accion>` | Punto de entrada de los **botones del chat** (shoot, horse 3, accept...) |
 | `/mvgam balance [jugador]` | Consulta el saldo |
 | `/mvgam stats [jugador]` | Estadísticas: partidas, retorno real, juego favorito |

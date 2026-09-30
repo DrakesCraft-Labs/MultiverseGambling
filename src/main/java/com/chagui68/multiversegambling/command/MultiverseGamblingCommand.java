@@ -194,10 +194,12 @@ public final class MultiverseGamblingCommand implements CommandExecutor, TabComp
             plugin.guis().openHub(player);
             return true;
         }
-        String query = String.join("_", java.util.Arrays.copyOfRange(args, 1, args.length));
-        Game game = plugin.games().search(query).orElse(null);
+        // Only the exact id counts: the remaining arguments are joined with hyphens so
+        // "/mvgam play lucky wheel" ends up asking for the id "lucky-wheel".
+        String id = String.join("-", java.util.Arrays.copyOfRange(args, 1, args.length));
+        Game game = plugin.games().byId(id).orElse(null);
         if (game == null) {
-            plugin.messages().send(player, "command.unknown-game", "game", query);
+            plugin.messages().send(player, "command.unknown-game", "game", id);
             return true;
         }
         game.open(player);

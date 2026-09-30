@@ -178,4 +178,28 @@ public abstract class AbstractGame implements Game {
         }
         return player.getWorld() == stage.world() ? stage : null;
     }
+
+    /**
+     * The arena of this game when the round is going to be played by clicking its
+     * blocks, or {@code null} when the round must use its menu.
+     *
+     * <p>Unlike {@link #arenaFor(Player, float)} this never moves the player to a
+     * watching spot: a board is played standing on it. Without
+     * {@code world.animations.teleport-players} the board is only used by whoever is
+     * already standing in the arena, so nobody is dragged away from wherever they are.</p>
+     */
+    public ArenaStage boardStageFor(Player player) {
+        if (player == null || plugin.world() == null || !plugin.config().worldAnimationsEnabled()) {
+            return null;
+        }
+        ArenaStage stage = plugin.world().stage(id());
+        if (stage == null) {
+            return null;
+        }
+        if (plugin.config().worldAnimationsTeleport()) {
+            return stage;
+        }
+        return stage.arena().contains(player.getLocation().getBlockX(), player.getLocation().getBlockZ())
+                ? stage : null;
+    }
 }

@@ -240,11 +240,21 @@ world:
 command:
   players-only: '&cEste comando es para usarlo dentro del juego.'
   unknown: '&cSubcomando desconocido: &f{subcommand}&c. Prueba &f/mvgam menu&c.'
-  play-help: '&7Juega a cualquier juego con &f/mvgam play <juego>&7.'
-  unknown-game: '&cNo existe ningun juego llamado &f{game}&c.'
+  play-help: '&7Juega a cualquier juego con &f/mvgam play <id>&7.'
+  unknown-game: '&cNo existe ningun juego con el id &f{game}&c. Usa &f/mvgam games &cpara ver la lista de ids.'
   unknown-player: '&cNo encuentro al jugador &f{player}&c.'
   invalid-amount: '&c&f{value} &cno es una cantidad valida.'
   usage: '&cUso correcto: &f{usage}'
+
+# Lineas de los cuatro juegos que se juegan pulsando los bloques de su arena.
+board:
+  finished: '&7Ronda terminada. Pulsa el tablero para jugar otra vez.'
+  mines-count: '&7Minas: &c{count}&7 de &f{tiles}&7. El &averde &7suma y el &crojo &7quita; pulsa una casilla para destapar.'
+  cash-out: '&7Retirarse paga &f{prize}&7: pulsa el &6bloque dorado&7.'
+  floor-pick: '&7Piso &f{floor}&7/&f{levels}&7: pulsa una casilla de esa fila.'
+  other-player: '&cEsta ronda es de &f{player}&c.'
+  starting: '&7La ronda esta a punto de empezar...'
+  other-turn: '&7Le toca a &f{player}&7.'
   balance: '&7Tu saldo es &6{balance}&7.'
   balance-other: '&7El saldo de &f{player}&7 es &6{balance}&7.'
   balance-updated: '&aSaldo de &f{player} &aactualizado a &6{balance}&a.'

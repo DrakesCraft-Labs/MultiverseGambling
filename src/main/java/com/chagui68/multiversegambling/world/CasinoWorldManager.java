@@ -1,9 +1,11 @@
 package com.chagui68.multiversegambling.world;
 
 import com.chagui68.multiversegambling.MultiverseGamblingPlugin;
+import com.chagui68.multiversegambling.game.BoardGame;
 import com.chagui68.multiversegambling.game.Game;
 import com.chagui68.multiversegambling.util.Text;
 import com.chagui68.multiversegambling.world.anim.ArenaStage;
+import com.chagui68.multiversegambling.world.board.BoardGrid;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -319,13 +321,12 @@ public final class CasinoWorldManager {
                         border ? Material.POLISHED_BLACKSTONE : floor);
             }
         }
-        // Small medallion in the middle of the platform.
-        for (int x = -2; x <= 2; x++) {
-            for (int z = -2; z <= 2; z++) {
-                boolean ring = Math.abs(x) == 2 || Math.abs(z) == 2;
-                set(arena.centerX() + x, floorY, arena.centerZ() + z,
-                        ring ? Material.GOLD_BLOCK : floor);
-            }
+        Game game = plugin.games().byId(arena.gameId()).orElse(null);
+        BoardGame board = game instanceof BoardGame boardGame ? boardGame : null;
+        if (board == null) {
+            medallion(arena, floor);
+        } else {
+            boardPad(arena, board);
         }
         fence(arena);
         for (int dx : new int[]{-1, 1}) {
@@ -333,7 +334,55 @@ public final class CasinoWorldManager {
                 lamp(arena.centerX() + dx * (radius - 2), arena.centerZ() + dz * (radius - 2));
             }
         }
-        arenaSign(arena);
+        arenaSign(arena, board != null);
+    }
+
+    /**
+     * Small medallion in the middle of the platform, for the games played in a menu.
+     */
+    private void medallion(CasinoLayout.Arena arena, Material floor) {
+        for (int x = -2; x <= 2; x++) {
+            for (int z = -2; z <= 2; z++) {
+                boolean ring = Math.abs(x) == 2 || Math.abs(z) == 2;
+                set(arena.centerX() + x, floorY, arena.centerZ() + z,
+                        ring ? Material.GOLD_BLOCK : floor);
+            }
+        }
+    }
+
+    /**
+     * Resting board of a game played by clicking blocks: one tile per cell, the filler
+     * of a grid the configuration does not fill, and a blackstone frame around it that
+     * also holds the block used to collect a prize when one is on the table.
+     */
+    private void boardPad(CasinoLayout.Arena arena, BoardGame game) {
+        BoardGrid grid = game.boardGrid();
+        if (!grid.fitsIn(CasinoLayout.ARENA_RADIUS)) {
+            plugin.getLogger().warning("The " + arena.gameId() + " board is " + grid.columns()
+                    + "x" + grid.rows() + " blocks, too big for an arena: that game will only"
+                    + " use its menu until the configuration shrinks it.");
+            return;
+        }
+        int y = floorY + 1;
+        for (int cell = 0; cell < grid.cellCount(); cell++) {
+            set(arena.centerX() + grid.dx(cell), y, arena.centerZ() + grid.dz(cell),
+                    cell < game.boardCells() ? game.boardTile() : game.boardFiller());
+        }
+        for (int dx = grid.originX() - 1; dx <= grid.originX() + grid.columns(); dx++) {
+            frame(arena, dx, grid.originZ() - 1, y);
+            frame(arena, dx, grid.originZ() + grid.rows(), y);
+        }
+        for (int dz = grid.originZ(); dz < grid.originZ() + grid.rows(); dz++) {
+            frame(arena, grid.originX() - 1, dz, y);
+            frame(arena, grid.originX() + grid.columns(), dz, y);
+        }
+    }
+
+    private void frame(CasinoLayout.Arena arena, int dx, int dz, int y) {
+        if (!arena.contains(arena.centerX() + dx, arena.centerZ() + dz)) {
+            return;
+        }
+        set(arena.centerX() + dx, y, arena.centerZ() + dz, Material.POLISHED_BLACKSTONE);
     }
 
     /**
@@ -383,14 +432,15 @@ public final class CasinoWorldManager {
     /**
      * Sign outside the entrance so the arena is easy to find from the road.
      */
-    private void arenaSign(CasinoLayout.Arena arena) {
+    private void arenaSign(CasinoLayout.Arena arena, boolean playedOnBlocks) {
         Game game = plugin.games().byId(arena.gameId()).orElse(null);
         String fallback = game == null ? arena.gameId() : game.name();
         String label = plugin.messages().getOr("catalog." + arena.gameId() + ".name", fallback);
         int x = arena.centerX();
         int z = arena.centerZ();
         int offset = CasinoLayout.ARENA_RADIUS + 2;
-        String[] lines = {"&6" + label, "&7" + arena.gameId(), "&7/mvgam play",
+        String hint = playedOnBlocks ? "&7Click to play" : "&7/mvgam play";
+        String[] lines = {"&6" + label, "&7" + arena.gameId(), hint,
                 "&8Arena " + (arena.index() + 1)};
         switch (CasinoLayout.entrance(arena)) {
             case NORTH -> sign(x, floorY + 1, z - offset, Material.OAK_SIGN, BlockFace.NORTH, lines);
