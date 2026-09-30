@@ -50,7 +50,7 @@ saldos, se los pregunta a Vault.
 
 ## El mundo casino
 
-En el primer arranque el plugin crea el mundo casino aparte (`multiverse_gambling` por defecto)
+En el primer arranque el plugin crea el mundo casino aparte (`mvgam_casino` por defecto)
 y levanta la plaza, las carreteras y una arena por juego. Nunca construye nada en tu mundo
 principal. Lo tienes en [Mundo Casino](Mundo-Casino-es).
 
@@ -64,9 +64,9 @@ borrar el `messages.yml` antiguo.
 ## Comprobar la instalación
 
 ```
-/casino info          → economía activa, juegos registrados y secreto actual
-/casino world         → viajar al casino
-/casino language      → el idioma en el que estás leyendo
+/mvgam info          → economía activa, juegos registrados y secreto actual
+/mvgam world         → viajar al casino
+/mvgam language      → el idioma en el que estás leyendo
 ```
 
 Si falta el mundo casino, la consola dice por qué: puede estar desactivado, la distribución no

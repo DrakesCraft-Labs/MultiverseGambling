@@ -2,7 +2,7 @@
 #  MultiverseGambling - mensajes (Español)
 #
 #  Un fichero por idioma, dentro de plugins/MultiverseGambling/lang/.
-#  Los jugadores cambian de idioma en el juego con: /casino language <codigo>
+#  Los jugadores cambian de idioma en el juego con: /mvgam language <codigo>
 #
 #  Los colores usan el formato clasico con ampersand: &6 dorado, &7 gris...
 #  Las llaves son huecos que rellena el plugin:
@@ -37,7 +37,7 @@ games:
 group:
   waiting-players: '&7Esperando jugadores para empezar: &f{current}&7/&f{min}&7.'
   betting-open: '&aLas apuestas estan abiertas &f{seconds}s&a. Puedes entrar ya.'
-  betting-hint: '&7Usa &f/casino play <juego> &7para entrar.'
+  betting-hint: '&7Usa &f/mvgam play <juego> &7para entrar.'
   countdown: '&eLa ronda empieza en &f{seconds}&e...'
   time-left: '&7Quedan &f{seconds}s &7para cerrar las apuestas.'
   round-starting: '&6¡Empieza la ronda &f{round}&6!'
@@ -73,11 +73,11 @@ duel:
 
 fairness:
   explanation: '&7Cada tirada sale de un secreto del servidor y de tu semilla. Cuando el secreto rote podras recalcularla y comprobar que nada se ha tocado.'
-  your-seed: '&7Tu semilla actual es &f{seed}&7. Puedes cambiarla con &f/casino verify <texto>&7.'
+  your-seed: '&7Tu semilla actual es &f{seed}&7. Puedes cambiarla con &f/mvgam verify <texto>&7.'
   seed-changed: '&aTu semilla ahora es &f{seed}&a.'
 
 # ---------------------------------------------------------------------------
-#  Selector de idioma: /casino language [codigo|reset]
+#  Selector de idioma: /mvgam language [codigo|reset]
 # ---------------------------------------------------------------------------
 language:
   current: '&7Tu idioma es &f{language}&7. Disponibles: &f{languages}&7.'
@@ -87,7 +87,7 @@ language:
   reset: '&aTu idioma vuelve a ser automatico; ahora lees en &f{language}&a.'
 
 # ---------------------------------------------------------------------------
-#  Mundo del casino: /casino world [build]
+#  Mundo del casino: /mvgam world [build]
 # ---------------------------------------------------------------------------
 world:
   disabled: '&cEl mundo del casino esta desactivado en la configuracion.'
@@ -98,8 +98,8 @@ world:
 
 command:
   players-only: '&cEste comando es para usarlo dentro del juego.'
-  unknown: '&cSubcomando desconocido: &f{subcommand}&c. Prueba &f/casino menu&c.'
-  play-help: '&7Juega a cualquier juego con &f/casino play <juego>&7.'
+  unknown: '&cSubcomando desconocido: &f{subcommand}&c. Prueba &f/mvgam menu&c.'
+  play-help: '&7Juega a cualquier juego con &f/mvgam play <juego>&7.'
   unknown-game: '&cNo existe ningun juego llamado &f{game}&c.'
   unknown-player: '&cNo encuentro al jugador &f{player}&c.'
   invalid-amount: '&c&f{value} &cno es una cantidad valida.'
@@ -146,7 +146,7 @@ gui:
       - '&7Secreto actual:'
       - '&f{hash}...'
       - ''
-      - '&e/casino verify'
+      - '&e/mvgam verify'
     bet: '&7Apuesta: &f{min} &7- &f{max}'
     players: '&7Jugadores: &f{min} &7- &f{max}'
     play: '&ePulsa para jugar'

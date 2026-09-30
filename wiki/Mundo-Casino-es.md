@@ -6,13 +6,13 @@ El plugin puede mantener todas sus estructuras en un **mundo aparte**, así el m
 queda limpio y no hay que pegar nada a mano.
 
 ```
-/casino world          → viajar al casino
-/casino world build    → reconstruirlo entero (casino.admin)
+/mvgam world          → viajar al casino
+/mvgam world build    → reconstruirlo entero (mvgam_admin)
 ```
 
 ## Qué crea
 
-Por defecto un **mundo plano de 500 × 500 bloques** llamado `multiverse_gambling`, con borde
+Por defecto un **mundo plano de 500 × 500 bloques** llamado `mvgam_casino`, con borde
 centrado en el spawn:
 
 | Pieza | Detalles |
@@ -44,7 +44,7 @@ que quien camina por ella ve el cartel del juego antes de entrar.
 ```yaml
 world:
   enabled: true
-  name: 'multiverse_gambling'
+  name: 'mvgam_casino'
   size: 500
   build-structures: true
   teleport-on-join: false
@@ -52,7 +52,7 @@ world:
 
 | Clave | Notas |
 |---|---|
-| `enabled` | Con `false` el plugin nunca crea el mundo y `/casino world` responde que está desactivado |
+| `enabled` | Con `false` el plugin nunca crea el mundo y `/mvgam world` responde que está desactivado |
 | `name` | Apúntalo a un mundo que ya tengas para reutilizarlo: el plugin construirá allí la rejilla de arenas |
 | `size` | De 200 a 2000. Si la distribución no cabe, el mundo **se agranda en pasos de 50** (hasta 2000) en vez de fallar |
 | `build-structures` | Con `false` el mundo se crea vacío y lo construyes tú |
@@ -62,7 +62,7 @@ world:
 
 - **El mundo principal no se toca nunca.** El plugin se niega a construir las estructuras en el
   mundo principal y lo avisa por consola.
-- **Reconstruir es seguro.** `/casino world build` limpia el mundo casino y lo vuelve a
+- **Reconstruir es seguro.** `/mvgam world build` limpia el mundo casino y lo vuelve a
   levantar; los jugadores que estén dentro aparecen en el spawn.
 - **El texto de los carteles sigue el idioma por defecto**, así que un servidor en español tiene
   las arenas rotuladas en español (`catalog.<id-juego>.name` con `language.default`).
@@ -79,5 +79,5 @@ world:
   enabled: false
 ```
 
-No se crea ni se modifica nada, y `/casino world` solo avisa de que el mundo está desactivado
-mientras `/casino play <juego>` sigue funcionando desde cualquier sitio.
+No se crea ni se modifica nada, y `/mvgam world` solo avisa de que el mundo está desactivado
+mientras `/mvgam play <juego>` sigue funcionando desde cualquier sitio.

@@ -34,7 +34,7 @@ public final class GameRegistry {
 
     /**
      * Looks a game up by id or by name, ignoring case and spaces. The translated name
-     * counts too, so {@code /casino play ruleta} works on a Spanish server.
+     * counts too, so {@code /mvgam play ruleta} works on a Spanish server.
      */
     public Optional<Game> search(String query) {
         if (query == null) {

@@ -2,7 +2,7 @@
 
 [English](Games-Solo) · **Español**
 
-Doce juegos contra la casa. Todos se abren desde `/casino`, desde `/casino play <id>` o desde
+Doce juegos contra la casa. Todos se abren desde `/mvgam`, desde `/mvgam play <id>` o desde
 la pestaña de solitario del menú, y todos comparten el mismo selector de apuesta y el mismo
 botón de "jugar otra vez".
 
@@ -55,5 +55,5 @@ la mitad del saldo o todo. El panel muestra tu saldo, los límites del juego y e
 el botón de confirmar se apaga cuando la apuesta se sale de rango.
 
 Los juegos en solitario se pueden abandonar: cerrar el panel devuelve o liquida la apuesta según
-el estado del juego, y `/casino cancel <jugador>` (admin) es la salida de emergencia si alguien
+el estado del juego, y `/mvgam cancel <jugador>` (admin) es la salida de emergencia si alguien
 se queda atascado.

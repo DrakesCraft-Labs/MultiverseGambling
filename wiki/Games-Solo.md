@@ -2,7 +2,7 @@
 
 **English** · [Español](Juegos-Solo-es)
 
-Twelve games against the house. All of them open from `/casino`, from `/casino play <id>`, or
+Twelve games against the house. All of them open from `/mvgam`, from `/mvgam play <id>`, or
 from the solo tab of the main menu, and all of them share the same bet selector and the same
 "play again" button.
 
@@ -55,4 +55,4 @@ of your balance or everything. The panel shows your balance, the game limits and
 cap, and the confirm button is greyed out when the stake is out of range.
 
 Solo games can be abandoned: closing the panel refunds or settles the bet depending on the
-game state, and `/casino cancel <player>` (admin) is the escape hatch if a player gets stuck.
+game state, and `/mvgam cancel <player>` (admin) is the escape hatch if a player gets stuck.

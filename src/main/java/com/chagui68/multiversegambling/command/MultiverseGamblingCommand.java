@@ -21,7 +21,7 @@ import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
-/** {@code /casino}: opens the menu and exposes balance, ranking, audit and administration. */
+/** {@code /mvgam}: opens the menu and exposes balance, ranking, audit and administration. */
 public final class MultiverseGamblingCommand implements CommandExecutor, TabCompleter {
 
     private static final List<String> SUBS = List.of(
@@ -42,7 +42,7 @@ public final class MultiverseGamblingCommand implements CommandExecutor, TabComp
                 plugin.messages().send(sender, "command.players-only");
                 return true;
             }
-            if (!player.hasPermission("casino.play")) {
+            if (!player.hasPermission("mvgam_play")) {
                 plugin.messages().send(player, "general.no-permission");
                 return true;
             }
@@ -55,10 +55,10 @@ public final class MultiverseGamblingCommand implements CommandExecutor, TabComp
             case "menu" -> {
                 return withPlayer(sender, player -> plugin.guis().openHub(player));
             }
-            case "games", "list" -> {
+            case "games" -> {
                 return listGames(sender, args);
             }
-            case "play", "bet" -> {
+            case "play" -> {
                 return playGame(sender, args);
             }
             case "balance" -> {
@@ -67,23 +67,23 @@ public final class MultiverseGamblingCommand implements CommandExecutor, TabComp
             case "stats" -> {
                 return stats(sender, args);
             }
-            case "top", "ranking" -> {
+            case "top" -> {
                 return top(sender, args);
             }
-            case "verify", "fair" -> {
+            case "verify" -> {
                 return verify(sender, args);
             }
             case "world" -> {
                 return world(sender, args);
             }
-            case "language", "lang" -> {
+            case "language" -> {
                 return language(sender, args);
             }
             case "info" -> {
                 return info(sender);
             }
             case "reload" -> {
-                if (!sender.hasPermission("casino.admin")) {
+                if (!sender.hasPermission("mvgam_admin")) {
                     plugin.messages().send(sender, "general.no-permission");
                     return true;
                 }
@@ -114,7 +114,7 @@ public final class MultiverseGamblingCommand implements CommandExecutor, TabComp
             plugin.messages().send(sender, "command.players-only");
             return true;
         }
-        if (!player.hasPermission("casino.play")) {
+        if (!player.hasPermission("mvgam_play")) {
             plugin.messages().send(player, "general.no-permission");
             return true;
         }
@@ -132,7 +132,7 @@ public final class MultiverseGamblingCommand implements CommandExecutor, TabComp
             return true;
         }
         if (args.length < 2) {
-            plugin.messages().send(player, "command.usage", "usage", "/casino action <action>");
+            plugin.messages().send(player, "command.usage", "usage", "/mvgam action <action>");
             return true;
         }
         var game = plugin.games().activeGameOf(player.getUniqueId());
@@ -182,7 +182,7 @@ public final class MultiverseGamblingCommand implements CommandExecutor, TabComp
             plugin.messages().send(sender, "command.players-only");
             return true;
         }
-        if (!player.hasPermission("casino.play")) {
+        if (!player.hasPermission("mvgam_play")) {
             plugin.messages().send(player, "general.no-permission");
             return true;
         }
@@ -244,6 +244,10 @@ public final class MultiverseGamblingCommand implements CommandExecutor, TabComp
     }
 
     private boolean top(CommandSender sender, String[] args) {
+        if (!sender.hasPermission("mvgam_top")) {
+            plugin.messages().send(sender, "general.no-permission");
+            return true;
+        }
         String mode = args.length > 1 ? args[1].toLowerCase(Locale.ROOT) : "profit";
         List<StatsStore.TopEntry> entries = switch (mode) {
             case "wagered" -> plugin.stats().topByWagered(10);
@@ -286,13 +290,13 @@ public final class MultiverseGamblingCommand implements CommandExecutor, TabComp
         return true;
     }
 
-    /** Teleports to the casino world; {@code /casino world build} rebuilds the structures. */
+    /** Teleports to the casino world; {@code /mvgam world build} rebuilds the structures. */
     private boolean world(CommandSender sender, String[] args) {
         if (!(sender instanceof Player player)) {
             plugin.messages().send(sender, "command.players-only");
             return true;
         }
-        if (!player.hasPermission("casino.play")) {
+        if (!player.hasPermission("mvgam_play")) {
             plugin.messages().send(player, "general.no-permission");
             return true;
         }
@@ -301,7 +305,7 @@ public final class MultiverseGamblingCommand implements CommandExecutor, TabComp
             return true;
         }
         if (args.length > 1 && args[1].equalsIgnoreCase("build")) {
-            if (!sender.hasPermission("casino.admin")) {
+            if (!sender.hasPermission("mvgam_admin")) {
                 plugin.messages().send(sender, "general.no-permission");
                 return true;
             }
@@ -319,7 +323,7 @@ public final class MultiverseGamblingCommand implements CommandExecutor, TabComp
     }
 
     /**
-     * Self translation: {@code /casino language es} switches everything this player
+     * Self translation: {@code /mvgam language es} switches everything this player
      * reads. The list of available languages comes from the {@code lang} folder, so an
      * admin can drop an extra file and it shows up without touching the code.
      */
@@ -337,7 +341,7 @@ public final class MultiverseGamblingCommand implements CommandExecutor, TabComp
         if (args.length < 2) {
             messages.send(player, "language.current", "language", messages.localeOf(player),
                     "languages", messages.localeList());
-            messages.send(player, "language.usage", "usage", "/casino language <" + String.join("|", messages.locales()) + ">");
+            messages.send(player, "language.usage", "usage", "/mvgam language <" + String.join("|", messages.locales()) + ">");
             return true;
         }
         String query = args[1].toLowerCase(Locale.ROOT);
@@ -383,12 +387,12 @@ public final class MultiverseGamblingCommand implements CommandExecutor, TabComp
     }
 
     private boolean adminMoney(CommandSender sender, String mode, String[] args) {
-        if (!sender.hasPermission("casino.admin")) {
+        if (!sender.hasPermission("mvgam_admin")) {
             plugin.messages().send(sender, "general.no-permission");
             return true;
         }
         if (args.length < 3) {
-            plugin.messages().send(sender, "command.usage", "usage", "/casino " + mode + " <player> <amount>");
+            plugin.messages().send(sender, "command.usage", "usage", "/mvgam " + mode + " <player> <amount>");
             return true;
         }
         @SuppressWarnings("deprecation")
@@ -417,12 +421,12 @@ public final class MultiverseGamblingCommand implements CommandExecutor, TabComp
     }
 
     private boolean cancel(CommandSender sender, String[] args) {
-        if (!sender.hasPermission("casino.admin")) {
+        if (!sender.hasPermission("mvgam_admin")) {
             plugin.messages().send(sender, "general.no-permission");
             return true;
         }
         if (args.length < 2) {
-            plugin.messages().send(sender, "command.usage", "usage", "/casino cancel <player>");
+            plugin.messages().send(sender, "command.usage", "usage", "/mvgam cancel <player>");
             return true;
         }
         Player target = Bukkit.getPlayerExact(args[1]);

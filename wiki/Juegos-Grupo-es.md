@@ -3,7 +3,7 @@
 [English](Games-Group) · **Español**
 
 Nueve juegos con **rondas automáticas**. Nadie tiene que iniciar nada: un jugador entra con
-`/casino play <juego>`, apuesta durante la ventana y la ronda se juega sola. Cuando termina, la
+`/mvgam play <juego>`, apuesta durante la ventana y la ronda se juega sola. Cuando termina, la
 siguiente ventana de apuestas se abre por su cuenta para quien quiera entrar otra vez.
 
 El ciclo compartido es: **esperando jugadores → ventana de apuestas → en juego → reparto**.
@@ -48,11 +48,11 @@ al jugador actual y, si no actúa a tiempo, el turno sigue solo, así que un jug
 puede congelar la mesa.
 
 Algunas acciones también están en el chat: los botones clicables mandan
-`/casino action <accion>` (`reveal`, `horse 3`, `shoot`, `accept`, `decline`...), que es lo que
+`/mvgam action <accion>` (`reveal`, `horse 3`, `shoot`, `accept`, `decline`...), que es lo que
 hace que los juegos se puedan jugar desde el móvil o desde el chat sin abrir un menú.
 
 ## Azar verificable
 
 Las rondas sacan su azar de la misma fuente verificable que los juegos en solitario, atribuida a
 la identidad fija del casino (UUID cero). Eso significa que una carrera o una ronda de bomba
-caliente se puede auditar después con `/casino verify`. Ver [Azar verificable](Justicia-es).
+caliente se puede auditar después con `/mvgam verify`. Ver [Azar verificable](Justicia-es).

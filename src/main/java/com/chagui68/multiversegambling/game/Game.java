@@ -69,7 +69,7 @@ public interface Game {
     void open(Player player);
 
     /**
-     * Action fired from a chat button ({@code /casino action ...}). Does nothing by
+     * Action fired from a chat button ({@code /mvgam action ...}). Does nothing by
      * default: only the interactive games use it.
      */
     default void handleAction(Player player, String action, String[] args) {

@@ -89,7 +89,7 @@ public abstract class AbstractSoloGame extends AbstractGame {
         player.sendMessage(Text.c(plugin.messages().forSender(player, "games.play-again-prompt"))
                 .append(Text.button(
                         plugin.messages().forSender(player, "games.play-again-button"),
-                        "/casino play " + id(),
+                        "/mvgam play " + id(),
                         plugin.messages().forSender(player, "games.play-again-hover",
                                 "game", displayName(player)))));
     }

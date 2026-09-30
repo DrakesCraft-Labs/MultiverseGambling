@@ -31,7 +31,7 @@ public record GameMeta(
         private final GameCategory category;
         private final Material icon;
         private final List<String> description = new ArrayList<>();
-        private String permission = "casino.play";
+        private String permission = "mvgam_play";
         private int minPlayers = 1;
         private int maxPlayers = 1;
 

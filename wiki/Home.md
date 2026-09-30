@@ -19,14 +19,14 @@ world** and **in-game translation** into English or Spanish.
 | Page | What it answers |
 |---|---|
 | [Installation](Installation) | How to drop the jar in and what files it creates |
-| [Commands](Commands) | Every `/casino` subcommand, with examples |
+| [Commands](Commands) | Every `/mvgam` subcommand, with examples |
 | [Permissions](Permissions) | The three permissions and what they open |
 | [Configuration](Configuration) | Every key of `config.yml` |
 | [Casino World](Casino-World) | The separate world, the plaza, the arenas and the roads |
-| [Languages](Languages) | Self translation, `/casino language` and adding a new language |
+| [Languages](Languages) | Self translation, `/mvgam language` and adding a new language |
 | [Solo Games](Games-Solo) | The 12 games against the house |
 | [Group Games](Games-Group) | The 9 games with automatic rounds |
-| [Fairness](Fairness) | Provably fair rolls and `/casino verify` |
+| [Fairness](Fairness) | Provably fair rolls and `/mvgam verify` |
 | [Economy](Economy) | Vault or the internal wallet, and the data files |
 | [Troubleshooting](Troubleshooting) | The usual suspects |
 | [Development](Development) | Build, test and project layout |
@@ -39,15 +39,15 @@ world** and **in-game translation** into English or Spanish.
 2. **Money can be settled once.** Bets are wrapped in a `Wager` that refuses a second
    payout; group games use a `Pot` that holds one wager per player.
 3. **Randomness that decides money is provably fair.** A server secret plus your own seed
-   produce every roll, and `/casino verify` lets anybody recompute them.
+   produce every roll, and `/mvgam verify` lets anybody recompute them.
 
 ## Quick tour
 
 ```
-/casino                      → main menu (solo / group tabs)
-/casino play roulette        → play a game by id or by name
-/casino world                → travel to the casino world
-/casino language es          → read everything in Spanish from now on
-/casino verify               → audit the fairness of every roll
-/casino world build          → rebuild the plaza, roads and arenas (admin)
+/mvgam                      → main menu (solo / group tabs)
+/mvgam play roulette        → play a game by id or by name
+/mvgam world                → travel to the casino world
+/mvgam language es          → read everything in Spanish from now on
+/mvgam verify               → audit the fairness of every roll
+/mvgam world build          → rebuild the plaza, roads and arenas (admin)
 ```

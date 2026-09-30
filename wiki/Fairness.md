@@ -14,7 +14,7 @@ roll = HMAC-SHA256(serverSecret, clientSeed:nonce:cursor)
 - The **server secret** is generated on start and its **hash is published** before you play.
   While the secret is running you cannot know the rolls, but the published hash commits the
   server to them.
-- The **client seed** is yours. You can set it to any text with `/casino verify <text>`, so the
+- The **client seed** is yours. You can set it to any text with `/mvgam verify <text>`, so the
   server cannot pick a result after seeing your bet.
 - The **nonce** counts the rolls issued, and the **cursor** separates the several random values
   a single game may need.
@@ -25,14 +25,14 @@ matches the secret you can read: anyone can redo the maths and check that nothin
 ## Auditing
 
 ```
-/casino verify
+/mvgam verify
 ```
 
 Shows the current secret hash, the previous secret (once rotated), the hash left by that
 previous secret, your client seed and how many rolls have been issued in this session.
 
 ```
-/casino verify my-lucky-text
+/mvgam verify my-lucky-text
 ```
 
 Changes your client seed. Do it whenever you like; the change applies to the rolls that come

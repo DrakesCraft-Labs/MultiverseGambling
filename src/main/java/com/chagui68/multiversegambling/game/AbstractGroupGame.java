@@ -170,7 +170,7 @@ public abstract class AbstractGroupGame extends AbstractGame {
 
     /**
      * Action requested from a chat button, for example
-     * {@code /casino action shoot}. This is what lets people play without menus.
+     * {@code /mvgam action shoot}. This is what lets people play without menus.
      */
     @Override
     public void handleAction(Player player, String action, String[] args) {
@@ -189,7 +189,7 @@ public abstract class AbstractGroupGame extends AbstractGame {
 
     /** Chat button label, ready to send. */
     protected final Component chatButton(String label, String action, String hover) {
-        return Text.button(label, "/casino accion " + action, hover);
+        return Text.button(label, "/mvgam action " + action, hover);
     }
 
     /** Closes the round: refunds whatever was not settled and goes back to waiting. */

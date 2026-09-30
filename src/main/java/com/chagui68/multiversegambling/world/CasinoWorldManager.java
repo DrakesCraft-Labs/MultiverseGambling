@@ -257,7 +257,7 @@ public final class CasinoWorldManager {
         set(0, floorY + 2, 0, Material.GOLD_BLOCK);
         set(0, floorY + 3, 0, Material.SEA_LANTERN);
         sign(2, floorY + 1, 0, Material.OAK_SIGN, BlockFace.EAST,
-                "&6&lMultiverseGambling", "&7Casino world", "&7/casino menu", "&7/casino language");
+                "&6&lMultiverseGambling", "&7Casino world", "&7/mvgam menu", "&7/mvgam language");
         // Lamps on the diagonals keep the four road exits clear.
         for (int dx : new int[]{-1, 1}) {
             for (int dz : new int[]{-1, 1}) {
@@ -369,7 +369,7 @@ public final class CasinoWorldManager {
         int x = arena.centerX();
         int z = arena.centerZ();
         int offset = CasinoLayout.ARENA_RADIUS + 2;
-        String[] lines = {"&6" + label, "&7" + arena.gameId(), "&7/casino play",
+        String[] lines = {"&6" + label, "&7" + arena.gameId(), "&7/mvgam play",
                 "&8Arena " + (arena.index() + 1)};
         switch (CasinoLayout.entrance(arena)) {
             case NORTH -> sign(x, floorY + 1, z - offset, Material.OAK_SIGN, BlockFace.NORTH, lines);

@@ -20,9 +20,9 @@ with a message. Balances are saved every `data.save-every-minutes` minutes and o
 Administration commands:
 
 ```
-/casino give <player> <amount>
-/casino take <player> <amount>
-/casino set  <player> <amount>
+/mvgam give <player> <amount>
+/mvgam take <player> <amount>
+/mvgam set  <player> <amount>
 ```
 
 They work with either provider. When Vault is active the plugin calls Vault, so your economy

@@ -31,7 +31,7 @@ game:
 
 fairness:
   # Provably fair: publish the hash of the secret and let anyone audit every
-  # roll with /casino verify. Leaving this on is strongly recommended.
+  # roll with /mvgam verify. Leaving this on is strongly recommended.
   provably-fair: true
 
 data:
@@ -39,7 +39,7 @@ data:
 
 # ---------------------------------------------------------------------------
 #  Language. One code per file in plugins/MultiverseGambling/lang/.
-#  Players switch it in game with /casino language <code>.
+#  Players switch it in game with /mvgam language <code>.
 # ---------------------------------------------------------------------------
 language:
   # Used for the console, for players with no preference and for the world signs.
@@ -56,7 +56,7 @@ language:
 world:
   # Create (or load) the casino world when the plugin starts.
   enabled: true
-  name: 'multiverse_gambling'
+  name: 'mvgam_casino'
   # Side of the square in blocks; the world border is centred on spawn.
   size: 500
   # Build the plaza, the arenas and the roads the first time the world is used.

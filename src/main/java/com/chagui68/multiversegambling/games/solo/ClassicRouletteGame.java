@@ -21,7 +21,7 @@ import org.bukkit.inventory.ItemStack;
  * The classic roulette.
  *
  * <p>The winning pocket is decided by the provably fair generator; the dancing numbers
- * are only paint. Anybody can recompute the roll with {@code /casino verify}.</p>
+ * are only paint. Anybody can recompute the roll with {@code /mvgam verify}.</p>
  */
 public final class ClassicRouletteGame extends AbstractSoloGame {
 

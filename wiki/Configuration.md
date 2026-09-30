@@ -3,7 +3,7 @@
 **English** · [Español](Configuracion-es)
 
 Everything lives in `plugins/MultiverseGambling/config.yml`. The file is written in English
-and commented; this page is the reference. After editing it run `/casino reload`: running
+and commented; this page is the reference. After editing it run `/mvgam reload`: running
 games are untouched, and the new values apply to the next round.
 
 ## `economy`
@@ -55,7 +55,7 @@ See [Languages](Languages).
 | Key | Default | Meaning |
 |---|---|---|
 | `enabled` | `true` | Creates (or loads) the casino world on start |
-| `name` | `multiverse_gambling` | World folder name. Point it at an existing world to reuse it |
+| `name` | `mvgam_casino` | World folder name. Point it at an existing world to reuse it |
 | `size` | `500` | Side of the square world, in blocks (200-2000). It is grown automatically if the layout does not fit |
 | `build-structures` | `true` | Builds the plaza, the roads and the arenas the first time the world is used |
 | `teleport-on-join` | `false` | Sends players to the casino world when they join the server |

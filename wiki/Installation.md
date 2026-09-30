@@ -51,7 +51,7 @@ plugin never touches the balances, it asks Vault for them.
 
 ## The casino world
 
-On first start the plugin creates the separate casino world (`multiverse_gambling` by
+On first start the plugin creates the separate casino world (`mvgam_casino` by
 default) and builds the plaza, the roads and one arena per game. Nothing is built in your
 main world. See [Casino World](Casino-World).
 
@@ -65,9 +65,9 @@ Older builds kept every message in a single `messages.yml`. Modern builds read
 ## Checking the installation
 
 ```
-/casino info          → active economy, registered games and current secret
-/casino world         → travel to the casino
-/casino language      → the language you are reading
+/mvgam info          → active economy, registered games and current secret
+/mvgam world         → travel to the casino
+/mvgam language      → the language you are reading
 ```
 
 If the casino world is missing, the console says why: the world may be disabled, the layout

@@ -6,10 +6,10 @@ The plugin translates **itself inside the game**. Nothing to restart, nothing to
 each player picks what they read and the choice is saved.
 
 ```
-/casino language es      → this player reads Spanish from now on
-/casino language en      → back to English
-/casino language         → what am I reading, and what is available?
-/casino language reset   → forget my choice, follow my Minecraft client again
+/mvgam language es      → this player reads Spanish from now on
+/mvgam language en      → back to English
+/mvgam language         → what am I reading, and what is available?
+/mvgam language reset   → forget my choice, follow my Minecraft client again
 ```
 
 Loose input is accepted: `es`, `ES`, `es_es`, `es-AR`, `spanish` and `español` all mean
@@ -31,7 +31,7 @@ a modern build.
 
 The lookup order is:
 
-1. the language that player chose with `/casino language`;
+1. the language that player chose with `/mvgam language`;
 2. their **Minecraft client locale**, when `language.follow-client` is `true` and the plugin
    ships that language;
 3. `language.default` from `config.yml`;
@@ -50,7 +50,7 @@ independent of the server language.
 | Menus: hub, statistics, bet selector | yes |
 | Game catalogue names and descriptions | yes, through `catalog.<game-id>.*` |
 | World signs | yes, with the default language |
-| Admin answers (`/casino give`, `/casino reload`, `/casino world build`...) | yes, in the language of whoever ran them |
+| Admin answers (`/mvgam give`, `/mvgam reload`, `/mvgam world build`...) | yes, in the language of whoever ran them |
 | The panel labels drawn **inside** each game (the "CASH OUT" button, "Bet:" lines...) | English only for now |
 
 That last row is honest rather than hidden: the money and the rules are the same in every
@@ -61,8 +61,8 @@ labels into the language files is the next translation milestone.
 
 1. Copy `lang/en.yml` to `lang/<code>.yml`, for example `lang/fr.yml`.
 2. Translate the values (never the keys).
-3. That is it: the code shows up in `/casino language` and in the tab completion as soon as
-   the file exists. `/casino reload` picks it up without a restart.
+3. That is it: the code shows up in `/mvgam language` and in the tab completion as soon as
+   the file exists. `/mvgam reload` picks it up without a restart.
 
 If a key is missing, the plugin looks for it in the player's language and then in English;
 if it is missing everywhere it prints `&c[missing message: <key>]` instead of breaking. A
@@ -70,7 +70,7 @@ partial translation is therefore always safe to ship.
 
 A language you drop in yourself cannot be picked up automatically from a Minecraft client:
 following the client only resolves codes the plugin ships (`en`, `es`). Custom languages are
-selected explicitly, with `/casino language <code>`.
+selected explicitly, with `/mvgam language <code>`.
 
 ## Translating game names
 

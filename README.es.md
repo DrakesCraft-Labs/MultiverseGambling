@@ -96,11 +96,11 @@ El plugin puede crear y mantener un **mundo aparte** que contiene todas las estr
 no hay que pegar nada a mano y el mundo de juego queda limpio.
 
 ```
-/casino world          → te lleva al casino
-/casino world build    → reconstruye la plaza, las carreteras y todas las arenas (admin)
+/mvgam world          → te lleva al casino
+/mvgam world build    → reconstruye la plaza, las carreteras y todas las arenas (admin)
 ```
 
-Por defecto crea un **mundo plano de 500 × 500 bloques** llamado `multiverse_gambling` con
+Por defecto crea un **mundo plano de 500 × 500 bloques** llamado `mvgam_casino` con
 borde centrado, y en el primer uso levanta:
 
 - una **plaza central** (radio 30) como disco pavimentado con bordillo, monumento de oro,
@@ -118,7 +118,7 @@ Todo se controla desde `world:` en [config.yml](src/main/resources/config.yml):
 ```yaml
 world:
   enabled: true            # crear/cargar el mundo al arrancar
-  name: 'multiverse_gambling'
+  name: 'mvgam_casino'
   size: 500                # lado del cuadrado, en bloques (200-2000)
   build-structures: true   # plaza, arenas y carreteras en el primer uso
   teleport-on-join: false  # mandar aquí a cada jugador al entrar
@@ -132,7 +132,7 @@ Cosas que conviene saber:
 - Si `world.size` es pequeño para la rejilla, el plugin **agranda el mundo** en pasos de 50
   bloques (hasta 2000) en vez de fallar.
 - Apunta `world.name` a un mundo existente para reutilizarlo, o pon `enabled: false` y
-  construye el casino a mano: `/casino world` te dirá entonces que el mundo está desactivado.
+  construye el casino a mano: `/mvgam world` te dirá entonces que el mundo está desactivado.
 - El plugin se niega a construir las estructuras en el mundo principal del servidor, así que
   nunca pisa el spawn de un mapa de supervivencia.
 - El texto de los carteles usa el catálogo del idioma por defecto, así que un servidor en
@@ -148,10 +148,10 @@ El plugin **se traduce a sí mismo dentro del juego**. Cada jugador elige lo que
 comandos de administración contestan en el idioma de quien los ejecutó.
 
 ```
-/casino language es      → este jugador pasa a leer español
-/casino language en      → vuelve al inglés
-/casino language         → muestra el idioma actual y los disponibles
-/casino language reset   → seguir otra vez el idioma del cliente de Minecraft
+/mvgam language es      → este jugador pasa a leer español
+/mvgam language en      → vuelve al inglés
+/mvgam language         → muestra el idioma actual y los disponibles
+/mvgam language reset   → seguir otra vez el idioma del cliente de Minecraft
 ```
 
 Cómo funciona:
@@ -164,7 +164,7 @@ Cómo funciona:
   (si `language.follow-client` es `true`) → `language.default` → inglés.
 - La consola y los carteles del mundo usan `language.default`.
 - Añadir un idioma es copiar un archivo: copia `lang/en.yml` a `lang/<codigo>.yml`,
-  tradúcelo, y el código aparece al instante en `/casino language`. Los códigos que no
+  tradúcelo, y el código aparece al instante en `/mvgam language`. Los códigos que no
   existen se rechazan mostrando la lista de disponibles.
 - Se acepta entrada libre: `es`, `ES`, `es_es`, `es-AR`, `spanish` y `español` significan
   todos español.
@@ -222,8 +222,8 @@ ronda se juega sola y la siguiente arranca sin que nadie lance comandos.
 | **Rifa** | `raffle` | Boletas a precio fijo y sorteo de **tres premios**: 70%, 20% y 10% del bote. | 2-24 |
 | **Póker de Dados** | `dice-poker` | Cinco dados cada uno; gana la mejor mano. Los empates reparten el bote. | 2-16 |
 
-Los ids son estables y también aceptan el nombre traducido, así que `/casino play ruleta`
-funciona en un servidor en español y `/casino play roulette` en uno en inglés.
+Los ids son estables y también aceptan el nombre traducido, así que `/mvgam play ruleta`
+funciona en un servidor en español y `/mvgam play roulette` en uno en inglés.
 
 ---
 
@@ -258,13 +258,13 @@ ventaja está fijada por la propia rueda, como la ruleta.
 Al arrancar, el plugin genera un secreto y **publica su hash**:
 
 ```
-/casino verify
+/mvgam verify
 ```
 
 Cada tirada se deriva de `HMAC-SHA256(secreto, semillaDelJugador:nonce:cursor)`. Cuando el
 secreto rota, se revela el anterior y cualquiera puede recalcular las tiradas para comprobar
 que la casa no las retocó. La semilla de cliente es tuya y se puede cambiar con
-`/casino verify <texto>`; mezclarla con el secreto del servidor es lo que impide que el
+`/mvgam verify <texto>`; mezclarla con el secreto del servidor es lo que impide que el
 servidor pueda elegir el resultado después de conocerte.
 
 Las tiradas de las partidas en grupo se atribuyen a la identidad fija del casino (UUID
@@ -277,31 +277,35 @@ paso.
 
 | Comando | Qué hace |
 |---|---|
-| `/casino` | Abre el menú principal con las dos pestañas |
-| `/casino games [solo\|group]` | Lista el catálogo con sus límites de apuesta |
-| `/casino play <juego>` | Juega a un juego por su id o su nombre |
-| `/casino action <accion>` | Punto de entrada de los **botones del chat** (shoot, horse 3, accept...) |
-| `/casino balance [jugador]` | Consulta el saldo |
-| `/casino stats [jugador]` | Estadísticas: partidas, retorno real, juego favorito |
-| `/casino top [profit\|wagered\|prize]` | Ranking del servidor |
-| `/casino verify [semilla]` | Auditoría del azar y cambio de semilla |
-| `/casino world [build]` | Te lleva al mundo casino, o lo reconstruye |
-| `/casino language [codigo\|reset]` | Cambia el idioma que lee este jugador |
-| `/casino info` | Economía activa, juegos y secreto actual |
-| `/casino give \| take \| set` | Administración de saldo |
-| `/casino cancel <jugador>` | Cierra la partida de alguien y devuelve su dinero |
-| `/casino reload` | Recarga config y mensajes sin tocar las partidas en curso |
+| `/mvgam` | Abre el menú principal con las dos pestañas |
+| `/mvgam games [solo\|group]` | Lista el catálogo con sus límites de apuesta |
+| `/mvgam play <juego>` | Juega a un juego por su id o su nombre |
+| `/mvgam action <accion>` | Punto de entrada de los **botones del chat** (shoot, horse 3, accept...) |
+| `/mvgam balance [jugador]` | Consulta el saldo |
+| `/mvgam stats [jugador]` | Estadísticas: partidas, retorno real, juego favorito |
+| `/mvgam top [profit\|wagered\|prize]` | Ranking del servidor |
+| `/mvgam verify [semilla]` | Auditoría del azar y cambio de semilla |
+| `/mvgam world [build]` | Te lleva al mundo casino, o lo reconstruye |
+| `/mvgam language [codigo\|reset]` | Cambia el idioma que lee este jugador |
+| `/mvgam info` | Economía activa, juegos y secreto actual |
+| `/mvgam give \| take \| set` | Administración de saldo |
+| `/mvgam cancel <jugador>` | Cierra la partida de alguien y devuelve su dinero |
+| `/mvgam reload` | Recarga config y mensajes sin tocar las partidas en curso |
 
-Alias: `/gambling`, `/mg`, `/bets`. Alias de subcomandos: `list`, `bet`, `ranking`, `fair`,
-`lang`, y `language` acepta además `lang`.
+El comando es `/mvgam` y **no tiene alias**: cada subcomando tiene una sola forma, así que el
+autocompletado y los mensajes nunca pueden discrepar.
+
+Los permisos, las etiquetas y el mundo que crea llevan el prefijo `mvgam_`, así que un
+servidor con otros plugins nunca mezcla un identificador: `mvgam_play`, `mvgam_top`,
+`mvgam_admin` y el mundo `mvgam_casino`.
 
 ## Permisos
 
 | Permiso | Por defecto | Permite |
 |---|---|---|
-| `casino.play` | todos | Entrar al casino, jugar a los juegos públicos y elegir idioma |
-| `casino.top` | todos | Ver el ranking del servidor |
-| `casino.admin` | operadores | Recargar, construir el mundo casino, dar/quitar saldo y cancelar partidas |
+| `mvgam_play` | todos | Entrar al casino, jugar a los juegos públicos y elegir idioma |
+| `mvgam_top` | todos | Ver el ranking del servidor |
+| `mvgam_admin` | operadores | Recargar, construir el mundo casino, dar/quitar saldo y cancelar partidas |
 
 ---
 

@@ -3,7 +3,7 @@
 [English](Configuration) · **Español**
 
 Todo está en `plugins/MultiverseGambling/config.yml`. El archivo se escribe en inglés y
-comentado; esta página es la referencia. Después de editar ejecuta `/casino reload`: las
+comentado; esta página es la referencia. Después de editar ejecuta `/mvgam reload`: las
 partidas en curso no se tocan y los valores nuevos se aplican en la siguiente ronda.
 
 ## `economy`
@@ -55,7 +55,7 @@ Ver [Idiomas](Idiomas-es).
 | Clave | Por defecto | Significado |
 |---|---|---|
 | `enabled` | `true` | Crea (o carga) el mundo casino al arrancar |
-| `name` | `multiverse_gambling` | Nombre de la carpeta del mundo. Apúntalo a un mundo existente para reutilizarlo |
+| `name` | `mvgam_casino` | Nombre de la carpeta del mundo. Apúntalo a un mundo existente para reutilizarlo |
 | `size` | `500` | Lado del mundo cuadrado, en bloques (200-2000). Se agranda solo si la distribución no cabe |
 | `build-structures` | `true` | Construye la plaza, las carreteras y las arenas la primera vez que se usa el mundo |
 | `teleport-on-join` | `false` | Manda a los jugadores al mundo casino cuando entran al servidor |

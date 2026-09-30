@@ -249,7 +249,7 @@ public final class MultiverseGamblingConfig {
     }
 
     public String worldName() {
-        return cfg.getString("world.name", "multiverse_gambling");
+        return cfg.getString("world.name", "mvgam_casino");
     }
 
     /** Side of the square in blocks; also the size of the world border. */

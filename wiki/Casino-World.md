@@ -6,13 +6,13 @@ The plugin can keep all of its structures in a **separate world**, so the playab
 clean and nothing has to be pasted by hand.
 
 ```
-/casino world          → travel to the casino
-/casino world build    → rebuild the whole thing (casino.admin)
+/mvgam world          → travel to the casino
+/mvgam world build    → rebuild the whole thing (mvgam_admin)
 ```
 
 ## What it creates
 
-By default a **flat, 500 × 500 block world** named `multiverse_gambling`, with a world border
+By default a **flat, 500 × 500 block world** named `mvgam_casino`, with a world border
 centred on spawn:
 
 | Piece | Details |
@@ -43,7 +43,7 @@ player walking down a road sees the sign of the game before entering.
 ```yaml
 world:
   enabled: true
-  name: 'multiverse_gambling'
+  name: 'mvgam_casino'
   size: 500
   build-structures: true
   teleport-on-join: false
@@ -51,7 +51,7 @@ world:
 
 | Key | Notes |
 |---|---|
-| `enabled` | With `false` the plugin never creates the world and `/casino world` answers that it is disabled |
+| `enabled` | With `false` the plugin never creates the world and `/mvgam world` answers that it is disabled |
 | `name` | Point it at a world you already have to reuse it: the plugin will build the arena grid there |
 | `size` | 200 to 2000. If the layout does not fit, the world **grows in steps of 50** (up to 2000) instead of failing |
 | `build-structures` | With `false` the world is created empty and you build it yourself |
@@ -61,7 +61,7 @@ world:
 
 - **The main world is never touched.** The plugin refuses to build the structures in the
   server's main world and logs a warning instead.
-- **Rebuilding is safe.** `/casino world build` clears the casino world and lays everything
+- **Rebuilding is safe.** `/mvgam world build` clears the casino world and lays everything
   out again; players inside are moved to spawn.
 - **Sign text follows the default language**, so a Spanish server gets Spanish arena signs
   (`catalog.<game-id>.name` with `language.default`).
@@ -80,5 +80,5 @@ world:
   enabled: false
 ```
 
-Nothing is created or modified, and `/casino world` just tells players the world is disabled
-while `/casino play <game>` keeps working from anywhere.
+Nothing is created or modified, and `/mvgam world` just tells players the world is disabled
+while `/mvgam play <game>` keeps working from anywhere.

@@ -8,18 +8,17 @@ website: https://github.com/DrakesCraft-Labs/MultiverseGambling
 softdepend: [Vault]
 
 commands:
-  casino:
-    description: Casino menu, worlds, language picker and administration.
-    usage: /casino menu
-    aliases: [gambling, mg, bets]
+  mvgam:
+    description: Casino menu, casino world, language picker and administration.
+    usage: /mvgam menu
 
 permissions:
-  casino.play:
+  mvgam_play:
     description: Allows entering the casino, playing the public games and picking a language.
     default: true
-  casino.top:
+  mvgam_top:
     description: Allows viewing the server ranking.
     default: true
-  casino.admin:
+  mvgam_admin:
     description: Reload, build the casino world, give or take balance and cancel running games.
     default: op

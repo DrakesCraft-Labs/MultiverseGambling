@@ -7,7 +7,7 @@ import java.util.Map;
 
 /**
  * Three reel slots. The symbol table is configurable and the theoretical return is
- * computed exactly, so {@code /casino rtp} can prove how much the slot configured by
+ * computed exactly, so {@code /mvgam rtp} can prove how much the slot configured by
  * the administrator really pays.
  */
 public final class SlotsTable {

@@ -8,7 +8,7 @@ import java.util.UUID;
  */
 public interface EconomyProvider {
 
-    /** Human readable name of the active provider, for /casino info. */
+    /** Human readable name of the active provider, for /mvgam info. */
     String name();
 
     double balance(UUID playerId);

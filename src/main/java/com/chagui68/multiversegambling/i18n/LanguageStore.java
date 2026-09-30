@@ -16,7 +16,7 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Remembers which language each player picked with {@code /casino language}.
+ * Remembers which language each player picked with {@code /mvgam language}.
  *
  * <p>Kept apart from the statistics on purpose: a player may wipe their casino
  * history and still want their language (or the other way around). Stored as a

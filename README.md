@@ -95,11 +95,11 @@ The plugin can build and take care of a **separate world** that holds every stru
 nothing has to be pasted by hand and the playable world stays clean.
 
 ```
-/casino world          → teleports you to the casino
-/casino world build    → rebuilds the plaza, the roads and every arena (admin)
+/mvgam world          → teleports you to the casino
+/mvgam world build    → rebuilds the plaza, the roads and every arena (admin)
 ```
 
-By default it creates a **flat 500 × 500 block world** named `multiverse_gambling` with a
+By default it creates a **flat 500 × 500 block world** named `mvgam_casino` with a
 centred world border, and lays out, on first use:
 
 - a **central plaza** (radius 30) as a paved disc with a kerb, a gold monument, four
@@ -115,7 +115,7 @@ Everything is driven by `world:` in [config.yml](src/main/resources/config.yml):
 ```yaml
 world:
   enabled: true            # create/load the world on start
-  name: 'multiverse_gambling'
+  name: 'mvgam_casino'
   size: 500                # side of the square, in blocks (200-2000)
   build-structures: true   # plaza, arenas and roads on first use
   teleport-on-join: false  # send every player here when they join
@@ -129,7 +129,7 @@ Notes worth knowing:
 - If `world.size` is too small for the grid, the plugin **grows the world** in steps of 50
   blocks (up to 2000) instead of failing to build.
 - Point `world.name` at an existing world to reuse it, or set `enabled: false` and build
-  the casino manually: `/casino world` then simply tells you the world is disabled.
+  the casino manually: `/mvgam world` then simply tells you the world is disabled.
 - The plugin refuses to build the structures in the server's main world, so it never
   overwrites the spawn of a survival map.
 - Sign text uses the catalogue of the default language, so a Spanish server gets Spanish
@@ -145,10 +145,10 @@ The plugin translates **itself inside the game**. Every player picks what they r
 admin commands answer in the language of whoever ran them.
 
 ```
-/casino language es      → this player now reads Spanish
-/casino language en      → back to English
-/casino language         → shows the current language and the available ones
-/casino language reset   → follow my Minecraft client again
+/mvgam language es      → this player now reads Spanish
+/mvgam language en      → back to English
+/mvgam language         → shows the current language and the available ones
+/mvgam language reset   → follow my Minecraft client again
 ```
 
 How it works:
@@ -161,7 +161,7 @@ How it works:
   `language.follow-client` is `true`) → `language.default` → English.
 - The console and the world signs use `language.default`.
 - Adding a language is dropping a file: copy `lang/en.yml` to `lang/<code>.yml`,
-  translate it, and the code immediately shows up in `/casino language`. Unknown codes are
+  translate it, and the code immediately shows up in `/mvgam language`. Unknown codes are
   rejected with the list of available ones.
 - Loose input is accepted: `es`, `ES`, `es_es`, `es-AR`, `spanish` and `español` all mean
   Spanish.
@@ -217,8 +217,8 @@ round plays itself and the next one starts without anybody typing a command.
 | **Raffle** | `raffle` | Tickets at a fixed price and a draw of **three prizes**: 70%, 20% and 10% of the pot. | 2-24 |
 | **Dice Poker** | `dice-poker` | Five dice each; the best hand wins. Ties split the pot. | 2-16 |
 
-Game ids are stable and also accept the localised name, so `/casino play ruleta` works on a
-Spanish server and `/casino play roulette` on an English one.
+Game ids are stable and also accept the localised name, so `/mvgam play ruleta` works on a
+Spanish server and `/mvgam play roulette` on an English one.
 
 ---
 
@@ -253,13 +253,13 @@ edge is fixed by the wheel itself, like roulette.
 On start the plugin generates a secret and **publishes its hash**:
 
 ```
-/casino verify
+/mvgam verify
 ```
 
 Every roll is derived from `HMAC-SHA256(secret, playerSeed:nonce:cursor)`. When the secret
 rotates the previous one is revealed and anybody can recompute the rolls to check that the
 house did not touch them. The client seed is yours and can be changed with
-`/casino verify <text>`; mixing it with the server secret is what stops the server from
+`/mvgam verify <text>`; mixing it with the server secret is what stops the server from
 choosing the result after seeing your bet.
 
 Rolls inside group games are attributed to the fixed casino identity (zero UUID), so a hot
@@ -271,31 +271,35 @@ bomb round or a horse race can be audited from start to finish.
 
 | Command | What it does |
 |---|---|
-| `/casino` | Opens the main menu with the two tabs |
-| `/casino games [solo\|group]` | Lists the catalogue with its betting limits |
-| `/casino play <game>` | Plays a game by id or by name |
-| `/casino action <action>` | Entry point for the **chat buttons** (shoot, horse 3, accept...) |
-| `/casino balance [player]` | Shows the balance |
-| `/casino stats [player]` | Statistics: games, real return, favourite game |
-| `/casino top [profit\|wagered\|prize]` | Server ranking |
-| `/casino verify [seed]` | Fairness audit and client seed change |
-| `/casino world [build]` | Teleports to the casino world, or rebuilds it |
-| `/casino language [code\|reset]` | Switches the language this player reads |
-| `/casino info` | Active economy, games and current secret |
-| `/casino give \| take \| set` | Balance administration |
-| `/casino cancel <player>` | Closes somebody's game and refunds their money |
-| `/casino reload` | Reloads config and messages without touching running games |
+| `/mvgam` | Opens the main menu with the two tabs |
+| `/mvgam games [solo\|group]` | Lists the catalogue with its betting limits |
+| `/mvgam play <game>` | Plays a game by id or by name |
+| `/mvgam action <action>` | Entry point for the **chat buttons** (shoot, horse 3, accept...) |
+| `/mvgam balance [player]` | Shows the balance |
+| `/mvgam stats [player]` | Statistics: games, real return, favourite game |
+| `/mvgam top [profit\|wagered\|prize]` | Server ranking |
+| `/mvgam verify [seed]` | Fairness audit and client seed change |
+| `/mvgam world [build]` | Teleports to the casino world, or rebuilds it |
+| `/mvgam language [code\|reset]` | Switches the language this player reads |
+| `/mvgam info` | Active economy, games and current secret |
+| `/mvgam give \| take \| set` | Balance administration |
+| `/mvgam cancel <player>` | Closes somebody's game and refunds their money |
+| `/mvgam reload` | Reloads config and messages without touching running games |
 
-Aliases: `/gambling`, `/mg`, `/bets`. Subcommand aliases: `list`, `bet`, `ranking`,
-`fair`, `lang`.
+The command is `/mvgam` and it has **no aliases**: each subcommand has exactly one spelling,
+so tab completion and the messages can never disagree.
+
+Tags, permissions and the world it creates carry the `mvgam_` prefix, so a server that also
+runs other plugins never mixes an identifier: `mvgam_play`, `mvgam_top`, `mvgam_admin` and
+the `mvgam_casino` world.
 
 ## Permissions
 
 | Permission | Default | Allows |
 |---|---|---|
-| `casino.play` | everyone | Entering the casino, playing the public games, picking a language |
-| `casino.top` | everyone | Viewing the server ranking |
-| `casino.admin` | operators | Reload, build the casino world, give/take balance, cancel games |
+| `mvgam_play` | everyone | Entering the casino, playing the public games, picking a language |
+| `mvgam_top` | everyone | Viewing the server ranking |
+| `mvgam_admin` | operators | Reload, build the casino world, give/take balance, cancel games |
 
 ---
 

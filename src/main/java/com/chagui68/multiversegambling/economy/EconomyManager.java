@@ -16,7 +16,7 @@ public final class EconomyManager {
         this.plugin = plugin;
     }
 
-    /** Detects Vault or falls back to the internal wallet. Called again on /casino reload. */
+    /** Detects Vault or falls back to the internal wallet. Called again on /mvgam reload. */
     public void setup() {
         startingBalance = plugin.config().startingBalance();
         String mode = plugin.config().economyProvider();

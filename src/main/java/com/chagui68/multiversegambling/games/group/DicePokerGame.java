@@ -20,7 +20,7 @@ import org.bukkit.entity.Player;
  *
  * <p>Everybody rolls five dice and the best hand wins. Because every roll comes from
  * the provably fair generator, two players can replay the whole game with
- * {@code /casino verify} and check that nobody cheated.</p>
+ * {@code /mvgam verify} and check that nobody cheated.</p>
  */
 public final class DicePokerGame extends AbstractGroupGame {
 

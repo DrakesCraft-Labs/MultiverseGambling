@@ -20,9 +20,9 @@ con su mensaje. Los saldos se guardan cada `data.save-every-minutes` minutos y a
 Comandos de administración:
 
 ```
-/casino give <jugador> <cantidad>
-/casino take <jugador> <cantidad>
-/casino set  <jugador> <cantidad>
+/mvgam give <jugador> <cantidad>
+/mvgam take <jugador> <cantidad>
+/mvgam set  <jugador> <cantidad>
 ```
 
 Funcionan con cualquiera de los dos proveedores. Cuando Vault está activo el plugin llama a

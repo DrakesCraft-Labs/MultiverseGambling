@@ -116,7 +116,7 @@ public final class FairnessService {
         return ProvablyFair.rollInt(serverSeed, clientSeed(playerId), nextNonce(), 0, bound);
     }
 
-    /** Text ready for /casino verify. */
+    /** Text ready for /mvgam verify. */
     public String[] auditLines(UUID playerId) {
         String revealed = previousSeed == null ? null : ProvablyFair.sha256(previousSeed);
         return new String[] {

@@ -3,7 +3,7 @@
 **English** · [Español](Juegos-Grupo-es)
 
 Nine games with **automatic rounds**. Nobody has to start anything: a player joins with
-`/casino play <game>`, bets during the window, and the round plays itself. When it ends the
+`/mvgam play <game>`, bets during the window, and the round plays itself. When it ends the
 next betting window opens on its own for whoever wants to join again.
 
 The shared round cycle is: **waiting for players → betting window → in game → payout**.
@@ -48,7 +48,7 @@ Hot Bomb, Bomb Board and Russian Roulette run on turns with a per turn clock
 current player and, if they do not act in time, the turn moves on by itself, so a single idle
 player cannot freeze the table.
 
-Some actions are also reachable from the chat: clickable buttons send `/casino action <action>`
+Some actions are also reachable from the chat: clickable buttons send `/mvgam action <action>`
 (`reveal`, `horse 3`, `shoot`, `accept`, `decline`...) which is what makes the games playable
 from a phone or from chat without opening a menu.
 
@@ -56,4 +56,4 @@ from a phone or from chat without opening a menu.
 
 Rounds draw their randomness from the same provably fair source as the solo games, attributed
 to the fixed casino identity (zero UUID). That means a whole race or a hot bomb round can be
-audited afterwards with `/casino verify`. See [Fairness](Fairness).
+audited afterwards with `/mvgam verify`. See [Fairness](Fairness).

@@ -15,7 +15,7 @@ tirada = HMAC-SHA256(secretoDelServidor, semillaDelJugador:nonce:cursor)
   Mientras el secreto está activo no puedes conocer las tiradas, pero el hash publicado
   compromete al servidor con ellas.
 - La **semilla de cliente** es tuya. Puedes ponerle cualquier texto con
-  `/casino verify <texto>`, así el servidor no puede elegir un resultado después de ver tu
+  `/mvgam verify <texto>`, así el servidor no puede elegir un resultado después de ver tu
   apuesta.
 - El **nonce** cuenta las tiradas emitidas, y el **cursor** separa los varios valores aleatorios
   que un mismo juego puede necesitar.
@@ -27,14 +27,14 @@ nada.
 ## Auditar
 
 ```
-/casino verify
+/mvgam verify
 ```
 
 Muestra el hash del secreto actual, el secreto anterior (cuando ya rotó), el hash que dejó ese
 secreto anterior, tu semilla de cliente y cuántas tiradas se han emitido en esta sesión.
 
 ```
-/casino verify mi-texto-de-suerte
+/mvgam verify mi-texto-de-suerte
 ```
 
 Cambia tu semilla de cliente. Hazlo cuando quieras; el cambio se aplica a las tiradas

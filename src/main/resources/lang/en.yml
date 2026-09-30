@@ -2,7 +2,7 @@
 #  MultiverseGambling - messages (English)
 #
 #  One file per language, inside plugins/MultiverseGambling/lang/.
-#  Players switch language in game with: /casino language <code>
+#  Players switch language in game with: /mvgam language <code>
 #
 #  Colours use the classic ampersand format: &6 gold, &7 grey, &c red...
 #  Curly braces are placeholders the plugin fills in:
@@ -43,7 +43,7 @@ games:
 group:
   waiting-players: '&7Waiting for players to start: &f{current}&7/&f{min}&7.'
   betting-open: '&aBetting is open for &f{seconds}s&a. You can join now.'
-  betting-hint: '&7Use &f/casino play <game> &7to join.'
+  betting-hint: '&7Use &f/mvgam play <game> &7to join.'
   countdown: '&eThe round starts in &f{seconds}&e...'
   time-left: '&7&f{seconds}s &7left before betting closes.'
   round-starting: '&6Round &f{round} &6is starting!'
@@ -79,11 +79,11 @@ duel:
 
 fairness:
   explanation: '&7Every roll is derived from a server secret and your seed. When the secret rotates you can recompute it and check that nothing was touched.'
-  your-seed: '&7Your current seed is &f{seed}&7. You can change it with &f/casino verify <text>&7.'
+  your-seed: '&7Your current seed is &f{seed}&7. You can change it with &f/mvgam verify <text>&7.'
   seed-changed: '&aYour seed is now &f{seed}&a.'
 
 # ---------------------------------------------------------------------------
-#  Language picker: /casino language [code|reset]
+#  Language picker: /mvgam language [code|reset]
 # ---------------------------------------------------------------------------
 language:
   current: '&7Your language is &f{language}&7. Available: &f{languages}&7.'
@@ -93,7 +93,7 @@ language:
   reset: '&aYour language is back to automatic; you now read &f{language}&a.'
 
 # ---------------------------------------------------------------------------
-#  Casino world: /casino world [build]
+#  Casino world: /mvgam world [build]
 # ---------------------------------------------------------------------------
 world:
   disabled: '&cThe casino world is disabled in the configuration.'
@@ -104,8 +104,8 @@ world:
 
 command:
   players-only: '&cThis command is meant to be used in game.'
-  unknown: '&cUnknown subcommand: &f{subcommand}&c. Try &f/casino menu&c.'
-  play-help: '&7Play any game with &f/casino play <game>&7.'
+  unknown: '&cUnknown subcommand: &f{subcommand}&c. Try &f/mvgam menu&c.'
+  play-help: '&7Play any game with &f/mvgam play <game>&7.'
   unknown-game: '&cThere is no game called &f{game}&c.'
   unknown-player: '&cI cannot find the player &f{player}&c.'
   invalid-amount: '&c&f{value} &cis not a valid amount.'
@@ -152,7 +152,7 @@ gui:
       - '&7Current secret:'
       - '&f{hash}...'
       - ''
-      - '&e/casino verify'
+      - '&e/mvgam verify'
     bet: '&7Bet: &f{min} &7- &f{max}'
     players: '&7Players: &f{min} &7- &f{max}'
     play: '&eClick to play'

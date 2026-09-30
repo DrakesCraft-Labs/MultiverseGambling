@@ -6,10 +6,10 @@ El plugin **se traduce a sí mismo dentro del juego**. Sin reiniciar nada y sin 
 cada jugador elige lo que lee y la elección se guarda.
 
 ```
-/casino language es      → este jugador lee español desde ahora
-/casino language en      → vuelve al inglés
-/casino language         → ¿qué leo y qué hay disponible?
-/casino language reset   → olvidar mi elección y seguir mi cliente de Minecraft
+/mvgam language es      → este jugador lee español desde ahora
+/mvgam language en      → vuelve al inglés
+/mvgam language         → ¿qué leo y qué hay disponible?
+/mvgam language reset   → olvidar mi elección y seguir mi cliente de Minecraft
 ```
 
 Se acepta entrada libre: `es`, `ES`, `es_es`, `es-AR`, `spanish` y `español` significan todos
@@ -31,7 +31,7 @@ sobreviven a las actualizaciones. Un `messages.yml` de una versión anterior se 
 
 El orden de búsqueda es:
 
-1. el idioma que ese jugador eligió con `/casino language`;
+1. el idioma que ese jugador eligió con `/mvgam language`;
 2. su **idioma de cliente de Minecraft**, cuando `language.follow-client` es `true` y el plugin
    tiene ese idioma;
 3. `language.default` de `config.yml`;
@@ -50,7 +50,7 @@ independientes del idioma del servidor.
 | Menús: hub, estadísticas, selector de apuesta | sí |
 | Nombres y descripciones del catálogo de juegos | sí, con `catalog.<id-juego>.*` |
 | Carteles del mundo | sí, con el idioma por defecto |
-| Respuestas de administración (`/casino give`, `/casino reload`, `/casino world build`...) | sí, en el idioma de quien lo ejecutó |
+| Respuestas de administración (`/mvgam give`, `/mvgam reload`, `/mvgam world build`...) | sí, en el idioma de quien lo ejecutó |
 | Las etiquetas dibujadas **dentro** de cada juego (el botón "CASH OUT", las líneas "Bet:"...) | solo en inglés, por ahora |
 
 Esa última fila es honesta, no está escondida: el dinero y las reglas son iguales en cualquier
@@ -61,8 +61,8 @@ esas etiquetas a los archivos de idioma es el siguiente hito de traducción.
 
 1. Copia `lang/en.yml` a `lang/<codigo>.yml`, por ejemplo `lang/fr.yml`.
 2. Traduce los valores (nunca las claves).
-3. Ya está: el código aparece en `/casino language` y en el autocompletado en cuanto el archivo
-   existe. `/casino reload` lo carga sin reiniciar.
+3. Ya está: el código aparece en `/mvgam language` y en el autocompletado en cuanto el archivo
+   existe. `/mvgam reload` lo carga sin reiniciar.
 
 Si falta una clave, el plugin la busca en el idioma del jugador y después en inglés; si falta en
 todos, dibuja `&c[missing message: <clave>]` en vez de romper. Una traducción parcial siempre es
@@ -70,7 +70,7 @@ segura de publicar.
 
 Un idioma que añadas tú no se puede detectar automáticamente desde el cliente de Minecraft:
 seguir el cliente solo resuelve los códigos que el plugin incluye (`en`, `es`). Los idiomas
-personalizados se eligen explícitamente con `/casino language <codigo>`.
+personalizados se eligen explícitamente con `/mvgam language <codigo>`.
 
 ## Traducir los nombres de los juegos
 

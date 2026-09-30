@@ -112,9 +112,9 @@ public final class DuelGame extends AbstractGame {
                         + plugin.economy().format(stake) + "&7. You have &f"
                         + plugin.config().duelTimeoutSeconds() + "s&7.")
                 .append(Text.c(" "))
-                .append(Text.button("&a&lACCEPT", "/casino action accept", "&7Accept the duel"))
+                .append(Text.button("&a&lACCEPT", "/mvgam action accept", "&7Accept the duel"))
                 .append(Text.c(" "))
-                .append(Text.button("&c&lDECLINE", "/casino action decline", "&7Decline the duel")));
+                .append(Text.button("&c&lDECLINE", "/mvgam action decline", "&7Decline the duel")));
         target.playSound(target.getLocation(), Sound.BLOCK_ANVIL_LAND, 0.8f, 1.4f);
     }
 

@@ -85,12 +85,12 @@ public final class MultiverseGamblingPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new PlayerListener(this), this);
 
         MultiverseGamblingCommand command = new MultiverseGamblingCommand(this);
-        PluginCommand pluginCommand = getCommand("casino");
+        PluginCommand pluginCommand = getCommand("mvgam");
         if (pluginCommand != null) {
             pluginCommand.setExecutor(command);
             pluginCommand.setTabCompleter(command);
         } else {
-            getLogger().severe("Could not register /casino; check plugin.yml");
+            getLogger().severe("Could not register /mvgam; check plugin.yml");
         }
 
         sessions.start();
