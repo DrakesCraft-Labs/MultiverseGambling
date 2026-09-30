@@ -1,17 +1,17 @@
-name: FreebuffCasino
+name: MultiverseGambling
 version: '${project.version}'
-main: com.freebuff.casino.CasinoPlugin
+main: com.chagui68.multiversegambling.MultiverseGamblingPlugin
 api-version: '1.21'
-authors: [Freebuff]
+authors: [Chagui68]
 description: Motor de azar y apuestas con catalogo de minijuegos en solitario y en grupo.
-website: https://freebuff.com
+website: https://github.com/DrakesCraft-Labs/MultiverseGambling
 softdepend: [Vault]
 
 commands:
   casino:
     description: Menu y comandos del casino.
     usage: /casino menu
-    aliases: [apuestas, azar, freebuffcasino, apuesta]
+    aliases: [apuestas, azar, multiversegambling, apuesta]
 
 permissions:
   casino.play:

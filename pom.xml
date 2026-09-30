@@ -4,13 +4,19 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>com.freebuff</groupId>
-  <artifactId>casino</artifactId>
+  <groupId>com.chagui68</groupId>
+  <artifactId>multiversegambling</artifactId>
   <version>1.0.0</version>
   <packaging>jar</packaging>
 
-  <name>FreebuffCasino</name>
+  <name>MultiverseGambling</name>
   <description>Motor de azar y apuestas con un catálogo de minijuegos en solitario y en grupo.</description>
+
+  <developers>
+    <developer>
+      <name>Chagui68</name>
+    </developer>
+  </developers>
 
   <properties>
     <java.version>21</java.version>

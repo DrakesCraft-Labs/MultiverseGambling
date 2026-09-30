@@ -1,4 +1,4 @@
-# FreebuffCasino
+# MultiverseGambling
 
 Motor de azar y apuestas para **Paper 1.21.11** con un catálogo de **21 minijuegos**:
 12 en solitario contra la casa y 9 en grupo con rondas automáticas.
@@ -8,7 +8,7 @@ sitio, cada tirada de dinero sale de un **azar verificable** y cada tabla de pre
 está **auditada por tests**.
 
 ```
-mvn package      →  target/FreebuffCasino-1.0.0.jar
+mvn package      →  target/MultiverseGambling-1.0.0.jar
 ```
 
 ---
@@ -31,12 +31,12 @@ mvn package      →  target/FreebuffCasino-1.0.0.jar
 
 Un casino de servidor se rompe siempre de la misma forma: una tabla de premios que
 paga de más, un pago que se aplica dos veces, o una tirada que un jugador puede
-predecir. FreebuffCasino está construido para hacer esos tres fallos **imposibles
+predecir. MultiverseGambling está construido para hacer esos tres fallos **imposibles
 por construcción**, no por cuidado al escribir el código.
 
 Tres decisiones sostienen todo lo demás:
 
-1. **La matemática del azar vive en `com.freebuff.casino.engine`, sin Bukkit.**
+1. **La matemática del azar vive en `com.chagui68.multiversegambling.engine`, sin Bukkit.**
    Son clases de Java puro (ruleta, minas, crash, plinko, blackjack, póker de dados,
    tragaperras, rasca, rueda de premios, azar verificable). Se testean en milisegundos
    y el plugin solo puede *usar* esas fórmulas, nunca reinterpretarlas.
@@ -66,10 +66,10 @@ No depende de NMS ni de ningún módulo interno: solo API pública.
 
 ```bash
 mvn package
-cp target/FreebuffCasino-1.0.0.jar ~/servidor/plugins/
+cp target/MultiverseGambling-1.0.0.jar ~/servidor/plugins/
 ```
 
-Sin Vault el plugin arranca su propio monedero en `plugins/FreebuffCasino/balances.json`,
+Sin Vault el plugin arranca su propio monedero en `plugins/MultiverseGambling/balances.json`,
 con saldo de bienvenida configurable. Con Vault usa la economía del servidor y no
 duplica nada. Se controla con `economia.proveedor: auto | vault | interno`.
 
@@ -191,7 +191,7 @@ Permisos: `casino.play` (por defecto todos), `casino.top` y `casino.admin` (oper
 ## Arquitectura
 
 ```
-com.freebuff.casino
+com.chagui68.multiversegambling
 ├── engine/        ← Java puro, sin Bukkit, cubierto por tests
 │   ├── ProvablyFair, Rng, WeightedTable
 │   ├── RouletteTable, ColorWheel, PrizeWheel, SlotsTable, ScratchCardTable
@@ -205,7 +205,7 @@ com.freebuff.casino
 ├── games/solo/    ← los 12 juegos en solitario
 ├── games/group/   ← los 9 juegos en grupo
 ├── stats/         ← PlayerStats, StatsStore
-├── config/        ← CasinoConfig, Messages
+├── config/        ← MultiverseGamblingConfig, Messages
 ├── command/  listener/  util/
 ```
 
@@ -246,13 +246,13 @@ reparto los lleva la clase base.
 
 En ambos casos, si el juego necesita una tabla de premios nueva, **esa tabla va al
 paquete `engine` con sus tests**, no dentro del juego. Por último, registra la instancia
-en `CasinoPlugin.registerGames()`: es la única línea extra.
+en `MultiverseGamblingPlugin.registerGames()`: es la única línea extra.
 
 ---
 
 ## Qué cubren los tests
 
-**91 tests** sobre el paquete `engine`. No comprueban que el código haga lo que dice,
+**92 tests** sobre el paquete `engine`. No comprueban que el código haga lo que dice,
 sino que **no pueda explotarse**:
 
 - **Invariantes de retorno.** El multiplicador de Minas multiplicado por la probabilidad
@@ -276,3 +276,7 @@ sino que **no pueda explotarse**:
 ```bash
 mvn test
 ```
+
+---
+
+Desarrollado por **Chagui68** — [MultiverseGambling](https://github.com/DrakesCraft-Labs/MultiverseGambling).
