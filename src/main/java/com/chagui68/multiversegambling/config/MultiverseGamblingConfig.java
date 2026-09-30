@@ -277,6 +277,24 @@ public final class MultiverseGamblingConfig {
         return cfg.getBoolean("world.teleport-on-join", false);
     }
 
+    /**
+     * Show the result of a round in the arena itself (a spinning ball, a wheel, a
+     * board) instead of only in the action bar.
+     */
+    public boolean worldAnimationsEnabled() {
+        return cfg.getBoolean("world.animations.enabled", true);
+    }
+
+    /** Move the player to the arena so they can watch the show of their round. */
+    public boolean worldAnimationsTeleport() {
+        return cfg.getBoolean("world.animations.teleport-players", true);
+    }
+
+    /** Blocks between the centre of the arena and the spot the watcher stands on. */
+    public int worldAnimationsViewDistance() {
+        return ranged(cfg.getInt("world.animations.view-distance", 11), 5, 20);
+    }
+
     // -------------------------------------------------------------------- extras
 
     public boolean provablyFairEnabled() {

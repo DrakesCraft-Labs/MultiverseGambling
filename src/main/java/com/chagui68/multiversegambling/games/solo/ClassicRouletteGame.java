@@ -12,6 +12,13 @@ import com.chagui68.multiversegambling.gui.Gui;
 import com.chagui68.multiversegambling.session.TimedSession;
 import com.chagui68.multiversegambling.util.Items;
 import com.chagui68.multiversegambling.util.Text;
+import com.chagui68.multiversegambling.world.anim.ArenaStage;
+import com.chagui68.multiversegambling.world.anim.WheelShow;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.command.CommandSender;
@@ -47,12 +54,16 @@ public final class ClassicRouletteGame extends AbstractSoloGame {
         new RouletteGui(plugin, player, this, wager).show();
     }
 
-    /** Refunds a bet that has not spun yet. */
+    /**
+     * Refunds a bet that has not spun yet.
+     */
     void release(Wager wager) {
         refund(wager);
     }
 
-    /** Refunds the board bet and asks for a new one to go straight to a number. */
+    /**
+     * Refunds the board bet and asks for a new one to go straight to a number.
+     */
     void betOnPocket(Player player, Wager previous, int pocket) {
         refund(previous);
         plugin.guis().openBetSelector(player, this, bet -> {
@@ -63,12 +74,51 @@ public final class ClassicRouletteGame extends AbstractSoloGame {
         });
     }
 
-    /** Spins the wheel and settles the bet. */
+    /**
+     * Spins the wheel and settles the bet.
+     */
     void spin(Player player, Wager wager, Bet type, int selection) {
         RouletteTable wheel = table();
         int total = plugin.config().rouletteSpinTicks();
+        UUID playerId = player.getUniqueId();
+        // The pocket is drawn once, here, from the provably fair generator: the table
+        // shown in the arena only paints the result, it decides nothing.
+        int result = wheel.pockets().get(plugin.fair().rollInt(playerId, wheel.pocketCount()));
 
-        TimedSession animation = new TimedSession(plugin, player, id(), total) {
+        ArenaStage stage = arenaFor(player);
+        if (stage != null) {
+            WheelShow show = new WheelShow(plugin, stage,
+                    sectors(wheel), wheel.pockets().indexOf(result), total);
+            new TimedSession(plugin, player, id(), total) {
+
+                @Override
+                protected void onStart() {
+                    show.start();
+                }
+
+                @Override
+                protected void onFrame(int elapsed, int duration) {
+                    show.tick();
+                }
+
+                @Override
+                protected void onFinish() {
+                    show.settle();
+                    settleSpin(playerId, wager, type, selection, result);
+                }
+
+                @Override
+                protected void onCancel() {
+                    show.cancel();
+                    refund(wager);
+                }
+            }.run();
+            return;
+        }
+
+        // No arena to paint on: the action bar keeps the suspense of a round played
+        // outside the casino world.
+        new TimedSession(plugin, player, id(), total) {
 
             @Override
             protected void onStart() {
@@ -95,36 +145,59 @@ public final class ClassicRouletteGame extends AbstractSoloGame {
 
             @Override
             protected void onFinish() {
-                Player online = player();
-                if (online == null) {
-                    refund(wager);
-                    return;
-                }
-                // Here is the money: the pocket comes from the provably fair generator.
-                int result = wheel.pockets().get(
-                        plugin.fair().rollInt(online.getUniqueId(), wheel.pocketCount()));
-                double multiplier = RouletteTable.payoutOf(type, selection, result);
-                double payout = settle(online, wager, multiplier);
+                settleSpin(playerId, wager, type, selection, result);
+            }
 
-                String colour = colourCode(result);
-                announceResult(online, payout > wager.amount(),
-                        label(online, "panel.roulette.subtitle",
-                                "colour", colour,
-                                "number", RouletteTable.label(result),
-                                "name", colourName(online, result)));
-                info(online, title(online));
-                message(online, "panel.roulette.result",
-                        "spot", betDescription(online, type, selection),
+            @Override
+            protected void onCancel() {
+                refund(wager);
+            }
+        }.run();
+    }
+
+    /**
+     * Pays a spin whose pocket was drawn when the round started.
+     */
+    private void settleSpin(UUID playerId, Wager wager, Bet type, int selection, int result) {
+        Player online = plugin.getServer().getPlayer(playerId);
+        if (online == null) {
+            refund(wager);
+            return;
+        }
+        double multiplier = RouletteTable.payoutOf(type, selection, result);
+        double payout = settle(online, wager, multiplier);
+
+        String colour = colourCode(result);
+        announceResult(online, payout > wager.amount(),
+                label(online, "panel.roulette.subtitle",
                         "colour", colour,
                         "number", RouletteTable.label(result),
-                        "name", colourName(online, result));
-                showResult(online, wager.amount(), payout);
-                sound(online, payout > wager.amount() ? Sound.ENTITY_PLAYER_LEVELUP : Sound.ENTITY_VILLAGER_NO,
-                        0.9f, payout > wager.amount() ? 1.2f : 0.9f);
-                offerReplay(online);
-            }
-        };
-        animation.run();
+                        "name", colourName(online, result)));
+        info(online, title(online));
+        message(online, "panel.roulette.result",
+                "spot", betDescription(online, type, selection),
+                "colour", colour,
+                "number", RouletteTable.label(result),
+                "name", colourName(online, result));
+        showResult(online, wager.amount(), payout);
+        sound(online, payout > wager.amount() ? Sound.ENTITY_PLAYER_LEVELUP : Sound.ENTITY_VILLAGER_NO,
+                0.9f, payout > wager.amount() ? 1.2f : 0.9f);
+        offerReplay(online);
+    }
+
+    /**
+     * Colour of each pocket, in the order the wheel paints them on the table.
+     */
+    static List<Material> sectors(RouletteTable wheel) {
+        List<Material> sectors = new ArrayList<>(wheel.pocketCount());
+        for (int pocket : wheel.pockets()) {
+            sectors.add(switch (RouletteTable.colorOf(pocket)) {
+                case RED -> Material.RED_CONCRETE;
+                case BLACK -> Material.BLACK_CONCRETE;
+                case GREEN -> Material.LIME_CONCRETE;
+            });
+        }
+        return sectors;
     }
 
     static String colourCode(int pocket) {
@@ -135,13 +208,17 @@ public final class ClassicRouletteGame extends AbstractSoloGame {
         };
     }
 
-    /** Colour of a pocket, in the language of the reader. */
+    /**
+     * Colour of a pocket, in the language of the reader.
+     */
     String colourName(CommandSender viewer, int pocket) {
         return plugin.messages().forSender(viewer, "panel.colour."
                 + RouletteTable.colorOf(pocket).name().toLowerCase(java.util.Locale.ROOT));
     }
 
-    /** Name of a board spot, in the language of the reader. */
+    /**
+     * Name of a board spot, in the language of the reader.
+     */
     String betName(CommandSender viewer, Bet bet, int selection) {
         return switch (bet) {
             case NUMBER -> label(viewer, "panel.roulette.bet-number",
@@ -158,7 +235,9 @@ public final class ClassicRouletteGame extends AbstractSoloGame {
         };
     }
 
-    /** Spot description for the chat, in the language of the reader. */
+    /**
+     * Spot description for the chat, in the language of the reader.
+     */
     String betDescription(CommandSender viewer, Bet bet, int selection) {
         return switch (bet) {
             case NUMBER -> label(viewer, "panel.roulette.spot-number",
@@ -182,7 +261,9 @@ public final class ClassicRouletteGame extends AbstractSoloGame {
 
     // ------------------------------------------------------------------ tablero
 
-    /** Betting board: pick a spot and spin. */
+    /**
+     * Betting board: pick a spot and spin.
+     */
     private final class RouletteGui extends Gui {
 
         private final ClassicRouletteGame game;
@@ -297,7 +378,9 @@ public final class ClassicRouletteGame extends AbstractSoloGame {
         }
     }
 
-    /** Grid from 0 to 36 for the straight up bet. */
+    /**
+     * Grid from 0 to 36 for the straight up bet.
+     */
     private final class NumberGrid extends Gui {
 
         private final ClassicRouletteGame game;

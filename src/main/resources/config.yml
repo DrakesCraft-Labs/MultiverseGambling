@@ -71,6 +71,19 @@ world:
   # Send players to the casino world when they join the server.
   teleport-on-join: false
 
+  # In world shows. Instead of only counting numbers in the action bar, the games
+  # paint the result on their arena: the roulette grows a table with a ball that
+  # spins and settles on the winning pocket, and the rest of the catalogue gets its
+  # own prop as it is added. The scenery is temporary and removed as the round ends.
+  animations:
+    enabled: true
+    # Move the player to their arena so they see the show. With this off a round is
+    # only animated for players who are already in the casino world; everybody else
+    # keeps the action bar of the old days.
+    teleport-players: true
+    # Blocks between the centre of an arena and the spot the watcher stands on.
+    view-distance: 11
+
 # ---------------------------------------------------------------------------
 #  Group games: values shared by all of them
 # ---------------------------------------------------------------------------

@@ -3,6 +3,7 @@ package com.chagui68.multiversegambling.game;
 import com.chagui68.multiversegambling.MultiverseGamblingPlugin;
 import com.chagui68.multiversegambling.economy.Wager;
 import com.chagui68.multiversegambling.util.Text;
+import com.chagui68.multiversegambling.world.anim.ArenaStage;
 import java.time.Duration;
 import java.util.List;
 import net.kyori.adventure.text.Component;
@@ -142,5 +143,39 @@ public abstract class AbstractGame implements Game {
             return;
         }
         player.sendActionBar(plugin.messages().componentPlainFor(player, key, replacements));
+    }
+
+    // ----------------------------------------------------------------- world shows
+
+    /**
+     * The arena of this game in the casino world, ready to paint a show on, or
+     * {@code null} when there is nothing to paint on.
+     *
+     * <p>With {@code world.animations.teleport-players} on the player is moved to the
+     * arena so they can watch; with it off only players already in the casino world get
+     * a show and everybody else keeps the text animation of their game.</p>
+     */
+    public ArenaStage arenaFor(Player player) {
+        return arenaFor(player, ArenaStage.TABLE_PITCH);
+    }
+
+    /**
+     * Same as {@link #arenaFor(Player)} but placing the watcher with their own pitch,
+     * so a board or a tower standing on the arena is looked at from below.
+     */
+    public ArenaStage arenaFor(Player player, float pitch) {
+        if (player == null || plugin.world() == null || !plugin.config().worldAnimationsEnabled()) {
+            return null;
+        }
+        ArenaStage stage = plugin.world().stage(id());
+        if (stage == null) {
+            return null;
+        }
+        if (plugin.config().worldAnimationsTeleport()) {
+            stage.load();
+            player.teleport(stage.watcher(plugin.config().worldAnimationsViewDistance(), pitch));
+            return stage;
+        }
+        return player.getWorld() == stage.world() ? stage : null;
     }
 }

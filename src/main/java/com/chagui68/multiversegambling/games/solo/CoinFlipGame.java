@@ -11,11 +11,18 @@ import com.chagui68.multiversegambling.gui.Gui;
 import com.chagui68.multiversegambling.session.TimedSession;
 import com.chagui68.multiversegambling.util.Items;
 import com.chagui68.multiversegambling.util.Text;
+import com.chagui68.multiversegambling.world.anim.ArenaStage;
+import com.chagui68.multiversegambling.world.anim.CoinFlipShow;
+
+import java.util.UUID;
+
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 
-/** Coin flip: the simplest game in the casino, double or nothing. */
+/**
+ * Coin flip: the simplest game in the casino, double or nothing.
+ */
 public final class CoinFlipGame extends AbstractSoloGame {
 
     private static final String HEADS = "heads";
@@ -39,7 +46,43 @@ public final class CoinFlipGame extends AbstractSoloGame {
 
     void flip(Player player, Wager wager, String side) {
         int total = 40;
-        TimedSession animation = new TimedSession(plugin, player, id(), total) {
+        UUID playerId = player.getUniqueId();
+        // The coin is tossed once, here, from the provably fair generator: the show
+        // only paints the side that came up.
+        boolean heads = plugin.fair().roll(playerId) < 0.5;
+
+        ArenaStage stage = arenaFor(player);
+        if (stage != null) {
+            CoinFlipShow show = new CoinFlipShow(plugin, stage, heads, total);
+            new TimedSession(plugin, player, id(), total) {
+
+                @Override
+                protected void onStart() {
+                    show.start();
+                }
+
+                @Override
+                protected void onFrame(int elapsed, int duration) {
+                    show.tick();
+                }
+
+                @Override
+                protected void onFinish() {
+                    show.settle();
+                    settleFlip(playerId, wager, side, heads);
+                }
+
+                @Override
+                protected void onCancel() {
+                    show.cancel();
+                    refund(wager);
+                }
+            }.run();
+            return;
+        }
+
+        // No arena to paint on: the action bar keeps the suspense.
+        new TimedSession(plugin, player, id(), total) {
 
             @Override
             protected void onFrame(int elapsed, int duration) {
@@ -60,36 +103,48 @@ public final class CoinFlipGame extends AbstractSoloGame {
 
             @Override
             protected void onFinish() {
-                Player online = player();
-                if (online == null) {
-                    refund(wager);
-                    return;
-                }
-                boolean heads = plugin.fair().roll(online.getUniqueId()) < 0.5;
-                String result = heads ? HEADS : TAILS;
-                boolean won = result.equals(side);
-                // Careful: paying 2.0 with a fair coin would give the house a zero edge.
-                // The trimmed fair payout is used, exactly like in the dice game.
-                double multiplier = DiceTable.payout(50.0, plugin.config().houseEdge());
-                double payout = settle(online, wager, won ? multiplier : 0);
-
-                announceResult(online, won, sideName(online, result));
-                info(online, title(online));
-                message(online, "panel.coin-flip.picked",
-                        "side", sideName(online, side), "result", sideName(online, result));
-                message(online, "panel.coin-flip.odds",
-                        "multiplier", Text.multiplier(multiplier),
-                        "edge", Text.percent(plugin.config().houseEdge()));
-                showResult(online, wager.amount(), payout);
-                sound(online, won ? Sound.ENTITY_PLAYER_LEVELUP : Sound.ENTITY_VILLAGER_NO,
-                        0.9f, won ? 1.3f : 0.9f);
-                offerReplay(online);
+                settleFlip(playerId, wager, side, heads);
             }
-        };
-        animation.run();
+
+            @Override
+            protected void onCancel() {
+                refund(wager);
+            }
+        }.run();
     }
 
-    /** Display name of a coin side, in the language of the reader. */
+    /**
+     * Pays a toss whose coin was decided when the round started.
+     */
+    private void settleFlip(UUID playerId, Wager wager, String side, boolean heads) {
+        Player online = plugin.getServer().getPlayer(playerId);
+        if (online == null) {
+            refund(wager);
+            return;
+        }
+        String result = heads ? HEADS : TAILS;
+        boolean won = result.equals(side);
+        // Careful: paying 2.0 with a fair coin would give the house a zero edge.
+        // The trimmed fair payout is used, exactly like in the dice game.
+        double multiplier = DiceTable.payout(50.0, plugin.config().houseEdge());
+        double payout = settle(online, wager, won ? multiplier : 0);
+
+        announceResult(online, won, sideName(online, result));
+        info(online, title(online));
+        message(online, "panel.coin-flip.picked",
+                "side", sideName(online, side), "result", sideName(online, result));
+        message(online, "panel.coin-flip.odds",
+                "multiplier", Text.multiplier(multiplier),
+                "edge", Text.percent(plugin.config().houseEdge()));
+        showResult(online, wager.amount(), payout);
+        sound(online, won ? Sound.ENTITY_PLAYER_LEVELUP : Sound.ENTITY_VILLAGER_NO,
+                0.9f, won ? 1.3f : 0.9f);
+        offerReplay(online);
+    }
+
+    /**
+     * Display name of a coin side, in the language of the reader.
+     */
     String sideName(Player viewer, String side) {
         return plugin.messages().forSender(viewer, "panel.coin-flip.side-" + side);
     }

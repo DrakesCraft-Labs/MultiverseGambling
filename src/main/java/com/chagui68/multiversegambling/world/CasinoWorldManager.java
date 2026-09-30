@@ -3,8 +3,11 @@ package com.chagui68.multiversegambling.world;
 import com.chagui68.multiversegambling.MultiverseGamblingPlugin;
 import com.chagui68.multiversegambling.game.Game;
 import com.chagui68.multiversegambling.util.Text;
+import com.chagui68.multiversegambling.world.anim.ArenaStage;
+
 import java.util.ArrayList;
 import java.util.List;
+
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -34,7 +37,9 @@ public final class CasinoWorldManager {
     private static final String FLAT_SETTINGS =
             "3;minecraft:bedrock,2*minecraft:dirt,minecraft:grass_block;1;minecraft:plains";
 
-    /** One colour per arena, cycled when more games than colours are registered. */
+    /**
+     * One colour per arena, cycled when more games than colours are registered.
+     */
     private static final Material[] PALETTE = {
             Material.RED_CONCRETE, Material.ORANGE_CONCRETE, Material.YELLOW_CONCRETE,
             Material.LIME_CONCRETE, Material.GREEN_CONCRETE, Material.CYAN_CONCRETE,
@@ -57,7 +62,9 @@ public final class CasinoWorldManager {
 
     // --------------------------------------------------------------------- setup
 
-    /** Loads (or creates) the world and builds the structures the first time. */
+    /**
+     * Loads (or creates) the world and builds the structures the first time.
+     */
     public boolean setup() {
         if (!plugin.config().worldEnabled()) {
             plugin.getLogger().info("Casino world disabled in the configuration.");
@@ -77,7 +84,9 @@ public final class CasinoWorldManager {
         return true;
     }
 
-    /** Creates the world when it does not exist yet and refreshes border and spawn. */
+    /**
+     * Creates the world when it does not exist yet and refreshes border and spawn.
+     */
     public boolean ensure() {
         if (world != null && Bukkit.getWorld(world.getName()) != null) {
             return true;
@@ -151,7 +160,9 @@ public final class CasinoWorldManager {
         floorY = world.getHighestBlockYAt(probe, probe) + 1;
     }
 
-    /** Registered game ids, in registration order. */
+    /**
+     * Registered game ids, in registration order.
+     */
     private List<String> gameIds() {
         List<String> ids = new ArrayList<>();
         for (Game game : plugin.games().all()) {
@@ -162,7 +173,9 @@ public final class CasinoWorldManager {
 
     // ------------------------------------------------------------------ building
 
-    /** True when the plaza marker is already in place. */
+    /**
+     * True when the plaza marker is already in place.
+     */
     public boolean looksBuilt() {
         return world != null && world.getBlockAt(0, floorY, 0).getType() == Material.GOLD_BLOCK;
     }
@@ -221,7 +234,9 @@ public final class CasinoWorldManager {
         }
     }
 
-    /** A three block wide piece of road centred on the segment. */
+    /**
+     * A three block wide piece of road centred on the segment.
+     */
     private void strip(int x, int z, boolean alongX) {
         int half = CasinoLayout.ROAD_WIDTH / 2;
         for (int offset = -half; offset <= half; offset++) {
@@ -266,7 +281,9 @@ public final class CasinoWorldManager {
         }
     }
 
-    /** One block high rim around the plaza, opened wherever a road leaves it. */
+    /**
+     * One block high rim around the plaza, opened wherever a road leaves it.
+     */
     private void kerb(int radius) {
         for (int x = -radius - 1; x <= radius + 1; x++) {
             for (int z = -radius - 1; z <= radius + 1; z++) {
@@ -319,7 +336,9 @@ public final class CasinoWorldManager {
         arenaSign(arena);
     }
 
-    /** Fence around the platform with a three block opening on the entrance side. */
+    /**
+     * Fence around the platform with a three block opening on the entrance side.
+     */
     private void fence(CasinoLayout.Arena arena) {
         CasinoLayout.Edge entrance = CasinoLayout.entrance(arena);
         boolean openAlongX = entrance == CasinoLayout.Edge.NORTH || entrance == CasinoLayout.Edge.SOUTH;
@@ -361,7 +380,9 @@ public final class CasinoWorldManager {
         return Math.abs(position - middle) <= 1;
     }
 
-    /** Sign outside the entrance so the arena is easy to find from the road. */
+    /**
+     * Sign outside the entrance so the arena is easy to find from the road.
+     */
     private void arenaSign(CasinoLayout.Arena arena) {
         Game game = plugin.games().byId(arena.gameId()).orElse(null);
         String fallback = game == null ? arena.gameId() : game.name();
@@ -422,7 +443,33 @@ public final class CasinoWorldManager {
         return layout;
     }
 
-    /** Where players land when they ask for the casino world. */
+    /**
+     * Y of the floor blocks of the plaza and the arenas.
+     */
+    public int floorY() {
+        return floorY;
+    }
+
+    /**
+     * The arena of one game, ready to paint a show on.
+     *
+     * @return {@code null} when the casino world is disabled or has no arena for that
+     * game, so callers can fall back to their menus instead of failing
+     */
+    public ArenaStage stage(String gameId) {
+        if (!ready()) {
+            return null;
+        }
+        CasinoLayout.Arena arena = layout.arena(gameId);
+        if (arena == null) {
+            return null;
+        }
+        return new ArenaStage(world, arena, floorY);
+    }
+
+    /**
+     * Where players land when they ask for the casino world.
+     */
     public Location spawn() {
         if (world == null) {
             return null;
@@ -430,7 +477,9 @@ public final class CasinoWorldManager {
         return new Location(world, 0.5, floorY + 1, 3.5, 180.0f, 0.0f);
     }
 
-    /** Sends a player to the plaza, loading the spawn chunk first. */
+    /**
+     * Sends a player to the plaza, loading the spawn chunk first.
+     */
     public boolean teleport(Player player) {
         if (!ensure() || !ready()) {
             return false;
@@ -441,7 +490,9 @@ public final class CasinoWorldManager {
         return player.teleport(target);
     }
 
-    /** Honours {@code world.teleport-on-join} one tick after the player joins. */
+    /**
+     * Honours {@code world.teleport-on-join} one tick after the player joins.
+     */
     public void handleJoin(Player player) {
         if (!plugin.config().worldEnabled() || !plugin.config().worldTeleportOnJoin()) {
             return;

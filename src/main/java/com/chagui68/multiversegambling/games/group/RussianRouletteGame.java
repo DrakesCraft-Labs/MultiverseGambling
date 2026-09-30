@@ -6,11 +6,15 @@ import com.chagui68.multiversegambling.game.AbstractGroupGame;
 import com.chagui68.multiversegambling.game.GameCategory;
 import com.chagui68.multiversegambling.game.GameMeta;
 import com.chagui68.multiversegambling.util.Text;
+import com.chagui68.multiversegambling.world.anim.ArenaStage;
+import com.chagui68.multiversegambling.world.anim.BarrelShow;
+
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
@@ -32,6 +36,8 @@ public final class RussianRouletteGame extends AbstractGroupGame {
     private int turnIndex;
     private int turnTicks;
     private boolean started;
+    /** Cylinder painted on the arena, when there is one. */
+    private BarrelShow show;
 
     public RussianRouletteGame(MultiverseGamblingPlugin plugin) {
         super(plugin, GameMeta.builder("russian-roulette", "Russian Roulette", GameCategory.GROUP, Material.FLINT_AND_STEEL)
@@ -77,6 +83,13 @@ public final class RussianRouletteGame extends AbstractGroupGame {
                 "player", playerName(current()),
                 "seconds", plugin.config().groupCountdownSeconds());
         prompt();
+
+        ArenaStage stage = gatherArena();
+        if (stage != null) {
+            show = new BarrelShow(plugin, stage, chambers(), bullets(),
+                    Math.max(60, plugin.config().groupCountdownSeconds() * 20 * 4));
+            show.start();
+        }
     }
 
     @Override
@@ -110,7 +123,9 @@ public final class RussianRouletteGame extends AbstractGroupGame {
         }
     }
 
-    /** Pulls the trigger. */
+    /**
+     * Pulls the trigger.
+     */
     public void trigger(Player player, boolean fromChat) {
         if (alive.size() <= 1) {
             message(player, "group.russian-roulette-finished");
@@ -127,6 +142,9 @@ public final class RussianRouletteGame extends AbstractGroupGame {
     private void pull(UUID shooter) {
         boolean fires = plugin.fair().rollInt(FairnessService.HOUSE, chambers()) < bullets();
         turnTicks = 0;
+        if (show != null) {
+            show.pull(fires);
+        }
         Player player = online(shooter);
 
         if (!fires) {
@@ -229,6 +247,11 @@ public final class RussianRouletteGame extends AbstractGroupGame {
 
     @Override
     protected void onRoundEnd() {
+        if (show != null) {
+            // The scenery is left standing for a moment, so the last shot is seen.
+            show.settle();
+            show = null;
+        }
         order.clear();
         alive.clear();
         turnIndex = 0;

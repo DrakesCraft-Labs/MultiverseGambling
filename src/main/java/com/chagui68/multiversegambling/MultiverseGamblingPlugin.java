@@ -35,6 +35,7 @@ import com.chagui68.multiversegambling.listener.PlayerListener;
 import com.chagui68.multiversegambling.session.SessionManager;
 import com.chagui68.multiversegambling.stats.StatsStore;
 import com.chagui68.multiversegambling.world.CasinoWorldManager;
+import com.chagui68.multiversegambling.world.anim.ArenaShow;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
@@ -114,6 +115,9 @@ public final class MultiverseGamblingPlugin extends JavaPlugin {
         if (sessions != null) {
             sessions.shutdown();
         }
+        // Shows whose scenery was waiting to be taken down would lose their delayed
+        // cleanup with the scheduler, so they are cleared here instead.
+        ArenaShow.clearAll();
         if (autosave != null) {
             autosave.cancel();
         }
@@ -132,7 +136,9 @@ public final class MultiverseGamblingPlugin extends JavaPlugin {
         getLogger().info("Plugin disabled; money from unfinished games was refunded.");
     }
 
-    /** The whole catalogue. Adding a game is adding one line here. */
+    /**
+     * The whole catalogue. Adding a game is adding one line here.
+     */
     private void registerGames() {
         // --- Solo ---
         games.register(new ClassicRouletteGame(this));
@@ -169,7 +175,9 @@ public final class MultiverseGamblingPlugin extends JavaPlugin {
         }, ticks, ticks);
     }
 
-    /** Reloads config, messages and languages without touching balances or live games. */
+    /**
+     * Reloads config, messages and languages without touching balances or live games.
+     */
     public void reloadAll() {
         reloadConfig();
         config.reload();

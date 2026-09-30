@@ -5,11 +5,15 @@ import com.chagui68.multiversegambling.fair.FairnessService;
 import com.chagui68.multiversegambling.game.AbstractGroupGame;
 import com.chagui68.multiversegambling.game.GameCategory;
 import com.chagui68.multiversegambling.game.GameMeta;
+
+import com.chagui68.multiversegambling.world.anim.ArenaStage;
+import com.chagui68.multiversegambling.world.anim.BombShow;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
@@ -27,7 +31,11 @@ public final class HotBombGame extends AbstractGroupGame {
     private final Set<UUID> alive = new LinkedHashSet<>();
     private UUID holder;
     private int fuseTicks;
+    /** Length the fuse was drawn with, to draw the burning one in proportion. */
+    private int fuseTotal = 1;
     private int passTicks;
+    /** Bomb painted on the arena, when there is one. */
+    private BombShow show;
 
     public HotBombGame(MultiverseGamblingPlugin plugin) {
         super(plugin, GameMeta.builder("hot-bomb", "Hot Bomb", GameCategory.GROUP, Material.TNT)
@@ -54,6 +62,13 @@ public final class HotBombGame extends AbstractGroupGame {
                 "min", (int) plugin.config().hotBombMinSeconds(),
                 "max", (int) plugin.config().hotBombMaxSeconds());
         soundAll(Sound.ENTITY_TNT_PRIMED, 0.8f, 1.0f);
+
+        fuseTotal = Math.max(1, fuseTicks);
+        ArenaStage stage = gatherArena();
+        if (stage != null) {
+            show = new BombShow(plugin, stage, Math.max(40, (int) (plugin.config().hotBombMaxSeconds() * 20)));
+            show.start();
+        }
     }
 
     private int rollFuse() {
@@ -106,6 +121,9 @@ public final class HotBombGame extends AbstractGroupGame {
         }
 
         fuseTicks--;
+        if (show != null) {
+            show.burn(fuseTicks / (double) Math.max(1, fuseTotal));
+        }
         if (timer % 10 == 0) {
             Player current = online(holder);
             if (current != null) {
@@ -127,6 +145,9 @@ public final class HotBombGame extends AbstractGroupGame {
     private void explode() {
         UUID victim = holder;
         alive.remove(victim);
+        if (show != null) {
+            show.blast();
+        }
         soundAll(Sound.ENTITY_GENERIC_EXPLODE, 1.0f, 0.9f);
         Player victimPlayer = online(victim);
         if (victimPlayer != null) {
@@ -144,6 +165,7 @@ public final class HotBombGame extends AbstractGroupGame {
         }
         holder = pickHolder(victim);
         fuseTicks = rollFuse();
+        fuseTotal = Math.max(1, fuseTicks);
         passTicks = 20;
         broadcastPlain("group.hot-bomb.reappears", "player", playerName(holder));
     }
@@ -178,9 +200,14 @@ public final class HotBombGame extends AbstractGroupGame {
 
     @Override
     protected void onRoundEnd() {
+        if (show != null) {
+            show.settle();
+            show = null;
+        }
         alive.clear();
         holder = null;
         fuseTicks = 0;
+        fuseTotal = 1;
         passTicks = 0;
     }
 }

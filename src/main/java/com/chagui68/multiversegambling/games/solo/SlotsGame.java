@@ -12,7 +12,13 @@ import com.chagui68.multiversegambling.gui.Gui;
 import com.chagui68.multiversegambling.session.TimedSession;
 import com.chagui68.multiversegambling.util.Items;
 import com.chagui68.multiversegambling.util.Text;
+import com.chagui68.multiversegambling.world.anim.ArenaStage;
+import com.chagui68.multiversegambling.world.anim.SlotReelsShow;
+
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
+
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.command.CommandSender;
@@ -47,14 +53,49 @@ public final class SlotsGame extends AbstractSoloGame {
         }
     }
 
-    /** Spins once and opens the panel with the result. */
+    /**
+     * Spins once and opens the panel with the result.
+     */
     void spin(Player player, Wager wager) {
         SlotsTable table = table();
         // The real reels come from the provably fair roll; the spinning ones are paint.
         List<Symbol> result = table.spin(() -> plugin.fair().roll(player.getUniqueId()));
         int total = plugin.config().slotsSpinTicks();
+        UUID playerId = player.getUniqueId();
 
-        TimedSession animation = new TimedSession(plugin, player, id(), total) {
+        ArenaStage stage = arenaFor(player);
+        if (stage != null) {
+            SlotReelsShow show = new SlotReelsShow(plugin, stage,
+                    blocks(result), blocks(table.symbols()), total);
+            new TimedSession(plugin, player, id(), total) {
+
+                @Override
+                protected void onStart() {
+                    show.start();
+                }
+
+                @Override
+                protected void onFrame(int elapsed, int duration) {
+                    show.tick();
+                }
+
+                @Override
+                protected void onFinish() {
+                    show.settle();
+                    settleSpin(playerId, wager, result);
+                }
+
+                @Override
+                protected void onCancel() {
+                    show.cancel();
+                    refund(wager);
+                }
+            }.run();
+            return;
+        }
+
+        // No arena to paint on: the action bar keeps the suspense.
+        new TimedSession(plugin, player, id(), total) {
 
             @Override
             protected void onFrame(int elapsed, int duration) {
@@ -76,38 +117,78 @@ public final class SlotsGame extends AbstractSoloGame {
 
             @Override
             protected void onFinish() {
-                Player online = player();
-                if (online == null) {
-                    refund(wager);
-                    return;
-                }
-                double multiplier = table.payout(result);
-                double payout = settle(online, wager, multiplier);
-                String reels = "&8[ &r" + glyph(online, result.get(0)) + " &8| &r"
-                        + glyph(online, result.get(1)) + " &8| &r" + glyph(online, result.get(2))
-                        + " &8]";
-                online.sendActionBar(Text.c(reels));
-
-                announceResult(online, payout > wager.amount(),
-                        multiplier > 0 ? Text.multiplier(multiplier)
-                                : plugin.messages().forSender(online, "panel.common.no-prize"));
-                info(online, title(online));
-                info(online, reels);
-                if (multiplier > 0) {
-                    message(online, "panel.slots.winning-combination",
-                            "multiplier", Text.multiplier(multiplier));
-                }
-                showResult(online, wager.amount(), payout);
-                sound(online, payout > wager.amount() ? Sound.ENTITY_PLAYER_LEVELUP : Sound.ENTITY_VILLAGER_NO,
-                        0.9f, payout > wager.amount() ? 1.3f : 0.9f);
-
-                new SlotsGui(plugin, online, SlotsGame.this, result, payout).show();
+                settleSpin(playerId, wager, result);
             }
-        };
-        animation.run();
+
+            @Override
+            protected void onCancel() {
+                refund(wager);
+            }
+        }.run();
     }
 
-    /** Reel look with the symbol name translated for the reader. */
+    /**
+     * Pays a spin whose reels came from the provably fair generator.
+     */
+    private void settleSpin(UUID playerId, Wager wager, List<Symbol> result) {
+        Player online = plugin.getServer().getPlayer(playerId);
+        if (online == null) {
+            refund(wager);
+            return;
+        }
+        SlotsTable table = table();
+        double multiplier = table.payout(result);
+        double payout = settle(online, wager, multiplier);
+        String reels = "&8[ &r" + glyph(online, result.get(0)) + " &8| &r"
+                + glyph(online, result.get(1)) + " &8| &r" + glyph(online, result.get(2))
+                + " &8]";
+        online.sendActionBar(Text.c(reels));
+
+        announceResult(online, payout > wager.amount(),
+                multiplier > 0 ? Text.multiplier(multiplier)
+                        : plugin.messages().forSender(online, "panel.common.no-prize"));
+        info(online, title(online));
+        info(online, reels);
+        if (multiplier > 0) {
+            message(online, "panel.slots.winning-combination",
+                    "multiplier", Text.multiplier(multiplier));
+        }
+        showResult(online, wager.amount(), payout);
+        sound(online, payout > wager.amount() ? Sound.ENTITY_PLAYER_LEVELUP : Sound.ENTITY_VILLAGER_NO,
+                0.9f, payout > wager.amount() ? 1.3f : 0.9f);
+
+        new SlotsGui(plugin, online, SlotsGame.this, result, payout).show();
+    }
+
+    /**
+     * Block that stands for a reel symbol in the arena.
+     */
+    static Material blockOf(String id) {
+        return switch (id) {
+            case "cherry" -> Material.RED_CONCRETE;
+            case "lemon" -> Material.YELLOW_CONCRETE;
+            case "bell" -> Material.YELLOW_GLAZED_TERRACOTTA;
+            case "diamond" -> Material.DIAMOND_BLOCK;
+            case "seven" -> Material.REDSTONE_BLOCK;
+            case "star" -> Material.SEA_LANTERN;
+            default -> Material.GOLD_BLOCK;
+        };
+    }
+
+    /**
+     * Same mapping, for a whole combination or for the whole table.
+     */
+    static List<Material> blocks(List<Symbol> symbols) {
+        List<Material> blocks = new ArrayList<>(symbols.size());
+        for (Symbol symbol : symbols) {
+            blocks.add(blockOf(symbol.id()));
+        }
+        return blocks;
+    }
+
+    /**
+     * Reel look with the symbol name translated for the reader.
+     */
     String glyph(CommandSender viewer, Symbol symbol) {
         return symbol.glyph() + " &7" + symbolName(viewer, symbol);
     }
@@ -132,7 +213,9 @@ public final class SlotsGame extends AbstractSoloGame {
         };
     }
 
-    /** Machine panel: shows the reels and lets you spin again. */
+    /**
+     * Machine panel: shows the reels and lets you spin again.
+     */
     private final class SlotsGui extends Gui {
 
         private final SlotsGame game;
@@ -158,11 +241,11 @@ public final class SlotsGame extends AbstractSoloGame {
                         .name(symbol == null
                                 ? label(player(), "panel.slots.hidden")
                                 : label(player(), "panel.slots.symbol", "symbol", symbol.glyph(),
-                                        "name", symbolName(player(), symbol)))
+                                "name", symbolName(player(), symbol)))
                         .lore(symbol == null
                                 ? label(player(), "panel.slots.click-spin")
                                 : label(player(), "panel.slots.triple-lore",
-                                        "multiplier", Text.multiplier(symbol.triple())))
+                                "multiplier", Text.multiplier(symbol.triple())))
                         .glow(symbol != null)
                         .build());
             }
@@ -190,7 +273,7 @@ public final class SlotsGame extends AbstractSoloGame {
                                     plugin.economy().format(balance)),
                             lastPayout > 0
                                     ? label(player(), "panel.slots.last-prize", "prize",
-                                            plugin.economy().format(lastPayout))
+                                    plugin.economy().format(lastPayout))
                                     : "",
                             "",
                             afford ? label(player(), "panel.common.click-to-spin")

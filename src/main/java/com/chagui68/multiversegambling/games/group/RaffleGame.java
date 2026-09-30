@@ -7,11 +7,16 @@ import com.chagui68.multiversegambling.fair.FairnessService;
 import com.chagui68.multiversegambling.game.AbstractGroupGame;
 import com.chagui68.multiversegambling.game.GameCategory;
 import com.chagui68.multiversegambling.game.GameMeta;
+import com.chagui68.multiversegambling.world.anim.ArenaShow;
+import com.chagui68.multiversegambling.world.anim.ArenaStage;
+import com.chagui68.multiversegambling.world.anim.WheelShow;
+
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
@@ -29,7 +34,19 @@ public final class RaffleGame extends AbstractGroupGame {
     private static final double[] PRIZES = {0.70, 0.20, 0.10};
     private static final int DRAW_TIMER = 100;
 
+    /** Colour of each ticket on the wheel drawn on the arena, cycled when out of colours. */
+    private static final Material[] SECTOR_COLOURS = {
+            Material.RED_CONCRETE, Material.BLUE_CONCRETE, Material.YELLOW_CONCRETE,
+            Material.LIME_CONCRETE, Material.MAGENTA_CONCRETE, Material.CYAN_CONCRETE,
+            Material.ORANGE_CONCRETE, Material.PURPLE_CONCRETE, Material.PINK_CONCRETE,
+            Material.WHITE_CONCRETE, Material.BROWN_CONCRETE, Material.BLACK_CONCRETE
+    };
+
     private final Map<UUID, Integer> tickets = new LinkedHashMap<>();
+    /** Winners of the three prizes, best first. */
+    private List<UUID> order = new ArrayList<>();
+    /** Wheel painted on the arena, when there is one. */
+    private ArenaShow show;
 
     public RaffleGame(MultiverseGamblingPlugin plugin) {
         super(plugin, GameMeta.builder("raffle", "Raffle", GameCategory.GROUP, Material.FIREWORK_STAR)
@@ -86,33 +103,44 @@ public final class RaffleGame extends AbstractGroupGame {
             return;
         }
         int elapsed = timer - 40;
+        if (elapsed == 1) {
+            // Draw without replacement, weighted by tickets and with provably fair rolls.
+            // It happens once, before the drum turns, so the wheel in the arena can stop
+            // on the ticket that really took the first prize.
+            order = new ArrayList<>();
+            Map<UUID, Integer> remaining = new LinkedHashMap<>(tickets);
+            for (int prize = 0; prize < PRIZES.length && !remaining.isEmpty(); prize++) {
+                WeightedTable<UUID> draw = new WeightedTable<>();
+                for (Map.Entry<UUID, Integer> entry : remaining.entrySet()) {
+                    draw.add(entry.getKey(), Math.max(1, entry.getValue()));
+                }
+                UUID winner = draw.roll(plugin.fair().roll(FairnessService.HOUSE));
+                order.add(winner);
+                remaining.remove(winner);
+            }
+            show = startWheelShow(order.isEmpty() ? null : order.get(0));
+        }
         if (elapsed <= DRAW_TIMER) {
-            double progress = (double) elapsed / DRAW_TIMER;
-            int wait = 1 + (int) (progress * progress * 8);
-            if (elapsed % wait == 0) {
-                List<UUID> pool = new ArrayList<>(tickets.keySet());
-                if (!pool.isEmpty()) {
-                    actionBarAllKey("group.raffle.drawing",
-                            "player", playerName(Rng.pick(pool)),
-                            "pot", plugin.economy().format(pot.total()));
-                    soundAll(Sound.BLOCK_NOTE_BLOCK_HAT, 0.5f, 0.9f + (float) progress);
+            if (show != null) {
+                show.tick();
+            } else {
+                double progress = (double) elapsed / DRAW_TIMER;
+                int wait = 1 + (int) (progress * progress * 8);
+                if (elapsed % wait == 0) {
+                    List<UUID> pool = new ArrayList<>(tickets.keySet());
+                    if (!pool.isEmpty()) {
+                        actionBarAllKey("group.raffle.drawing",
+                                "player", playerName(Rng.pick(pool)),
+                                "pot", plugin.economy().format(pot.total()));
+                        soundAll(Sound.BLOCK_NOTE_BLOCK_HAT, 0.5f, 0.9f + (float) progress);
+                    }
                 }
             }
             return;
         }
-
-        // Draw without replacement, weighted by tickets and with provably fair rolls.
-        List<UUID> order = new ArrayList<>();
-        WeightedTable<UUID> draw = new WeightedTable<>();
-        Map<UUID, Integer> remaining = new LinkedHashMap<>(tickets);
-        for (int prize = 0; prize < PRIZES.length && !remaining.isEmpty(); prize++) {
-            draw = new WeightedTable<>();
-            for (Map.Entry<UUID, Integer> entry : remaining.entrySet()) {
-                draw.add(entry.getKey(), Math.max(1, entry.getValue()));
-            }
-            UUID winner = draw.roll(plugin.fair().roll(FairnessService.HOUSE));
-            order.add(winner);
-            remaining.remove(winner);
+        if (show != null) {
+            show.settle();
+            show = null;
         }
 
         double total = pot.total();
@@ -128,9 +156,9 @@ public final class RaffleGame extends AbstractGroupGame {
         for (int i = 0; i < order.size() && i < labels.length; i++) {
             final int index = i;
             broadcastPlainFor(player -> new Object[]{
-                    "prize", plugin.messages().forSender(player, labels[index]),
-                    "player", playerName(order.get(index)),
-                    "amount", plugin.economy().format(total * PRIZES[index])},
+                            "prize", plugin.messages().forSender(player, labels[index]),
+                            "player", playerName(order.get(index)),
+                            "amount", plugin.economy().format(total * PRIZES[index])},
                     "group.raffle.prize");
         }
         soundAll(Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.1f);
@@ -143,6 +171,28 @@ public final class RaffleGame extends AbstractGroupGame {
 
     @Override
     protected void onRoundEnd() {
+        if (show != null) {
+            show.cancel();
+            show = null;
+        }
         tickets.clear();
+        order = new ArrayList<>();
+    }
+
+    /** Builds the drum in the arena as a wheel of tickets; {@code null} without an arena. */
+    private ArenaShow startWheelShow(UUID winner) {
+        ArenaStage stage = gatherArena();
+        if (stage == null) {
+            return null;
+        }
+        List<UUID> pool = new ArrayList<>(tickets.keySet());
+        List<Material> sectors = new ArrayList<>(pool.size());
+        for (int index = 0; index < pool.size(); index++) {
+            sectors.add(SECTOR_COLOURS[index % SECTOR_COLOURS.length]);
+        }
+        int landing = winner == null ? 0 : Math.max(0, pool.indexOf(winner));
+        WheelShow wheel = new WheelShow(plugin, stage, sectors, landing, DRAW_TIMER);
+        wheel.start();
+        return wheel;
     }
 }

@@ -132,6 +132,50 @@ world:
   teleport-on-join: false  # mandar aquí a cada jugador al entrar
 ```
 
+### Animaciones en el mundo
+
+Los resultados no son solo texto. Cuando el mundo casino está listo, los juegos pintan la
+ronda en su propia arena en vez de limitarse a contar números en la barra de acción:
+
+| Juego | Lo que se pinta en la arena |
+|---|---|
+| **Ruleta** | Una mesa redonda de casillas con una bolita que se para en el número ganador |
+| **Ruleta de la suerte** | La misma mesa, con un sector por casilla |
+| **Ruleta de colores** (grupo) | La rueda real de 18 rojas, 18 negras y una verde |
+| **Bote** y **Rifa** (grupo) | Una rueda de boletos, un color por jugador, que se para en el boleto premiado |
+| **Tragaperras** | Un mueble de tres rodillos que se paran uno a uno en la línea de pago |
+| **Plinko** | Una pirámide de clavijas donde la bola da los rebotes reales hasta su cubo |
+| **Crash** | Una torre que sube con el multiplicador y estalla donde se rompió la curva |
+| **Dados** | Una recta de 0 a 100 con el objetivo marcado y un marcador que se para en la tirada |
+| **Póker de dados** (grupo) | La mano ganadora como cinco dados con sus puntos |
+| **Carrera** (grupo) | Una calle por caballo y corredores avanzando hacia la meta dorada |
+| **Ruleta rusa** (grupo) | El tambor del revólver, con las recámaras cargadas en rojo, girando en cada disparo |
+| **Bomba caliente** (grupo) | Un bloque de TNT con una mecha que se acorta hasta estallar |
+| **Cara o cruz** | Una moneda de oro lanzada sobre la arena que pavimenta debajo la cara que sale |
+
+Todas son **solo pintura**: el resultado lo sortea el generador provablemente justo antes
+de que empiece la animación, así que lo que se ve en la arena y lo que paga la cartera
+siempre coinciden.
+
+Minas, torres, rasca y gana y el tablero de bombas conservan sus menús a propósito: la
+ronda es una secuencia de elecciones, así que jugarlos en el mundo significa hacer clic en
+bloques, que es una función aparte. El blackjack y el alto-bajo se quedan en sus menús de
+cartas por el mismo motivo.
+
+El decorado es temporal: aparece al empezar la ronda, se queda un segundo tras el
+resultado para que dé tiempo a verlo y luego se retira, así que la arena siempre vuelve a
+su plataforma limpia aunque el jugador se desconecte o el servidor se pare a mitad de
+giro. Los menús siguen ahí para lo que no es un resultado (apostar, elegir casilla,
+retirarse) y quien juegue con el mundo desactivado conserva la barra de acción de siempre.
+
+```yaml
+world:
+  animations:
+    enabled: true           # pintar los resultados en la arena
+    teleport-players: true  # llevar al jugador a su arena para verlo
+    view-distance: 11       # bloques entre el centro de la arena y el espectador
+```
+
 Cosas que conviene saber:
 
 - La **geometría es una clase pura** (`CasinoLayout`) sin Bukkit, así que está testeada: la

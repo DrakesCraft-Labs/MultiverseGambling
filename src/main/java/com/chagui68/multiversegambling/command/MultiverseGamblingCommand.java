@@ -8,10 +8,12 @@ import com.chagui68.multiversegambling.i18n.Language;
 import com.chagui68.multiversegambling.stats.PlayerStats;
 import com.chagui68.multiversegambling.stats.StatsStore;
 import com.chagui68.multiversegambling.util.Text;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
+
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
@@ -21,7 +23,9 @@ import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
-/** {@code /mvgam}: opens the menu and exposes balance, ranking, audit and administration. */
+/**
+ * {@code /mvgam}: opens the menu and exposes balance, ranking, audit and administration.
+ */
 public final class MultiverseGamblingCommand implements CommandExecutor, TabCompleter {
 
     private static final List<String> SUBS = List.of(
@@ -290,7 +294,9 @@ public final class MultiverseGamblingCommand implements CommandExecutor, TabComp
         return true;
     }
 
-    /** Teleports to the casino world; {@code /mvgam world build} rebuilds the structures. */
+    /**
+     * Teleports to the casino world; {@code /mvgam world build} rebuilds the structures.
+     */
     private boolean world(CommandSender sender, String[] args) {
         if (!(sender instanceof Player player)) {
             plugin.messages().send(sender, "command.players-only");
@@ -454,10 +460,8 @@ public final class MultiverseGamblingCommand implements CommandExecutor, TabComp
                 case "top" -> filter(List.of("profit", "wagered", "prize"), args[1]);
                 case "verify" -> filter(List.of("<seed>"), args[1]);
                 case "world" -> filter(List.of("build"), args[1]);
-                case "language", "lang" ->
-                        filter(plugin.messages().locales(), args[1]);
-                case "give", "take", "set", "cancel", "balance", "stats" ->
-                        filter(onlineNames(), args[1]);
+                case "language" -> filter(plugin.messages().locales(), args[1]);
+                case "give", "take", "set", "cancel", "balance", "stats" -> filter(onlineNames(), args[1]);
                 default -> List.of();
             };
         }

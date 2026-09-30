@@ -3,6 +3,7 @@ package com.chagui68.multiversegambling.game;
 import com.chagui68.multiversegambling.MultiverseGamblingPlugin;
 import com.chagui68.multiversegambling.economy.Pot;
 import com.chagui68.multiversegambling.util.Text;
+import com.chagui68.multiversegambling.world.anim.ArenaStage;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -282,6 +283,47 @@ public abstract class AbstractGroupGame extends AbstractGame {
 
     protected final boolean isGone(UUID playerId) {
         return gone.contains(playerId);
+    }
+
+    // ----------------------------------------------------------------- world shows
+
+    /**
+     * The arena of this game in the casino world, ready to paint a show on, or
+     * {@code null} when there is nothing to paint on.
+     *
+     * <p>With {@code world.animations.teleport-players} on the room is gathered round
+     * the arena, spread out and all of them facing the middle, so everybody can watch
+     * the round instead of reading it in the action bar.</p>
+     */
+    protected final ArenaStage gatherArena() {
+        return gatherArena(ArenaStage.TABLE_PITCH);
+    }
+
+    /**
+     * Same as {@link #gatherArena()} but with the pitch of the room, so a show standing
+     * on the arena is looked at from below.
+     */
+    protected final ArenaStage gatherArena(float pitch) {
+        if (plugin.world() == null || !plugin.config().worldAnimationsEnabled()) {
+            return null;
+        }
+        ArenaStage stage = plugin.world().stage(id());
+        if (stage == null || !plugin.config().worldAnimationsTeleport()) {
+            return stage;
+        }
+        stage.load();
+        List<Player> audience = new ArrayList<>();
+        for (UUID id : pot.participants()) {
+            Player player = online(id);
+            if (player != null) {
+                audience.add(player);
+            }
+        }
+        int distance = plugin.config().worldAnimationsViewDistance();
+        for (int index = 0; index < audience.size(); index++) {
+            audience.get(index).teleport(stage.watcher(distance, pitch, index, audience.size()));
+        }
+        return stage;
     }
 
     /** Participants still around, and therefore able to win. */

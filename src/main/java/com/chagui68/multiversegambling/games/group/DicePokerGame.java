@@ -6,11 +6,16 @@ import com.chagui68.multiversegambling.fair.FairnessService;
 import com.chagui68.multiversegambling.game.AbstractGroupGame;
 import com.chagui68.multiversegambling.game.GameCategory;
 import com.chagui68.multiversegambling.game.GameMeta;
+import com.chagui68.multiversegambling.world.anim.ArenaShow;
+import com.chagui68.multiversegambling.world.anim.ArenaStage;
+import com.chagui68.multiversegambling.world.anim.DiceShow;
+
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
@@ -26,6 +31,9 @@ public final class DicePokerGame extends AbstractGroupGame {
 
     private final Map<UUID, int[]> hands = new LinkedHashMap<>();
     private int resolvedCount;
+    /** Dice painted in the arena while the hands are revealed. */
+    private ArenaShow show;
+    private boolean showTried;
 
     public DicePokerGame(MultiverseGamblingPlugin plugin) {
         super(plugin, GameMeta.builder("dice-poker", "Dice Poker", GameCategory.GROUP, Material.DRAGON_BREATH)
@@ -67,36 +75,36 @@ public final class DicePokerGame extends AbstractGroupGame {
         int index = (timer - 40) / 40;
         List<UUID> order = new ArrayList<>(hands.keySet());
         if (index < order.size()) {
+            if (!showTried) {
+                showTried = true;
+                show = startDiceShow();
+            }
+            if (show != null) {
+                show.tick();
+            }
             if ((timer - 40) % 40 == 0) {
                 UUID id = order.get(index);
                 int[] dice = hands.get(id);
                 DicePoker.Hand hand = DicePoker.handOf(dice);
                 broadcastPlainFor(player -> new Object[]{
-                        "player", playerName(id),
-                        "dice", DicePoker.describe(dice),
-                        "hand", handName(player, hand)},
+                                "player", playerName(id),
+                                "dice", DicePoker.describe(dice),
+                                "hand", handName(player, hand)},
                         "group.dice-poker.reveal");
                 soundAll(Sound.BLOCK_ANVIL_LAND, 0.6f, 1.0f + index * 0.1f);
             }
             return;
         }
 
+        if (show != null) {
+            show.settle();
+            show = null;
+        }
+
         // Everybody has revealed: the winner is settled.
         resolvedCount++;
-        UUID winner = null;
-        int bestScore = Integer.MIN_VALUE;
-        List<UUID> tied = new ArrayList<>();
-        for (Map.Entry<UUID, int[]> entry : hands.entrySet()) {
-            int score = DicePoker.score(entry.getValue());
-            if (score > bestScore) {
-                bestScore = score;
-                winner = entry.getKey();
-                tied.clear();
-                tied.add(entry.getKey());
-            } else if (score == bestScore) {
-                tied.add(entry.getKey());
-            }
-        }
+        List<UUID> tied = bestHand();
+        UUID winner = tied.isEmpty() ? null : tied.get(0);
 
         double total = pot.total();
         if (tied.size() > 1) {
@@ -111,9 +119,9 @@ public final class DicePokerGame extends AbstractGroupGame {
             pot.payAllTo(winner, plugin.config().groupHouseCut());
             broadcastPlain("group.dice-poker.banner");
             broadcastPlainFor(player -> new Object[]{
-                    "player", playerName(winnerId),
-                    "hand", handName(player, winningHand),
-                    "dice", winningDice},
+                            "player", playerName(winnerId),
+                            "hand", handName(player, winningHand),
+                            "dice", winningDice},
                     "group.dice-poker.winner");
         }
         broadcastPlain("group.dice-poker.paid", "pot", plugin.economy().format(total));
@@ -128,11 +136,48 @@ public final class DicePokerGame extends AbstractGroupGame {
 
     @Override
     protected void onRoundEnd() {
+        if (show != null) {
+            show.cancel();
+            show = null;
+        }
+        showTried = false;
         hands.clear();
         resolvedCount = 0;
     }
 
-    /** Name of a hand in the language of the reader. */
+    /** Players holding the best hand, in the order they staked. */
+    private List<UUID> bestHand() {
+        List<UUID> best = new ArrayList<>();
+        int bestScore = Integer.MIN_VALUE;
+        for (Map.Entry<UUID, int[]> entry : hands.entrySet()) {
+            int score = DicePoker.score(entry.getValue());
+            if (score > bestScore) {
+                bestScore = score;
+                best.clear();
+                best.add(entry.getKey());
+            } else if (score == bestScore) {
+                best.add(entry.getKey());
+            }
+        }
+        return best;
+    }
+
+    /** Builds the dice of the winning hand in the arena; {@code null} when there is none. */
+    private ArenaShow startDiceShow() {
+        ArenaStage stage = gatherArena();
+        if (stage == null) {
+            return null;
+        }
+        List<UUID> best = bestHand();
+        int[] faces = best.isEmpty() ? new int[DicePoker.DICE] : hands.get(best.get(0));
+        DiceShow dice = new DiceShow(plugin, stage, faces, Math.max(40, hands.size() * 40));
+        dice.start();
+        return dice;
+    }
+
+    /**
+     * Name of a hand in the language of the reader.
+     */
     String handName(Player viewer, DicePoker.Hand hand) {
         return plugin.messages().forSender(viewer, handKey(hand));
     }

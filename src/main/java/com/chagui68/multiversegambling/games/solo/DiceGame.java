@@ -11,11 +11,16 @@ import com.chagui68.multiversegambling.gui.Gui;
 import com.chagui68.multiversegambling.session.TimedSession;
 import com.chagui68.multiversegambling.util.Items;
 import com.chagui68.multiversegambling.util.Text;
+import com.chagui68.multiversegambling.world.anim.ArenaStage;
+import com.chagui68.multiversegambling.world.anim.DiceTrackShow;
+import java.util.UUID;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 
-/** Dice with a target: bet that the roll comes over or under a number. */
+/**
+ * Dice with a target: bet that the roll comes over or under a number.
+ */
 public final class DiceGame extends AbstractSoloGame {
 
     public DiceGame(MultiverseGamblingPlugin plugin) {
@@ -39,13 +44,53 @@ public final class DiceGame extends AbstractSoloGame {
         return plugin.config().houseEdge();
     }
 
-    /** "over" or "under", already coloured, in the language of the reader. */
+    /**
+     * "over" or "under", already coloured, in the language of the reader.
+     */
     String direction(Player viewer, boolean over) {
         return plugin.messages().forSender(viewer, over ? "panel.dice.over" : "panel.dice.under");
     }
 
     void roll(Player player, Wager wager, double target, boolean over) {
-        TimedSession animation = new TimedSession(plugin, player, id(), 25) {
+        int total = 25;
+        UUID playerId = player.getUniqueId();
+        // The real roll comes from the provably fair generator, and the marker on the
+        // track in the arena stops exactly on it.
+        double result = DiceTable.round2(plugin.fair().roll(playerId) * 100.0);
+        boolean won = DiceTable.wins(result, target, over);
+
+        ArenaStage stage = arenaFor(player);
+        if (stage != null) {
+            DiceTrackShow show = new DiceTrackShow(plugin, stage, target, result, won, total);
+            new TimedSession(plugin, player, id(), total) {
+
+                @Override
+                protected void onStart() {
+                    show.start();
+                }
+
+                @Override
+                protected void onFrame(int elapsed, int duration) {
+                    show.tick();
+                }
+
+                @Override
+                protected void onFinish() {
+                    show.settle();
+                    settleRoll(playerId, wager, target, over, result, won);
+                }
+
+                @Override
+                protected void onCancel() {
+                    show.cancel();
+                    refund(wager);
+                }
+            }.run();
+            return;
+        }
+
+        // No arena to paint on: the action bar keeps the suspense.
+        new TimedSession(plugin, player, id(), total) {
 
             @Override
             protected void onFrame(int elapsed, int duration) {
@@ -63,30 +108,37 @@ public final class DiceGame extends AbstractSoloGame {
 
             @Override
             protected void onFinish() {
-                Player online = player();
-                if (online == null) {
-                    refund(wager);
-                    return;
-                }
-                // The real roll comes from the provably fair generator.
-                double result = DiceTable.round2(plugin.fair().roll(online.getUniqueId()) * 100.0);
-                boolean won = DiceTable.wins(result, target, over);
-                double chance = over ? DiceTable.winChanceOver(target) : DiceTable.winChanceUnder(target);
-                double multiplier = won ? DiceTable.payout(chance, houseEdge()) : 0;
-                double payout = settle(online, wager, multiplier);
-
-                announceResult(online, won, "&f" + Text.number(result));
-                info(online, title(online));
-                message(online, "panel.dice.info",
-                        "direction", direction(online, over),
-                        "target", Text.number(target), "result", Text.number(result));
-                showResult(online, wager.amount(), payout);
-                sound(online, won ? Sound.ENTITY_PLAYER_LEVELUP : Sound.ENTITY_VILLAGER_NO,
-                        0.9f, won ? 1.3f : 0.9f);
-                offerReplay(online);
+                settleRoll(playerId, wager, target, over, result, won);
             }
-        };
-        animation.run();
+
+            @Override
+            protected void onCancel() {
+                refund(wager);
+            }
+        }.run();
+    }
+
+    /** Pays a roll that was drawn when the marker set off. */
+    private void settleRoll(UUID playerId, Wager wager, double target, boolean over,
+                            double result, boolean won) {
+        Player online = plugin.getServer().getPlayer(playerId);
+        if (online == null) {
+            refund(wager);
+            return;
+        }
+        double chance = over ? DiceTable.winChanceOver(target) : DiceTable.winChanceUnder(target);
+        double multiplier = won ? DiceTable.payout(chance, houseEdge()) : 0;
+        double payout = settle(online, wager, multiplier);
+
+        announceResult(online, won, "&f" + Text.number(result));
+        info(online, title(online));
+        message(online, "panel.dice.info",
+                "direction", direction(online, over),
+                "target", Text.number(target), "result", Text.number(result));
+        showResult(online, wager.amount(), payout);
+        sound(online, won ? Sound.ENTITY_PLAYER_LEVELUP : Sound.ENTITY_VILLAGER_NO,
+                0.9f, won ? 1.3f : 0.9f);
+        offerReplay(online);
     }
 
     private final class DiceGui extends Gui {
@@ -188,7 +240,9 @@ public final class DiceGame extends AbstractSoloGame {
                     .build(), e -> close());
         }
 
-        /** Name of a step button such as -10 or +0.1. */
+        /**
+         * Name of a step button such as -10 or +0.1.
+         */
         private String amount(double step) {
             String shown = Text.number(Math.abs(step));
             return label(player(), step < 0 ? "panel.dice.minus" : "panel.dice.plus",

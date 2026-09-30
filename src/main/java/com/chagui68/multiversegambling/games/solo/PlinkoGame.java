@@ -10,6 +10,9 @@ import com.chagui68.multiversegambling.gui.Gui;
 import com.chagui68.multiversegambling.session.TimedSession;
 import com.chagui68.multiversegambling.util.Items;
 import com.chagui68.multiversegambling.util.Text;
+import com.chagui68.multiversegambling.world.anim.ArenaStage;
+import com.chagui68.multiversegambling.world.anim.PlinkoShow;
+import java.util.UUID;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
@@ -56,10 +59,46 @@ public final class PlinkoGame extends AbstractSoloGame {
     /** Drops the ball. */
     void drop(Player player, Wager wager) {
         int rows = rows();
-        // The direction of every bounce comes from the provably fair generator.
+        // The direction of every bounce comes from the provably fair generator, and the
+        // same rolls drive the ball down the board drawn in the arena.
         double[] rolls = plugin.fair().rolls(player.getUniqueId(), rows);
-        int finalBucket = bucketFor(rolls);
-        TimedSession animation = new TimedSession(plugin, player, id(), rows * 3) {
+        int bucket = bucketFor(rolls);
+        UUID playerId = player.getUniqueId();
+        int ticks = rows * 3;
+
+        ArenaStage stage = arenaFor(player);
+        if (stage != null) {
+            PlinkoShow show = new PlinkoShow(plugin, stage, rolls, bucket, ticks);
+            new TimedSession(plugin, player, id(), ticks) {
+
+                @Override
+                protected void onStart() {
+                    show.start();
+                }
+
+                @Override
+                protected void onFrame(int elapsed, int duration) {
+                    show.tick();
+                }
+
+                @Override
+                protected void onFinish() {
+                    show.settle();
+                    settleDrop(playerId, wager, bucket);
+                }
+
+                @Override
+                protected void onCancel() {
+                    show.cancel();
+                    refund(wager);
+                }
+            }.run();
+            return;
+        }
+
+        // No arena to paint on: the action bar walks the same path in text.
+        new TimedSession(plugin, player, id(), ticks) {
+
             @Override
             protected void onFrame(int elapsed, int duration) {
                 Player online = player();
@@ -82,29 +121,39 @@ public final class PlinkoGame extends AbstractSoloGame {
 
             @Override
             protected void onFinish() {
-                Player online = player();
-                if (online == null) {
-                    refund(wager);
-                    return;
-                }
-                double multiplier = PlinkoGame.this.payoutFor(finalBucket);
-                double payout = settle(online, wager, multiplier);
-                announceResult(online, payout > wager.amount(),
-                        plugin.messages().forSender(online, "panel.plinko.bucket-subtitle",
-                                "bucket", finalBucket, "multiplier", Text.multiplier(multiplier)));
-                info(online, title(online));
-                message(online, "panel.plinko.landed",
-                        "bucket", finalBucket, "rows", rows,
-                        "multiplier", Text.multiplier(multiplier));
-                message(online, "panel.plinko.chance",
-                        "percent", Text.percent(PlinkoTable.bucketChance(rows, finalBucket)));
-                showResult(online, wager.amount(), payout);
-                sound(online, payout > wager.amount() ? Sound.ENTITY_PLAYER_LEVELUP : Sound.ENTITY_VILLAGER_NO,
-                        0.9f, payout > wager.amount() ? 1.3f : 0.9f);
-                offerReplay(online);
+                settleDrop(playerId, wager, bucket);
             }
-        };
-        animation.run();
+
+            @Override
+            protected void onCancel() {
+                refund(wager);
+            }
+        }.run();
+    }
+
+    /** Pays a drop whose bounces were drawn when the ball started falling. */
+    private void settleDrop(UUID playerId, Wager wager, int bucket) {
+        Player online = plugin.getServer().getPlayer(playerId);
+        if (online == null) {
+            refund(wager);
+            return;
+        }
+        int rows = rows();
+        double multiplier = payoutFor(bucket);
+        double payout = settle(online, wager, multiplier);
+        announceResult(online, payout > wager.amount(),
+                plugin.messages().forSender(online, "panel.plinko.bucket-subtitle",
+                        "bucket", bucket, "multiplier", Text.multiplier(multiplier)));
+        info(online, title(online));
+        message(online, "panel.plinko.landed",
+                "bucket", bucket, "rows", rows,
+                "multiplier", Text.multiplier(multiplier));
+        message(online, "panel.plinko.chance",
+                "percent", Text.percent(PlinkoTable.bucketChance(rows, bucket)));
+        showResult(online, wager.amount(), payout);
+        sound(online, payout > wager.amount() ? Sound.ENTITY_PLAYER_LEVELUP : Sound.ENTITY_VILLAGER_NO,
+                0.9f, payout > wager.amount() ? 1.3f : 0.9f);
+        offerReplay(online);
     }
 
     /** Counts the bounces to the right: that is the final bucket. */

@@ -10,7 +10,13 @@ import com.chagui68.multiversegambling.gui.Gui;
 import com.chagui68.multiversegambling.session.TimedSession;
 import com.chagui68.multiversegambling.util.Items;
 import com.chagui68.multiversegambling.util.Text;
+import com.chagui68.multiversegambling.world.anim.ArenaStage;
+import com.chagui68.multiversegambling.world.anim.WheelShow;
+
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
+
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
@@ -57,8 +63,40 @@ public final class LuckyWheelGame extends AbstractSoloGame {
         PrizeWheel wheel = wheel();
         int winner = wheel.spin(() -> plugin.fair().roll(player.getUniqueId()));
         int total = 60;
+        UUID playerId = player.getUniqueId();
 
-        TimedSession animation = new TimedSession(plugin, player, id(), total) {
+        ArenaStage stage = arenaFor(player);
+        if (stage != null) {
+            WheelShow show = new WheelShow(plugin, stage, sectors(wheel), winner, total);
+            new TimedSession(plugin, player, id(), total) {
+
+                @Override
+                protected void onStart() {
+                    show.start();
+                }
+
+                @Override
+                protected void onFrame(int elapsed, int duration) {
+                    show.tick();
+                }
+
+                @Override
+                protected void onFinish() {
+                    show.settle();
+                    settleSpin(playerId, wager, winner);
+                }
+
+                @Override
+                protected void onCancel() {
+                    show.cancel();
+                    refund(wager);
+                }
+            }.run();
+            return;
+        }
+
+        // No arena to paint on: the action bar keeps the suspense.
+        new TimedSession(plugin, player, id(), total) {
 
             @Override
             protected void onFrame(int elapsed, int duration) {
@@ -80,28 +118,52 @@ public final class LuckyWheelGame extends AbstractSoloGame {
 
             @Override
             protected void onFinish() {
-                Player online = player();
-                if (online == null) {
-                    refund(wager);
-                    return;
-                }
-                double multiplier = wheel.multiplier(winner);
-                double payout = settle(online, wager, multiplier);
-                announceResult(online, payout > wager.amount(),
-                        multiplier > 0
-                                ? plugin.messages().forSender(online, "panel.lucky-wheel.tile",
-                                        "multiplier", Text.multiplier(multiplier))
-                                : plugin.messages().forSender(online, "panel.common.no-prize"));
-                info(online, title(online));
-                message(online, "panel.lucky-wheel.result",
-                        "tile", winner + 1, "multiplier", Text.multiplier(multiplier));
-                showResult(online, wager.amount(), payout);
-                sound(online, payout > wager.amount() ? Sound.ENTITY_PLAYER_LEVELUP : Sound.ENTITY_VILLAGER_NO,
-                        0.9f, payout > wager.amount() ? 1.3f : 0.9f);
-                offerReplay(online);
+                settleSpin(playerId, wager, winner);
             }
-        };
-        animation.run();
+
+            @Override
+            protected void onCancel() {
+                refund(wager);
+            }
+        }.run();
+    }
+
+    /**
+     * Pays a spin whose winning tile was drawn when the round started.
+     */
+    private void settleSpin(UUID playerId, Wager wager, int winner) {
+        Player online = plugin.getServer().getPlayer(playerId);
+        if (online == null) {
+            refund(wager);
+            return;
+        }
+        double multiplier = wheel().multiplier(winner);
+        double payout = settle(online, wager, multiplier);
+        announceResult(online, payout > wager.amount(),
+                multiplier > 0
+                        ? plugin.messages().forSender(online, "panel.lucky-wheel.tile",
+                        "multiplier", Text.multiplier(multiplier))
+                        : plugin.messages().forSender(online, "panel.common.no-prize"));
+        info(online, title(online));
+        message(online, "panel.lucky-wheel.result",
+                "tile", winner + 1, "multiplier", Text.multiplier(multiplier));
+        showResult(online, wager.amount(), payout);
+        sound(online, payout > wager.amount() ? Sound.ENTITY_PLAYER_LEVELUP : Sound.ENTITY_VILLAGER_NO,
+                0.9f, payout > wager.amount() ? 1.3f : 0.9f);
+        offerReplay(online);
+    }
+
+    /**
+     * Colour of each tile: grey when it pays nothing, gold for the top prize.
+     */
+    static List<Material> sectors(PrizeWheel wheel) {
+        List<Material> sectors = new ArrayList<>(wheel.size());
+        for (int index = 0; index < wheel.size(); index++) {
+            double multiplier = wheel.multiplier(index);
+            sectors.add(multiplier <= 0 ? Material.GRAY_CONCRETE
+                    : multiplier >= wheel.best() ? Material.GOLD_BLOCK : Material.LIME_CONCRETE);
+        }
+        return sectors;
     }
 
     private final class WheelGui extends Gui {
@@ -148,7 +210,7 @@ public final class LuckyWheelGame extends AbstractSoloGame {
                         .name(multiplier == 0
                                 ? label(player(), "panel.lucky-wheel.no-prize")
                                 : label(player(), "panel.lucky-wheel.tile",
-                                        "multiplier", Text.multiplier(multiplier)))
+                                "multiplier", Text.multiplier(multiplier)))
                         .lore(label(player(), "panel.lucky-wheel.chance",
                                         "percent", Text.percent(1.0 / wheel.size())),
                                 label(player(), "panel.lucky-wheel.pays",

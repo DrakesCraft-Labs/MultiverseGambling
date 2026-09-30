@@ -58,6 +58,60 @@ world:
 | `build-structures` | Con `false` el mundo se crea vacío y lo construyes tú |
 | `teleport-on-join` | Manda a cada jugador al casino cuando entra al servidor |
 
+## Animaciones en el mundo
+
+Las arenas no son decorado: cuando se juega una ronda y el mundo casino está listo, el juego
+pinta el resultado en su propia arena en vez de limitarse a contar números en la barra de
+acción.
+
+| Juego | Animación |
+|---|---|
+| **Ruleta** | Una mesa redonda de casillas de colores dentro de un aro dorado, con una bolita que gira y se para en el número ganador |
+| **Ruleta de la suerte** | La misma mesa, con un sector por casilla: gris no paga nada, el oro es el premio máximo |
+| **Ruleta de colores** (grupo) | La rueda real de 18 casillas rojas, 18 negras y una verde; la bolita cae en el color que ha salido |
+| **Bote** (grupo) | Una rueda de boletos, un color por jugador, que se para en el boleto que se lleva el bote |
+| **Rifa** (grupo) | El mismo tambor de boletos, parándose en el primer premio |
+| **Tragaperras** | Un mueble de tres rodillos que pasan por la tabla de símbolos y se paran de izquierda a derecha, dejando la combinación en la línea de pago |
+| **Plinko** | Una pirámide de clavijas en el suelo donde la bola da los rebotes reales y se queda iluminado el cubo donde cae |
+| **Crash** | Una torre que sube un bloque por cada doblada del multiplicador: dorada si te retiras, calcinada si estalla |
+| **Dados** | Una recta de 0 a 100 con el objetivo en rojo y un marcador que sube hasta la tirada, dejando el tramo recorrido en verde o en rojo |
+| **Póker de dados** (grupo) | La mano ganadora como cinco dados con sus puntos en relieve, parándose uno a uno |
+| **Carrera** (grupo) | Una calle por caballo corriendo hacia el fondo, hacia una meta dorada |
+| **Ruleta rusa** (grupo) | El tambor del revólver dibujado en el suelo, con las recámaras cargadas en rojo, girando en cada disparo |
+| **Bomba caliente** (grupo) | Un bloque de TNT sobre un podio con una mecha que se acorta con el tiempo sorteado y una marca de quemadura al estallar |
+| **Cara o cruz** | Una moneda de oro girando sobre la arena, que aterriza en la cara que ha salido y la pavimenta debajo |
+
+El decorado se **monta al empezar la ronda, se queda un segundo tras el resultado y se
+retira después**, así que las arenas siempre vuelven a su plataforma limpia: ni un jugador
+desconectándose ni el servidor parándose a mitad de giro dejan bloques sueltos ni
+entidades flotando (el plugin limpia al apagarse cualquier animación que siga en pie). Los
+menús siguen usándose para todo lo que es una decisión y no un resultado (apostar, elegir
+casilla, retirarse).
+
+Cuatro juegos conservan solo su menú a propósito, porque su ronda es una **secuencia de
+elecciones** y no un resultado que mirar: minas, torres, rasca y gana y el tablero de
+bombas en grupo. Jugarlos en el mundo significaría hacer clic en bloques de la arena, que
+es otra función. El blackjack y el alto-bajo se quedan en sus menús de cartas por el mismo
+motivo.
+
+```yaml
+world:
+  animations:
+    enabled: true           # pintar los resultados en la arena
+    teleport-players: true  # llevar al jugador (o a toda la sala) a la arena para verlo
+    view-distance: 11       # bloques entre el centro de la arena y el espectador
+```
+
+| Clave | Notas |
+|---|---|
+| `enabled` | Con `false` cada juego conserva su animación clásica en la barra de acción |
+| `teleport-players` | Con `false` solo ven la animación quienes ya estén en el mundo casino; los juegos individuales colocan a un espectador frente a la mesa y los de grupo reparten la sala en círculo alrededor |
+| `view-distance` | A cuántos bloques del centro se coloca el espectador, mirando hacia la mesa |
+
+Cada juego decide dónde mostrar su ronda, y una animación nunca decide dinero: el resultado
+ya lo ha sorteado el generador provablemente justo cuando se monta el decorado. Añadir una
+animación a otro juego es extender `ArenaShow` y llamarlo desde la ronda.
+
 ## Cosas que conviene saber
 
 - **El mundo principal no se toca nunca.** El plugin se niega a construir las estructuras en el

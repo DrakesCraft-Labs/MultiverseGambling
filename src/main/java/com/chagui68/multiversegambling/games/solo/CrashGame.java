@@ -6,13 +6,15 @@ import com.chagui68.multiversegambling.economy.Wager;
 import com.chagui68.multiversegambling.game.AbstractSoloGame;
 import com.chagui68.multiversegambling.game.GameCategory;
 import com.chagui68.multiversegambling.game.GameMeta;
-import com.chagui68.multiversegambling.gui.Gui;
-import com.chagui68.multiversegambling.session.TimedSession;
+import com.chagui68.multiversegambling.gui.Gui;import com.chagui68.multiversegambling.session.TimedSession;
 import com.chagui68.multiversegambling.util.Items;
 import com.chagui68.multiversegambling.util.Text;
+import com.chagui68.multiversegambling.world.anim.ArenaStage;
+import com.chagui68.multiversegambling.world.anim.CrashTowerShow;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
@@ -48,17 +50,52 @@ public final class CrashGame extends AbstractSoloGame {
         // The round lasts exactly as long as the curve takes to reach the crash point.
         int ticks = (int) Math.ceil(CrashTable.secondsToReach(crashPoint, growth) * 20.0) + 1;
 
-        CrashRound round = new CrashRound(player, wager, crashPoint, growth, Math.max(2, ticks));
+        ArenaStage stage = arenaFor(player, ArenaStage.BOARD_PITCH);
+        CrashTowerShow show = stage == null ? null : new CrashTowerShow(plugin, stage,
+                plugin.config().crashMaxMultiplier(), Math.max(2, ticks));
+        if (show != null) {
+            show.start();
+        }
+
+        CrashRound round = new CrashRound(player, wager, crashPoint, growth, Math.max(2, ticks), show);
         rounds.put(player.getUniqueId(), round);
         round.run();
-        new CrashGui(plugin, player, this).show();
+
+        if (show == null) {
+            new CrashGui(plugin, player, this).show();
+            return;
+        }
+        // The tower is watched in the arena, so the cash out button waits in the chat
+        // instead of covering it with a menu.
+        player.sendMessage(plugin.messages().componentPlainFor(player, "panel.crash.follow")
+                .append(Text.c(" "))
+                .append(Text.button(
+                        plugin.messages().forSender(player, "panel.crash.cash-out"),
+                        "/mvgam action cashout",
+                        plugin.messages().forSender(player, "panel.crash.click-fast"))));
+    }
+
+    @Override
+    public boolean ownsPlayer(UUID playerId) {
+        return rounds.containsKey(playerId);
+    }
+
+    @Override
+    public void handleAction(Player player, String action, String[] args) {
+        if ("cashout".equals(action)) {
+            cashOut(player);
+            return;
+        }
+        super.handleAction(player, action, args);
     }
 
     CrashRound roundOf(UUID playerId) {
         return rounds.get(playerId);
     }
 
-    /** Cashes the player out at the current multiplier. */
+    /**
+     * Cashes the player out at the current multiplier.
+     */
     void cashOut(Player player) {
         CrashRound round = rounds.get(player.getUniqueId());
         if (round != null) {
@@ -66,20 +103,25 @@ public final class CrashGame extends AbstractSoloGame {
         }
     }
 
-    /** A crash round: it climbs while it has not burst. */
+    /**
+     * A crash round: it climbs while it has not burst.
+     */
     final class CrashRound extends TimedSession {
 
         private final Wager wager;
         private final double crashPoint;
         private final double growth;
+        private final CrashTowerShow show;
         private double current = 1.0;
         private boolean finished;
 
-        CrashRound(Player player, Wager wager, double crashPoint, double growth, int durationTicks) {
+        CrashRound(Player player, Wager wager, double crashPoint, double growth,
+                   int durationTicks, CrashTowerShow show) {
             super(plugin, player, CrashGame.this.id(), durationTicks);
             this.wager = wager;
             this.crashPoint = crashPoint;
             this.growth = growth;
+            this.show = show;
         }
 
         double bet() {
@@ -103,6 +145,9 @@ public final class CrashGame extends AbstractSoloGame {
         @Override
         protected void onFrame(int elapsed, int duration) {
             current = CrashTable.multiplierAt(elapsed / 20.0, growth);
+            if (show != null) {
+                show.climb(current);
+            }
             Player online = player();
             if (online == null) {
                 return;
@@ -125,6 +170,10 @@ public final class CrashGame extends AbstractSoloGame {
             finished = true;
             double multiplier = Math.min(current, crashPoint);
             cancel();
+            if (show != null) {
+                show.cashOut();
+                show.settle();
+            }
 
             Player online = player();
             if (online == null) {
@@ -149,6 +198,10 @@ public final class CrashGame extends AbstractSoloGame {
         @Override
         protected void onFinish() {
             finished = true;
+            if (show != null) {
+                show.burst();
+                show.settle();
+            }
             Player online = player();
             if (online == null) {
                 refund(wager);
@@ -175,13 +228,18 @@ public final class CrashGame extends AbstractSoloGame {
             if (!finished) {
                 // Disconnect or server shutdown: the money is refunded.
                 finished = true;
+                if (show != null) {
+                    show.cancel();
+                }
                 refund(wager);
                 rounds.remove(playerId());
             }
         }
     }
 
-    /** Single button panel: the curve is followed on the action bar. */
+    /**
+     * Single button panel: the curve is followed on the action bar.
+     */
     private final class CrashGui extends Gui {
 
         private final CrashGame game;

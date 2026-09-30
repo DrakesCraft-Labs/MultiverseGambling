@@ -10,11 +10,15 @@ import com.chagui68.multiversegambling.game.AbstractGroupGame;
 import com.chagui68.multiversegambling.game.GameCategory;
 import com.chagui68.multiversegambling.game.GameMeta;
 import com.chagui68.multiversegambling.util.Text;
+import com.chagui68.multiversegambling.world.anim.ArenaStage;
+import com.chagui68.multiversegambling.world.anim.RaceShow;
+
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
@@ -29,11 +33,22 @@ import org.bukkit.entity.Player;
  */
 public final class HorseRaceGame extends AbstractGroupGame {
 
+    /** Colour of the runner of each lane drawn on the arena. */
+    private static final Material[] LANE_COLOURS = {
+            Material.RED_CONCRETE, Material.BLUE_CONCRETE, Material.YELLOW_CONCRETE,
+            Material.LIME_CONCRETE, Material.MAGENTA_CONCRETE, Material.CYAN_CONCRETE,
+            Material.ORANGE_CONCRETE, Material.PURPLE_CONCRETE
+    };
+
     private final Map<UUID, Integer> picks = new LinkedHashMap<>();
     private List<Runner> field = List.of();
     private double[][] race = new double[0][];
     private int winner = -1;
     private int step;
+    /** Position of the leader at the end of the race, to normalise the track. */
+    private double finishLine = 1.0;
+    /** Track painted on the arena, when there is one. */
+    private RaceShow show;
 
     public HorseRaceGame(MultiverseGamblingPlugin plugin) {
         super(plugin, GameMeta.builder("race", "Horse Race", GameCategory.GROUP, Material.SADDLE)
@@ -104,6 +119,26 @@ public final class HorseRaceGame extends AbstractGroupGame {
         }
         broadcastPlain("group.race.starting");
         soundAll(Sound.ENTITY_FIREWORK_ROCKET_BLAST, 0.8f, 1.0f);
+
+        int steps = plugin.config().horseRaceSteps();
+        finishLine = 1.0;
+        for (int i = 0; i < field.size(); i++) {
+            finishLine = Math.max(finishLine, race[i][steps - 1]);
+        }
+        ArenaStage stage = gatherArena();
+        if (stage != null) {
+            show = new RaceShow(plugin, stage, laneColours(field.size()), steps * 3 + 5);
+            show.start();
+        }
+    }
+
+    /** One colour per lane, cycled when more horses than colours are registered. */
+    private static List<Material> laneColours(int lanes) {
+        List<Material> colours = new ArrayList<>(lanes);
+        for (int lane = 0; lane < lanes; lane++) {
+            colours.add(LANE_COLOURS[lane % LANE_COLOURS.length]);
+        }
+        return colours;
     }
 
     private int drawWinner() {
@@ -114,7 +149,9 @@ public final class HorseRaceGame extends AbstractGroupGame {
         return draw.roll(plugin.fair().roll(FairnessService.HOUSE));
     }
 
-    /** Builds the whole race at once and makes sure the drawn horse is the winner. */
+    /**
+     * Builds the whole race at once and makes sure the drawn horse is the winner.
+     */
     private double[][] buildRace() {
         int runners = field.size();
         int steps = plugin.config().horseRaceSteps();
@@ -148,6 +185,13 @@ public final class HorseRaceGame extends AbstractGroupGame {
         int currentStep = Math.min(steps - 1, timer / 3);
         if (currentStep != step) {
             step = currentStep;
+            if (show != null) {
+                double[] ratios = new double[field.size()];
+                for (int i = 0; i < ratios.length; i++) {
+                    ratios[i] = finishLine <= 0 ? 0 : race[i][step] / finishLine;
+                }
+                show.progress(ratios);
+            }
             if (timer % 6 == 0) {
                 soundAll(Sound.BLOCK_NOTE_BLOCK_HAT, 0.4f, 1.0f + (float) step / steps);
             }
@@ -174,6 +218,11 @@ public final class HorseRaceGame extends AbstractGroupGame {
     }
 
     private void resolve() {
+        if (show != null) {
+            show.finish(winner);
+            show.settle();
+            show = null;
+        }
         double[] odds = new double[field.size()];
         for (Runner runner : field) {
             odds[runner.index()] = runner.odds();
@@ -233,10 +282,15 @@ public final class HorseRaceGame extends AbstractGroupGame {
 
     @Override
     protected void onRoundEnd() {
+        if (show != null) {
+            show.cancel();
+            show = null;
+        }
         picks.clear();
         field = List.of();
         race = new double[0][];
         winner = -1;
         step = 0;
+        finishLine = 1.0;
     }
 }

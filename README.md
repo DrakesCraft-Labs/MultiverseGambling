@@ -128,6 +128,48 @@ world:
   teleport-on-join: false  # send every player here when they join
 ```
 
+### In-world shows
+
+Results are not only text. When the casino world is ready, the games paint the round on
+their own arena instead of just counting numbers in the action bar:
+
+| Game | Painted in the arena |
+|---|---|
+| **Roulette** | A round table of coloured pockets with a ball that settles on the winning number |
+| **Lucky wheel** | The same table, one sector per tile |
+| **Colour roulette** (group) | The real wheel of 18 red, 18 black and one green pocket |
+| **Jackpot** and **Raffle** (group) | A wheel of tickets, one colour per player, landing on the ticket that won |
+| **Slots** | A three reel cabinet that stops reel by reel on the payline |
+| **Plinko** | A peg pyramid with the ball taking the real bounces into its bucket |
+| **Crash** | A tower that climbs with the multiplier and bursts where the curve crashed |
+| **Dice** | A number line from 0 to 100 with the target marked and a marker that stops on the roll |
+| **Dice poker** (group) | The winning hand as five dice with their pips |
+| **Race** (group) | A lane per horse and runners creeping towards the golden finish line |
+| **Russian roulette** (group) | The revolver cylinder, loaded chambers in red, turning on every trigger |
+| **Hot bomb** (group) | A block of TNT with a fuse that shortens until it goes off |
+| **Coin flip** | A gold coin tossed over the arena, paving the winning side underneath |
+
+Every one of them is **only paint**: the result is drawn by the provably fair generator
+before the show starts, so what the arena shows and what the wallet pays always match.
+
+Mines, towers, scratch cards and the bomb board keep their menus on purpose: the round is
+a sequence of picks, so playing them in the world means clicking blocks, which is a
+separate feature. Blackjack and high low stay in their card menus for the same reason.
+
+The scenery is temporary: it appears when the round starts, stays a second after the
+result so there is time to see it, and is taken down afterwards, so an arena always goes
+back to its plain platform even if the player disconnects or the server is stopped mid
+spin. Menus are still there for what is not a result (betting, picking a spot, cashing
+out), and anyone playing with the world disabled keeps the classic action bar.
+
+```yaml
+world:
+  animations:
+    enabled: true           # paint results on the arena
+    teleport-players: true  # move the player to their arena to watch
+    view-distance: 11       # blocks between the arena centre and the watcher
+```
+
 Notes worth knowing:
 
 - The **geometry is a pure class** (`CasinoLayout`) with no Bukkit, so it is unit tested:
@@ -340,6 +382,7 @@ com.chagui68.multiversegambling
 ├── fair/          ← FairnessService: server secret, seeds, nonces
 ├── i18n/          ← Language, LanguageStore (per player choice)
 ├── world/         ← CasinoLayout (pure geometry), CasinoWorldManager (blocks)
+│   └── anim/      ← ArenaStage, ArenaShow and one show per game (WheelShow, …)
 ├── game/          ← Game, GameMeta, AbstractSoloGame, AbstractGroupGame, GameRegistry
 ├── session/       ← SessionManager (one clock), SoloSession, TimedSession
 ├── gui/           ← Gui, GuiListener, HubGui, BetSelectorGui, StatsGui
