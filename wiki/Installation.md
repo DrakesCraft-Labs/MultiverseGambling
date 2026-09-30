@@ -41,9 +41,13 @@ plugins/MultiverseGambling/
 
 | Value | Behaviour |
 |---|---|
-| `auto` (default) | Uses Vault when the server has it, otherwise the internal wallet |
-| `vault` | Forces Vault; if it is missing the plugin warns and falls back to the internal wallet |
+| `auto` (default) | Tries the engines of `economy.auto-order` in order: sBank, Vault, internal wallet |
+| `sbank` | The bank accounts of the sBank plugin |
+| `vault` | The economy the server registers through Vault |
 | `internal` | Always uses the plugin's own `balances.json` |
+
+Every value falls back to the next engine with a console warning, so the casino always has a
+wallet. See [Economy](Economy) for the details of the sBank bridge.
 
 With the internal wallet, `economy.starting-balance` (1000 by default) is credited to every
 new account and the welcome message is sent once. With Vault nothing of that happens: the

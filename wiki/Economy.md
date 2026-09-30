@@ -7,9 +7,54 @@ The plugin can use your server economy through **Vault**, or its own wallet, dec
 
 | Value | Behaviour |
 |---|---|
-| `auto` (default) | Vault when the server has it, otherwise the internal wallet |
-| `vault` | Forces Vault. If it is missing the plugin warns and falls back to the internal wallet |
-| `internal` | Always uses `balances.json`, even when Vault is installed |
+| `auto` (default) | Tries the engines of `economy.auto-order`, in order |
+| `sbank` | The **bank accounts** of the sBank plugin |
+| `vault` | Whatever economy the server registers through Vault |
+| `internal` | The plugin's own `balances.json`, ignoring every other plugin |
+
+Whichever value you pick, the plugin ends up with a usable wallet: if the named engine is
+missing or refuses to answer, it warns in the console and falls back to the next one, and the
+internal wallet is always last. The casino can never fail to start because of money.
+
+## Which engine, in which order
+
+```yaml
+economy:
+  provider: auto
+  auto-order: [sbank, vault, internal]
+```
+
+`auto` walks that list. The shipped order puts the **bank first**, because a server that
+installs sBank keeps its players' money in bank accounts; a server that would rather gamble
+with the wallet it hands out with Vault just swaps it:
+
+```yaml
+  auto-order: [vault, sbank, internal]
+```
+
+Picking one engine directly is the other option: `provider: sbank` still falls back to the
+internal wallet if sBank is not there, and `provider: internal` ignores every other plugin.
+
+## sBank bank accounts
+
+The bridge to [sBank](https://github.com/DrakesCraft-Labs) uses its public API, so the casino
+moves the same number the bank shows:
+
+- **Reads** come from the in-memory bank of online players and from the bank database for
+  anybody offline, which is what lets a group round pay a player who disconnected.
+- **Writes** follow the bank's own rules: the balance is rounded to two decimals like the
+  bank does, and every movement is persisted immediately with `SBank.persistBank`, so a crash
+  cannot resurrect an old balance. If the bank cannot store the movement, the casino refuses
+  the payout instead of handing out money nobody can hold.
+- **Audit**: each bet and each payout is written to the bank audit log as `CASINO_BET`,
+  `CASINO_PAYOUT` or `CASINO_ADMIN`, so an administrator can reconcile the casino against the
+  bank afterwards.
+- **Accounts are the bank's job.** sBank opens one for every player who joins, with its own
+  starting money, so the casino never creates or funds one.
+
+The bridge is loaded through reflection: the casino still starts on servers without sBank,
+and if a future sBank version changes its API the plugin logs a warning and simply uses the
+next engine.
 
 ## Internal wallet
 
@@ -38,7 +83,7 @@ comma or a dot, so both `1000.50` and `1000,50` work.
 
 | File | Contents | Safe to delete? |
 |---|---|---|
-| `balances.json` | Internal wallet; ignored when Vault is used | Only to reset the internal economy |
+| `balances.json` | Internal wallet; ignored when sBank or Vault is used | Only to reset the internal economy |
 | `stats.json` | Games played, wins, wagered, biggest win and the rankings | Yes, players just lose their statistics |
 | `fairness.json` | Current server secret, previous secret and the per player client seeds | Yes, but every player's seed changes |
 | `languages.json` | The language each player chose | Yes, everyone falls back to `language.default` |

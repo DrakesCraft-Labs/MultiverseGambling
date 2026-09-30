@@ -27,7 +27,7 @@ world** and **in-game translation** into English or Spanish.
 | [Solo Games](Games-Solo) | The 12 games against the house |
 | [Group Games](Games-Group) | The 9 games with automatic rounds |
 | [Fairness](Fairness) | Provably fair rolls and `/mvgam verify` |
-| [Economy](Economy) | Vault or the internal wallet, and the data files |
+| [Economy](Economy) | sBank, Vault or the internal wallet, and the data files |
 | [Troubleshooting](Troubleshooting) | The usual suspects |
 | [Development](Development) | Build, test and project layout |
 

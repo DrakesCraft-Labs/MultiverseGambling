@@ -10,10 +10,11 @@ partidas en curso no se tocan y los valores nuevos se aplican en la siguiente ro
 
 | Clave | Por defecto | Significado |
 |---|---|---|
-| `provider` | `auto` | `auto` usa Vault si está, `vault` lo fuerza (con aviso si falta) y `internal` usa siempre el monedero del plugin |
+| `provider` | `auto` | Con qué dinero juega el casino: `auto` (prueba los motores de abajo en orden), `sbank` (cuentas bancarias), `vault` (la economía Vault) o `internal` (solo el monedero del plugin). Si un motor falta, cae al siguiente |
+| `auto-order` | `[sbank, vault, internal]` | Motores que se prueban cuando `provider` es `auto`. Cámbialo a `[vault, sbank, internal]` para jugar con el monedero en vez de con el banco |
 | `currency` | `coins` | Nombre que muestra el placeholder `{currency}` |
 | `format` | `&6{amount} &7{currency}` | Cómo se imprime cualquier cantidad |
-| `starting-balance` | `1000` | Saldo de bienvenida del monedero interno (se ignora con Vault) |
+| `starting-balance` | `1000` | Saldo de bienvenida del monedero interno (se ignora con sBank o Vault) |
 
 ## `game`
 

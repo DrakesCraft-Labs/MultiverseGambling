@@ -16,21 +16,33 @@ public final class EconomyManager {
         this.plugin = plugin;
     }
 
-    /** Detects Vault or falls back to the internal wallet. Called again on /mvgam reload. */
+    /**
+     * Hooks the economy engine the configuration asks for: the sBank bank accounts, the
+     * Vault economy or the internal wallet, in the order {@code economy.auto-order}
+     * decides. Called again on /mvgam reload, so a server that installs another economy
+     * plugin can switch without restarting.
+     */
     public void setup() {
         startingBalance = plugin.config().startingBalance();
         String mode = plugin.config().economyProvider();
-        EconomyProvider vault = "internal".equalsIgnoreCase(mode) ? null : VaultEconomy.tryHook();
-        if (vault != null) {
-            provider = vault;
-            plugin.getLogger().info("Economia enlazada: " + provider.name());
-        } else {
-            if (!"internal".equalsIgnoreCase(mode) && !"auto".equalsIgnoreCase(mode)) {
-                plugin.getLogger().warning("Unknown economy provider '" + mode + "'; using the internal wallet.");
-            }
-            provider = new InternalEconomy(plugin);
-            plugin.getLogger().info("Using the internal casino wallet (balances.json).");
+        if (mode != null && !mode.isBlank() && !EconomyProviders.isKnown(mode)) {
+            plugin.getLogger().warning("Unknown economy provider '" + mode + "'; using the internal wallet.");
         }
+        for (String engine : EconomyProviders.candidates(mode, plugin.config().economyAutoOrder())) {
+            EconomyProvider hooked = switch (engine) {
+                case EconomyProviders.SBANK -> SbankEconomy.tryHook(plugin);
+                case EconomyProviders.VAULT -> VaultEconomy.tryHook();
+                case EconomyProviders.INTERNAL -> new InternalEconomy(plugin);
+                default -> null;
+            };
+            if (hooked != null) {
+                provider = hooked;
+                plugin.getLogger().info("Economy engine in use: " + provider.name());
+                return;
+            }
+        }
+        provider = new InternalEconomy(plugin);
+        plugin.getLogger().info("Economy engine in use: " + provider.name());
     }
 
     public EconomyProvider provider() {

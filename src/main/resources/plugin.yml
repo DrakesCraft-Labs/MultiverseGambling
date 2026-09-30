@@ -5,7 +5,7 @@ api-version: '1.21'
 authors: [Chagui68]
 description: Chance and betting engine with 21 solo and group minigames, a casino world and in-game English or Spanish.
 website: https://github.com/DrakesCraft-Labs/MultiverseGambling
-softdepend: [Vault]
+softdepend: [Vault, sBank]
 
 commands:
   mvgam:

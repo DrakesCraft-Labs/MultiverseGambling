@@ -1,6 +1,7 @@
 package com.chagui68.multiversegambling.config;
 
 import com.chagui68.multiversegambling.MultiverseGamblingPlugin;
+import com.chagui68.multiversegambling.economy.EconomyProviders;
 import java.util.List;
 import org.bukkit.configuration.file.FileConfiguration;
 
@@ -42,6 +43,15 @@ public final class MultiverseGamblingConfig {
     }
 
     /** auto, internal or vault. */
+    /**
+     * Engines tried in order when {@code economy.provider} is {@code auto}: sBank bank
+     * accounts, Vault, and the internal wallet last.
+     */
+    public List<String> economyAutoOrder() {
+        List<String> order = cfg.getStringList("economy.auto-order");
+        return order.isEmpty() ? EconomyProviders.DEFAULT_ORDER : order;
+    }
+
     public String economyProvider() {
         return cfg.getString("economy.provider", "auto");
     }

@@ -28,7 +28,7 @@ La compilación necesita Java 21. Los tests son JUnit 5 y cubren los paquetes `e
 ```
 src/main/java/com/chagui68/multiversegambling
 ├── engine/    tablas y reglas en Java puro (sin Bukkit); aquí vive la matemática
-├── economy/   EconomyProvider (Vault | interno), Wager, Pot, EconomyManager
+├── economy/   EconomyProvider (sBank | Vault | interno), EconomyProviders, Wager, Pot, EconomyManager
 ├── fair/      FairnessService: secreto del servidor, semillas, nonces
 ├── i18n/      Language, LanguageStore
 ├── world/     CasinoLayout (geometría pura), CasinoWorldManager (bloques)

@@ -11,14 +11,21 @@
 # ============================================================================
 
 economy:
-  # auto     = use Vault when the server has it, otherwise the internal wallet
-  # vault    = force Vault (if it fails, warn and fall back to the internal one)
-  # internal = always use the plugin's own balances.json
+  # Which money the casino plays with. Every value falls back to the internal wallet
+  # when the engine it names is not usable, so the plugin always starts.
+  #   auto     = try the engines below, in order
+  #   sbank    = the bank accounts of the sBank plugin
+  #   vault    = whatever economy the server registers through Vault
+  #   internal = the plugin's own balances.json, ignoring every other plugin
   provider: auto
+  # Engines tried when provider is auto. Put sbank first on a server that keeps the
+  # players' money in the bank; put vault first to gamble with the wallet instead.
+  auto-order: [sbank, vault, internal]
   currency: coins
   # {amount} is the quantity and {currency} the name above.
   format: '&6{amount} &7{currency}'
-  # Welcome balance for the internal wallet. Unused with Vault.
+  # Welcome balance for the internal wallet. Unused with sBank or Vault, which
+  # hand out their own starting money.
   starting-balance: 1000
 
 game:

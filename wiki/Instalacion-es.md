@@ -40,9 +40,13 @@ plugins/MultiverseGambling/
 
 | Valor | Comportamiento |
 |---|---|
-| `auto` (por defecto) | Usa Vault si el servidor lo tiene, si no el monedero interno |
-| `vault` | Fuerza Vault; si no está, avisa y cae al monedero interno |
+| `auto` (por defecto) | Prueba los motores de `economy.auto-order` en orden: sBank, Vault, monedero interno |
+| `sbank` | Las cuentas bancarias del plugin sBank |
+| `vault` | La economía que el servidor registre a través de Vault |
 | `internal` | Usa siempre `balances.json` |
+
+Cualquier valor cae al siguiente motor con un aviso por consola, así que el casino siempre
+tiene monedero. Los detalles del puente con sBank están en [Economía](Economia-es).
 
 Con el monedero interno, `economy.starting-balance` (1000 por defecto) se abona a cada cuenta
 nueva junto con el mensaje de bienvenida. Con Vault eso no ocurre: el plugin nunca toca los

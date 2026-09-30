@@ -7,9 +7,54 @@ según `economy.provider`.
 
 | Valor | Comportamiento |
 |---|---|
-| `auto` (por defecto) | Vault si el servidor lo tiene, si no el monedero interno |
-| `vault` | Fuerza Vault. Si falta, avisa y cae al monedero interno |
-| `internal` | Usa siempre `balances.json`, aunque Vault esté instalado |
+| `auto` (por defecto) | Prueba los motores de `economy.auto-order`, en orden |
+| `sbank` | Las **cuentas bancarias** del plugin sBank |
+| `vault` | La economía que el servidor registre a través de Vault |
+| `internal` | El `balances.json` del propio plugin, ignorando a cualquier otro |
+
+Elijas lo que elijas, el plugin acaba con un monedero usable: si el motor nombrado falta o no
+responde, avisa por consola y cae al siguiente, y el monedero interno siempre va al final. El
+casino nunca puede fallar al arrancar por culpa del dinero.
+
+## Qué motor, en qué orden
+
+```yaml
+economy:
+  provider: auto
+  auto-order: [sbank, vault, internal]
+```
+
+`auto` recorre esa lista. El orden que viene de fábrica pone el **banco primero**, porque un
+servidor que instala sBank guarda el dinero de sus jugadores en cuentas bancarias; un servidor
+que prefiera jugar con el monedero que reparte con Vault solo tiene que intercambiarlo:
+
+```yaml
+  auto-order: [vault, sbank, internal]
+```
+
+Elegir un motor directamente es la otra opción: `provider: sbank` sigue cayendo al monedero
+interno si sBank no está, y `provider: internal` ignora a cualquier otro plugin.
+
+## Cuentas bancarias de sBank
+
+El puente con [sBank](https://github.com/DrakesCraft-Labs) usa su API pública, así que el
+casino mueve el mismo número que muestra el banco:
+
+- **Las lecturas** salen del banco en memoria de los jugadores conectados y de la base de
+datos para quien esté desconectado, que es lo que permite pagar una ronda de grupo a alguien
+que se fue.
+- **Las escrituras** siguen las reglas del propio banco: el saldo se redondea a dos decimales
+como hace el banco, y cada movimiento se persiste al instante con `SBank.persistBank`, así que
+una caída del servidor no puede resucitar un saldo viejo. Si el banco no puede guardar el movimiento, el
+casino rechaza el pago en lugar de repartir dinero que nadie puede tener.
+- **Auditoría**: cada apuesta y cada pago se escriben en el registro del banco como
+`CASINO_BET`, `CASINO_PAYOUT` o `CASINO_ADMIN`, así que un administrador puede cuadrar el
+casino contra el banco después.
+- **Las cuentas son cosa del banco.** sBank abre una para cada jugador que entra, con su
+propio dinero inicial, así que el casino nunca crea ni financia una.
+
+El puente se carga por reflexión: el casino sigue arrancando en servidores sin sBank, y si una
+versión futura de sBank cambia su API el plugin avisa por consola y usa el siguiente motor.
 
 ## Monedero interno
 
@@ -39,7 +84,7 @@ cantidades escritas en los comandos aceptan coma o punto, así que funcionan `10
 
 | Archivo | Contenido | ¿Se puede borrar? |
 |---|---|---|
-| `balances.json` | Monedero interno; se ignora con Vault | Solo para reiniciar la economía interna |
+| `balances.json` | Monedero interno; se ignora con sBank o Vault | Solo para reiniciar la economía interna |
 | `stats.json` | Partidas, victorias, apostado, mayor premio y los rankings | Sí, los jugadores pierden sus estadísticas |
 | `fairness.json` | Secreto actual, secreto anterior y semillas de cliente por jugador | Sí, pero cambia la semilla de todos |
 | `languages.json` | El idioma que eligió cada jugador | Sí, todos caen a `language.default` |

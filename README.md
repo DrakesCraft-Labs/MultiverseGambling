@@ -76,7 +76,14 @@ cp target/MultiverseGambling-1.0.0.jar ~/server/plugins/
 Without Vault the plugin starts its own wallet in
 `plugins/MultiverseGambling/balances.json`, with a configurable welcome balance. With
 Vault it uses the server economy and duplicates nothing. Control it with
-`economy.provider: auto | vault | internal`.
+`economy.provider: auto | sbank | vault | internal`.
+
+The bridge is engine agnostic on purpose. Besides the usual Vault economy, the casino
+speaks to **[sBank](https://github.com/DrakesCraft-Labs)** bank accounts: on a server that
+keeps the players' money in the bank, the bets and the payouts move that balance, using the
+same two-decimal rounding and the same audit log the bank itself writes. `auto` tries the
+engines in `economy.auto-order` (bank, then Vault, then the internal wallet) and always ends
+with a wallet, so the plugin can never fail to start because of money.
 
 Data files it creates:
 
@@ -325,7 +332,7 @@ com.chagui68.multiversegambling
 │   ├── RouletteTable, ColorWheel, PrizeWheel, SlotsTable, ScratchCardTable
 │   ├── MinesTable, CrashTable, DiceTable, PlinkoTable
 │   ├── Card.Deck, BlackjackHand, DicePoker, HorseOdds
-├── economy/       ← EconomyProvider (Vault | internal), Wager, Pot, EconomyManager
+├── economy/       ← EconomyProvider (sBank | Vault | internal), Wager, Pot, EconomyManager
 ├── fair/          ← FairnessService: server secret, seeds, nonces
 ├── i18n/          ← Language, LanguageStore (per player choice)
 ├── world/         ← CasinoLayout (pure geometry), CasinoWorldManager (blocks)

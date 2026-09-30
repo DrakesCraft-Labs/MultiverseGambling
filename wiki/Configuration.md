@@ -10,10 +10,11 @@ games are untouched, and the new values apply to the next round.
 
 | Key | Default | Meaning |
 |---|---|---|
-| `provider` | `auto` | `auto` uses Vault when present, `vault` forces it (falling back with a warning) and `internal` always uses the plugin wallet |
+| `provider` | `auto` | Which money the casino plays with: `auto` (try the engines below in order), `sbank` (bank accounts), `vault` (the Vault economy) or `internal` (only the plugin wallet). A missing engine falls back to the next one |
+| `auto-order` | `[sbank, vault, internal]` | Engines tried when `provider` is `auto`. Swap it to `[vault, sbank, internal]` to gamble with the wallet instead of the bank |
 | `currency` | `coins` | Name shown by the `{currency}` placeholder |
 | `format` | `&6{amount} &7{currency}` | How every amount is printed |
-| `starting-balance` | `1000` | Welcome balance for the internal wallet (ignored with Vault) |
+| `starting-balance` | `1000` | Welcome balance for the internal wallet (ignored with sBank or Vault) |
 
 ## `game`
 

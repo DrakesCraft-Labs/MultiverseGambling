@@ -28,7 +28,7 @@ packages, so they run in a couple of seconds with no server.
 ```
 src/main/java/com/chagui68/multiversegambling
 ├── engine/    plain Java tables and rules (no Bukkit); where the maths lives
-├── economy/   EconomyProvider (Vault | internal), Wager, Pot, EconomyManager
+├── economy/   EconomyProvider (sBank | Vault | internal), EconomyProviders, Wager, Pot, EconomyManager
 ├── fair/      FairnessService: server secret, client seeds, nonces
 ├── i18n/      Language, LanguageStore
 ├── world/     CasinoLayout (pure geometry), CasinoWorldManager (blocks)

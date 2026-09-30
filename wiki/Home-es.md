@@ -27,7 +27,7 @@ casino** y **traducción dentro del juego** al inglés o al español.
 | [Juegos en solitario](Juegos-Solo-es) | Los 12 juegos contra la casa |
 | [Juegos en grupo](Juegos-Grupo-es) | Los 9 juegos con rondas automáticas |
 | [Azar verificable](Justicia-es) | Tiradas verificables y `/mvgam verify` |
-| [Economía](Economia-es) | Vault o el monedero interno, y los archivos de datos |
+| [Economía](Economia-es) | sBank, Vault o el monedero interno, y los archivos de datos |
 | [Problemas](Problemas-es) | Los sospechosos habituales |
 | [Desarrollo](Desarrollo-es) | Compilar, testear y estructura del proyecto |
 
