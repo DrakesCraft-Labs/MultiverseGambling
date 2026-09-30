@@ -107,9 +107,11 @@ public final class CrashGame extends AbstractSoloGame {
             if (online == null) {
                 return;
             }
-            online.sendActionBar(Text.c("&7Multiplier " + colour() + Text.multiplier(current)
-                    + " &8| &7Cashing out now pays &f"
-                    + plugin.economy().format(wager.amount() * Math.min(current, crashPoint))));
+            online.sendActionBar(Text.c(plugin.messages().forSender(online, "panel.crash.bar",
+                    "colour", colour(),
+                    "multiplier", Text.multiplier(current),
+                    "prize", plugin.economy().format(
+                            wager.amount() * Math.min(current, crashPoint)))));
             if (elapsed % 4 == 0) {
                 online.playSound(online.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 0.35f,
                         1.0f + (float) Math.min(1.0, elapsed / 100.0));
@@ -131,10 +133,13 @@ public final class CrashGame extends AbstractSoloGame {
                 return;
             }
             double payout = settle(online, wager, multiplier);
-            announceResult(online, true, "&a" + Text.multiplier(multiplier));
-            info(online, title());
-            info(online, "&7You cashed out at &f" + Text.multiplier(multiplier)
-                    + "&7 and the plane would have burst at &f" + Text.multiplier(crashPoint));
+            announceResult(online, true,
+                    plugin.messages().forSender(online, "panel.crash.cashed-subtitle",
+                            "multiplier", Text.multiplier(multiplier)));
+            info(online, title(online));
+            message(online, "panel.crash.cashed",
+                    "multiplier", Text.multiplier(multiplier),
+                    "crash", Text.multiplier(crashPoint));
             showResult(online, wager.amount(), payout);
             sound(online, Sound.ENTITY_PLAYER_LEVELUP, 0.9f, 1.3f);
             rounds.remove(playerId());
@@ -152,10 +157,13 @@ public final class CrashGame extends AbstractSoloGame {
             }
             // Never cashed out: the plane bursts and they are left with nothing.
             double payout = settle(online, wager, 0);
-            announceResult(online, false, "&cburst at " + Text.multiplier(crashPoint));
-            info(online, title());
-            info(online, "&7The plane burst at &f" + Text.multiplier(crashPoint)
-                    + "&7 and you lost &f" + plugin.economy().format(wager.amount()));
+            announceResult(online, false,
+                    plugin.messages().forSender(online, "panel.crash.burst-subtitle",
+                            "multiplier", Text.multiplier(crashPoint)));
+            info(online, title(online));
+            message(online, "panel.crash.burst",
+                    "multiplier", Text.multiplier(crashPoint),
+                    "bet", plugin.economy().format(wager.amount()));
             showResult(online, wager.amount(), payout);
             sound(online, Sound.ENTITY_GENERIC_EXPLODE, 0.9f, 0.8f);
             rounds.remove(playerId());
@@ -179,7 +187,8 @@ public final class CrashGame extends AbstractSoloGame {
         private final CrashGame game;
 
         CrashGui(MultiverseGamblingPlugin plugin, Player player, CrashGame game) {
-            super(plugin, player, 3, "&8" + displayName(player) + " &7· &6Cash out before it bursts");
+            super(plugin, player, 3, plugin.messages().forSender(player, "panel.crash.title",
+                    "game", displayName(player)));
             this.game = game;
         }
 
@@ -190,26 +199,30 @@ public final class CrashGame extends AbstractSoloGame {
 
             CrashRound round = game.roundOf(player().getUniqueId());
             if (round == null || round.finished()) {
-                set(13, Items.of(Material.BARRIER).name("&7The round is already over").build());
-                set(22, Items.of(Material.ARROW).name("&eClose").build(), e -> close());
+                set(13, Items.of(Material.BARRIER)
+                        .name(label(player(), "panel.crash.over")).build());
+                set(22, Items.of(Material.ARROW)
+                        .name(label(player(), "panel.crash.close")).build(), e -> close());
                 return;
             }
 
             set(4, Items.of(Material.FIREWORK_ROCKET)
-                    .name("&6Crash in progress")
+                    .name(label(player(), "panel.crash.in-progress"))
                     .lore(
-                            "&7Apostado: &f" + plugin.economy().format(round.bet()),
-                            "&7The curve doubles every &f"
-                                    + (int) plugin.config().crashDoubleEverySeconds() + "s&7.",
-                            "&7Follow it on the action bar.",
+                            label(player(), "panel.crash.staked",
+                                    "bet", plugin.economy().format(round.bet())),
+                            label(player(), "panel.crash.doubles",
+                                    "seconds", (int) plugin.config().crashDoubleEverySeconds()),
+                            label(player(), "panel.crash.follow"),
                             "",
-                            "&cIf you do not cash out, you lose everything.")
+                            label(player(), "panel.crash.warning"))
                     .glow(true)
                     .build());
 
             set(13, Items.of(Material.LIME_CONCRETE)
-                    .name("&a&lCASH OUT")
-                    .lore("&7Collect at the current multiplier.", "", "&eClick fast")
+                    .name(label(player(), "panel.crash.cash-out"))
+                    .lore(label(player(), "panel.crash.collect"), "",
+                            label(player(), "panel.crash.click-fast"))
                     .glow(true)
                     .build(), e -> {
                 close();
@@ -217,8 +230,8 @@ public final class CrashGame extends AbstractSoloGame {
             });
 
             set(22, Items.of(Material.RED_CONCRETE)
-                    .name("&cClose without cashing out")
-                    .lore("&7The round keeps running if you close the menu.")
+                    .name(label(player(), "panel.crash.close-button"))
+                    .lore(label(player(), "panel.crash.close-lore"))
                     .build());
         }
 

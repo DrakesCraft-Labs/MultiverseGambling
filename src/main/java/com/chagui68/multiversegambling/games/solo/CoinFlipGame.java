@@ -51,7 +51,8 @@ public final class CoinFlipGame extends AbstractSoloGame {
                 int wait = 1 + (int) (progress * progress * 8);
                 if (elapsed % wait == 0) {
                     String shown = Rng.chance(0.5) ? HEADS : TAILS;
-                    online.sendActionBar(Text.c("&7The coin spins... &f" + shown));
+                    online.sendActionBar(Text.c(plugin.messages().forSender(online,
+                            "panel.coin-flip.spinning", "side", sideName(online, shown))));
                     online.playSound(online.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 0.4f,
                             1.0f + (float) progress);
                 }
@@ -72,12 +73,13 @@ public final class CoinFlipGame extends AbstractSoloGame {
                 double multiplier = DiceTable.payout(50.0, plugin.config().houseEdge());
                 double payout = settle(online, wager, won ? multiplier : 0);
 
-                announceResult(online, won, "&f" + result);
-                info(online, title());
-                info(online, "&7You picked &f" + side + " &7and it came up &f" + result);
-                info(online, "&7A correct call pays &f" + Text.multiplier(multiplier)
-                        + " &7(house edge of "
-                        + Text.percent(plugin.config().houseEdge()) + "&7).");
+                announceResult(online, won, sideName(online, result));
+                info(online, title(online));
+                message(online, "panel.coin-flip.picked",
+                        "side", sideName(online, side), "result", sideName(online, result));
+                message(online, "panel.coin-flip.odds",
+                        "multiplier", Text.multiplier(multiplier),
+                        "edge", Text.percent(plugin.config().houseEdge()));
                 showResult(online, wager.amount(), payout);
                 sound(online, won ? Sound.ENTITY_PLAYER_LEVELUP : Sound.ENTITY_VILLAGER_NO,
                         0.9f, won ? 1.3f : 0.9f);
@@ -87,6 +89,11 @@ public final class CoinFlipGame extends AbstractSoloGame {
         animation.run();
     }
 
+    /** Display name of a coin side, in the language of the reader. */
+    String sideName(Player viewer, String side) {
+        return plugin.messages().forSender(viewer, "panel.coin-flip.side-" + side);
+    }
+
     private final class SideGui extends Gui {
 
         private final CoinFlipGame game;
@@ -94,7 +101,8 @@ public final class CoinFlipGame extends AbstractSoloGame {
         private boolean armed;
 
         SideGui(MultiverseGamblingPlugin plugin, Player player, CoinFlipGame game, Wager wager) {
-            super(plugin, player, 3, "&8" + game.displayName(player) + " &7· &6Pick a side");
+            super(plugin, player, 3, plugin.messages().forSender(player, "panel.coin-flip.title",
+                    "game", game.displayName(player)));
             this.game = game;
             this.wager = wager;
         }
@@ -106,15 +114,18 @@ public final class CoinFlipGame extends AbstractSoloGame {
 
             double multiplier = DiceTable.payout(50.0, plugin.config().houseEdge());
             set(4, Items.of(Material.GOLD_INGOT)
-                    .name("&6Bet: &f" + plugin.economy().format(wager.amount()))
-                    .lore("&7A correct call pays &f" + Text.multiplier(multiplier) + "&7, that is &f"
-                            + plugin.economy().format(wager.amount() * multiplier))
+                    .name(label(player(), "panel.common.bet",
+                            "bet", plugin.economy().format(wager.amount())))
+                    .lore(label(player(), "panel.coin-flip.info",
+                            "multiplier", Text.multiplier(multiplier),
+                            "prize", plugin.economy().format(wager.amount() * multiplier)))
                     .glow(true)
                     .build());
 
             set(11, Items.of(Material.GOLD_BLOCK)
-                    .name("&6HEADS")
-                    .lore("&7The sun side.", "", "&eClick to bet on heads")
+                    .name(label(player(), "panel.coin-flip.heads"))
+                    .lore(label(player(), "panel.coin-flip.heads-lore"), "",
+                            label(player(), "panel.coin-flip.click-heads"))
                     .build(), e -> {
                 armed = true;
                 close();
@@ -122,8 +133,9 @@ public final class CoinFlipGame extends AbstractSoloGame {
             });
 
             set(15, Items.of(Material.IRON_BLOCK)
-                    .name("&7TAILS")
-                    .lore("&7The royal seal.", "", "&eClick to bet on tails")
+                    .name(label(player(), "panel.coin-flip.tails"))
+                    .lore(label(player(), "panel.coin-flip.tails-lore"), "",
+                            label(player(), "panel.coin-flip.click-tails"))
                     .build(), e -> {
                 armed = true;
                 close();
@@ -131,8 +143,8 @@ public final class CoinFlipGame extends AbstractSoloGame {
             });
 
             set(22, Items.of(Material.BARRIER)
-                    .name("&cCancelar")
-                    .lore("&7You get your stake back.")
+                    .name(label(player(), "panel.common.cancel"))
+                    .lore(label(player(), "panel.common.refund-lore"))
                     .build(), e -> close());
         }
 

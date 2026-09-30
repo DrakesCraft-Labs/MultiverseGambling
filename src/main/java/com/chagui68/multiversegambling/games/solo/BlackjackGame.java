@@ -10,7 +10,6 @@ import com.chagui68.multiversegambling.game.GameMeta;
 import com.chagui68.multiversegambling.gui.Gui;
 import com.chagui68.multiversegambling.session.TimedSession;
 import com.chagui68.multiversegambling.util.Items;
-import com.chagui68.multiversegambling.util.Text;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -82,9 +81,9 @@ public final class BlackjackGame extends AbstractSoloGame {
                     finish(online, table);
                     return;
                 }
-                online.sendActionBar(Text.c("&7Your hand: &f"
-                        + BlackjackHand.value(table.playerCards) + " &8| &7Dealer: &f"
-                        + table.dealerCards.get(0).display() + " &7? ?"));
+                actionBarKey(online, "panel.blackjack.action",
+                        "hand", BlackjackHand.value(table.playerCards),
+                        "card", table.dealerCards.get(0).display());
                 table.gui().ifPresent(Gui::refresh);
             }
         };
@@ -164,16 +163,21 @@ public final class BlackjackGame extends AbstractSoloGame {
         tables.remove(player.getUniqueId());
 
         boolean won = payout > table.wager.amount() * (table.doubled ? 2 : 1);
-        announceResult(player, won, payout > 0 ? "&a" + plugin.economy().format(payout) : "&cno prize");
-        info(player, title());
-        info(player, "&7Your hand: &f" + BlackjackHand.describe(table.playerCards)
-                + " &7= &f" + BlackjackHand.value(table.playerCards));
-        info(player, "&7Dealer: &f" + BlackjackHand.describe(table.dealerCards)
-                + " &7= &f" + BlackjackHand.value(table.dealerCards));
+        announceResult(player, won, payout > 0
+                ? plugin.messages().forSender(player, "panel.blackjack.prize-subtitle",
+                        "prize", plugin.economy().format(payout))
+                : plugin.messages().forSender(player, "panel.common.no-prize"));
+        info(player, title(player));
+        message(player, "panel.blackjack.your-hand",
+                "cards", BlackjackHand.describe(table.playerCards),
+                "value", BlackjackHand.value(table.playerCards));
+        message(player, "panel.blackjack.dealer-hand",
+                "cards", BlackjackHand.describe(table.dealerCards),
+                "value", BlackjackHand.value(table.dealerCards));
         if (playerBlackjack && !dealerBlackjack) {
-            info(player, "&6Natural blackjack: pays 3 to 2.");
+            message(player, "panel.blackjack.natural");
         } else if (dealerBust) {
-            info(player, "&aThe dealer busted.");
+            message(player, "panel.blackjack.dealer-bust");
         }
         showResult(player, table.wager.amount() * (table.doubled ? 2 : 1), payout);
         sound(player, won ? Sound.ENTITY_PLAYER_LEVELUP : Sound.ENTITY_VILLAGER_NO,
@@ -237,7 +241,7 @@ public final class BlackjackGame extends AbstractSoloGame {
         private final BlackjackGame.Table table;
 
         BlackjackGui(MultiverseGamblingPlugin plugin, Player player, BlackjackGame game) {
-            super(plugin, player, 5, "&8Blackjack");
+            super(plugin, player, 5, plugin.messages().forSender(player, "panel.blackjack.title"));
             this.game = game;
             this.table = game.tableOf(player.getUniqueId());
             if (table != null) {
@@ -251,18 +255,23 @@ public final class BlackjackGame extends AbstractSoloGame {
             fill(Items.of(Material.GREEN_STAINED_GLASS_PANE).name(" ").build());
 
             if (table == null) {
-                set(22, Items.of(Material.BARRIER).name("&7Mesa cerrada").build(), e -> close());
+                set(22, Items.of(Material.BARRIER)
+                        .name(label(player(), "panel.blackjack.closed")).build(), e -> close());
                 return;
             }
 
             set(4, Items.of(Material.GOLD_INGOT)
-                    .name("&6Bet: &f" + plugin.economy().format(table.bet()))
+                    .name(label(player(), "panel.common.bet",
+                            "bet", plugin.economy().format(table.bet())))
                     .lore(
-                            "&7Your hand: &f" + BlackjackHand.value(table.playerCards()),
-                            "&7Dealer: &f" + BlackjackHand.value(table.dealerCards()),
-                            "&7Deck: &f" + table.deck.remaining() + " &7cards",
+                            label(player(), "panel.blackjack.hand",
+                                    "value", BlackjackHand.value(table.playerCards())),
+                            label(player(), "panel.blackjack.dealer",
+                                    "value", BlackjackHand.value(table.dealerCards())),
+                            label(player(), "panel.blackjack.deck",
+                                    "cards", table.deck.remaining()),
                             "",
-                            "&7A natural pays &f3:2&7; a push returns the stake.")
+                            label(player(), "panel.blackjack.rules"))
                     .glow(true)
                     .build());
 
@@ -271,8 +280,9 @@ public final class BlackjackGame extends AbstractSoloGame {
 
             boolean settled = table.isSettled();
             set(36, Items.of(settled ? Material.GRAY_DYE : Material.LIME_CONCRETE)
-                    .name("&aHit")
-                    .lore("&7Take another card.", "&7Busting over 21 loses.")
+                    .name(label(player(), "panel.blackjack.hit"))
+                    .lore(label(player(), "panel.blackjack.hit-lore"),
+                            label(player(), "panel.blackjack.hit-lore-2"))
                     .build(), e -> {
                 if (!settled) {
                     game.hit(player(), table);
@@ -280,8 +290,8 @@ public final class BlackjackGame extends AbstractSoloGame {
             });
 
             set(40, Items.of(settled ? Material.GRAY_DYE : Material.RED_CONCRETE)
-                    .name("&cStand")
-                    .lore("&7The dealer plays their hand.")
+                    .name(label(player(), "panel.blackjack.stand"))
+                    .lore(label(player(), "panel.blackjack.stand-lore"))
                     .build(), e -> {
                 if (!settled) {
                     game.stand(player(), table);
@@ -289,11 +299,13 @@ public final class BlackjackGame extends AbstractSoloGame {
             });
 
             set(44, Items.of(table.canDouble(player()) ? Material.GOLD_BLOCK : Material.GRAY_DYE)
-                    .name("&6Double down")
-                    .lore("&7Double the bet and take",
-                            "&7one more card, then you must stand.",
+                    .name(label(player(), "panel.blackjack.double"))
+                    .lore(label(player(), "panel.blackjack.double-lore"),
+                            label(player(), "panel.blackjack.double-lore-2"),
                             "",
-                            table.canDouble(player()) ? "&eClick to double" : "&7Not available")
+                            table.canDouble(player())
+                                    ? label(player(), "panel.blackjack.click-double")
+                                    : label(player(), "panel.blackjack.not-available"))
                     .build(), e -> {
                 if (table.canDouble(player())) {
                     game.doubleDown(player(), table);
@@ -307,14 +319,19 @@ public final class BlackjackGame extends AbstractSoloGame {
                 boolean hole = hideHole && i == 1 && !table.isSettled();
                 Card card = cards.get(i);
                 set(startSlot + i, Items.of(hole ? Material.GRAY_STAINED_GLASS_PANE : cardMaterial(card))
-                        .name(hole ? "&8? ? ?" : "&f" + card.display())
-                        .lore(hole ? "&7Face down card" : "&7Worth &f" + card.blackjackValue())
+                        .name(hole
+                                ? label(player(), "panel.blackjack.hidden")
+                                : label(player(), "panel.blackjack.card", "card", card.display()))
+                        .lore(hole
+                                ? label(player(), "panel.blackjack.face-down")
+                                : label(player(), "panel.blackjack.worth",
+                                        "value", card.blackjackValue()))
                         .build());
             }
         }
 
         private static Material cardMaterial(Card card) {
-            if (card.suit() == Card.Suit.CORAZONES || card.suit() == Card.Suit.DIAMANTES) {
+            if (card.suit() == Card.Suit.HEARTS || card.suit() == Card.Suit.DIAMONDS) {
                 return Material.RED_DYE;
             }
             return Material.BLACK_DYE;

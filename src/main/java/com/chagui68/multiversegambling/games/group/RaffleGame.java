@@ -12,11 +12,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import net.kyori.adventure.title.Title;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
-import com.chagui68.multiversegambling.util.Text;
 
 /**
  * Raffle with three prizes.
@@ -52,24 +50,29 @@ public final class RaffleGame extends AbstractGroupGame {
         int capped = Math.min(bought, plugin.config().raffleMaxTickets());
         tickets.put(player.getUniqueId(), capped);
         int total = tickets.values().stream().mapToInt(Integer::intValue).sum();
-        broadcastRaw("&8» &f" + player.getName() + " &7bought &f" + capped + " &7ticket(s) for &6"
-                + plugin.economy().format(amount) + "&7. Tickets sold: &f" + total);
+        broadcastPlain("group.raffle.tickets-bought",
+                "player", player.getName(),
+                "tickets", capped,
+                "amount", plugin.economy().format(amount),
+                "total", total);
     }
 
     @Override
     protected void onRoundStart() {
         timer = 0;
-        broadcastRaw(roundHeader());
+        broadcastRoundHeader();
         int total = tickets.values().stream().mapToInt(Integer::intValue).sum();
-        broadcastRaw("&7Boletas vendidas: &f" + total + " &7a &6"
-                + plugin.economy().format(ticketPrice()) + " &7each.");
-        broadcastRaw("&7Pot to be paid out: &6" + plugin.economy().format(pot.total()));
+        broadcastPlain("group.raffle.sold",
+                "total", total, "price", plugin.economy().format(ticketPrice()));
+        broadcastPlain("group.raffle.pot", "pot", plugin.economy().format(pot.total()));
         for (Map.Entry<UUID, Integer> entry : tickets.entrySet()) {
             double share = pot.amountOf(entry.getKey()) / Math.max(0.0001, pot.total());
-            broadcastRaw("&7  " + playerName(entry.getKey()) + ": &f" + entry.getValue()
-                    + " &7boleta(s) &8(" + String.format("%.1f%%", share * 100) + ")");
+            broadcastPlain("group.raffle.line",
+                    "player", playerName(entry.getKey()),
+                    "tickets", entry.getValue(),
+                    "chance", String.format("%.1f%%", share * 100));
         }
-        broadcastRaw("&7The draw starts in a few seconds.");
+        broadcastPlain("group.raffle.starting");
     }
 
     @Override
@@ -78,7 +81,7 @@ public final class RaffleGame extends AbstractGroupGame {
         if (timer <= 40) {
             if (timer % 20 == 0) {
                 soundAll(Sound.BLOCK_NOTE_BLOCK_HAT, 0.5f, 1.2f);
-                actionBarAll("&7Preparing the draw...");
+                actionBarAllKey("group.raffle.preparing");
             }
             return;
         }
@@ -89,8 +92,9 @@ public final class RaffleGame extends AbstractGroupGame {
             if (elapsed % wait == 0) {
                 List<UUID> pool = new ArrayList<>(tickets.keySet());
                 if (!pool.isEmpty()) {
-                    actionBarAll("&7Bombo... &f" + playerName(Rng.pick(pool)) + " &8| &6"
-                            + plugin.economy().format(pot.total()));
+                    actionBarAllKey("group.raffle.drawing",
+                            "player", playerName(Rng.pick(pool)),
+                            "pot", plugin.economy().format(pot.total()));
                     soundAll(Sound.BLOCK_NOTE_BLOCK_HAT, 0.5f, 0.9f + (float) progress);
                 }
             }
@@ -118,23 +122,21 @@ public final class RaffleGame extends AbstractGroupGame {
         }
         pot.payoutByMultiplier(id -> prizes.getOrDefault(id, 0.0));
 
-        broadcastRaw("&8&m        &r &6RAFFLE &8&m        ");
-        String[] labels = {"&6First prize &7(&f70%&7)", "&eSecond prize &7(&f20%&7)",
-                "&7Third prize &7(&f10%&7)"};
+        broadcastPlain("group.raffle.banner");
+        String[] labels = {"group.raffle.first-prize", "group.raffle.second-prize",
+                "group.raffle.third-prize"};
         for (int i = 0; i < order.size() && i < labels.length; i++) {
-            broadcastRaw(labels[i] + ": &f" + playerName(order.get(i)) + " &8- &6"
-                    + plugin.economy().format(total * PRIZES[i]));
+            final int index = i;
+            broadcastPlainFor(player -> new Object[]{
+                    "prize", plugin.messages().forSender(player, labels[index]),
+                    "player", playerName(order.get(index)),
+                    "amount", plugin.economy().format(total * PRIZES[index])},
+                    "group.raffle.prize");
         }
         soundAll(Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.1f);
         if (!order.isEmpty()) {
-            Player first = online(order.get(0));
-            if (first != null) {
-                first.showTitle(Title.title(Text.c("&6&lFIRST PRIZE"),
-                        Text.c("&f" + plugin.economy().format(total * PRIZES[0])), Title.Times.times(
-                                java.time.Duration.ofMillis(200),
-                                java.time.Duration.ofMillis(2500),
-                                java.time.Duration.ofMillis(400))));
-            }
+            showTitle(online(order.get(0)), "group.raffle.title", "group.raffle.title-subtitle",
+                    "prize", plugin.economy().format(total * PRIZES[0]));
         }
         endRound();
     }

@@ -177,6 +177,10 @@ How it works:
 - Game **names and descriptions** are written in the code in English and can be overridden
   per language with a `catalog.<game-id>.name` / `catalog.<game-id>.description` block;
   `lang/es.yml` ships the whole Spanish catalogue as an example.
+- The **panels of every game** — window titles, buttons, item lore and the lines those menus
+  print in the chat — live under `panel.*`, one section per game, so the inside of a minigame
+  reads in the player's language too. A test fails the build when `lang/en.yml` and
+  `lang/es.yml` drift apart in keys or placeholders.
 
 ```yaml
 language:

@@ -26,13 +26,13 @@ public final class SlotsTable {
      * {@link #rtp()} proves it and the test pins it.
      */
     public static final List<Symbol> DEFAULT = List.of(
-            new Symbol("cereza", "\uD83C\uDF52", 30, 7.0, 1.55),
-            Symbol.of("limon", "\uD83C\uDF4B", 25, 10.5),
-            Symbol.of("campana", "\uD83D\uDD14", 18, 21.0),
-            Symbol.of("diamante", "\uD83D\uDC8E", 12, 46.0),
-            Symbol.of("siete", "7\uFE0F\u20E3", 8, 105.0),
-            Symbol.of("estrella", "\u2B50", 4, 265.0),
-            Symbol.of("corona", "\uD83D\uDC51", 2, 600.0));
+            new Symbol("cherry", "\uD83C\uDF52", 30, 7.0, 1.55),
+            Symbol.of("lemon", "\uD83C\uDF4B", 25, 10.5),
+            Symbol.of("bell", "\uD83D\uDD14", 18, 21.0),
+            Symbol.of("diamond", "\uD83D\uDC8E", 12, 46.0),
+            Symbol.of("seven", "7\uFE0F\u20E3", 8, 105.0),
+            Symbol.of("star", "\u2B50", 4, 265.0),
+            Symbol.of("crown", "\uD83D\uDC51", 2, 600.0));
 
     private final List<Symbol> symbols;
     private final Map<String, Symbol> byId = new LinkedHashMap<>();

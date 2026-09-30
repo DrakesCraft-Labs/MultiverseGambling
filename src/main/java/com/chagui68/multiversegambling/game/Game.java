@@ -83,8 +83,8 @@ public interface Game {
         return false;
     }
 
-    /** Extra menu line with the current state. */
-    default List<String> statusLore() {
+    /** Extra menu line with the current state, in the language of the viewer. */
+    default List<String> statusLore(CommandSender viewer) {
         return List.of();
     }
 

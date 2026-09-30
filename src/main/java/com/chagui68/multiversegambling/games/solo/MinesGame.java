@@ -71,7 +71,7 @@ public final class MinesGame extends AbstractSoloGame {
         private boolean resolved;
 
         MinesGui(MultiverseGamblingPlugin plugin, Player player, MinesGame game, Wager wager, int minesCount) {
-            super(plugin, player, 6, "&8Mines &7· &6Reveal or cash out");
+            super(plugin, player, 6, plugin.messages().forSender(player, "panel.mines.title"));
             this.game = game;
             this.wager = wager;
             this.minesCount = minesCount;
@@ -120,14 +120,22 @@ public final class MinesGame extends AbstractSoloGame {
             double current = revealed.isEmpty() ? 0 : multiplier();
 
             set(4, Items.of(Material.GOLD_INGOT)
-                    .name("&6Bet: &f" + plugin.economy().format(wager.amount()))
+                    .name(label(player(), "panel.common.bet",
+                            "bet", plugin.economy().format(wager.amount())))
                     .lore(
-                            "&7Mines: &c" + minesCount + " &7of &f" + tiles() + " &7tiles",
-                            "&7Revealed: &f" + revealed.size(),
-                            current > 0 ? "&7Current multiplier: &a" + Text.multiplier(current) : "&7Nothing revealed yet",
-                            "&7If you reveal another: &f" + Text.multiplier(next),
+                            label(player(), "panel.mines.info",
+                                    "count", minesCount, "tiles", tiles()),
+                            label(player(), "panel.mines.revealed", "count", revealed.size()),
+                            current > 0
+                                    ? label(player(), "panel.mines.current",
+                                            "multiplier", Text.multiplier(current))
+                                    : label(player(), "panel.mines.nothing-revealed"),
+                            label(player(), "panel.mines.next",
+                                    "multiplier", Text.multiplier(next)),
                             "",
-                            placed ? "&7Mined tiles: &c" + mines.size() : "&7Mines are placed on the first reveal.")
+                            placed
+                                    ? label(player(), "panel.mines.placed", "count", mines.size())
+                                    : label(player(), "panel.mines.not-placed"))
                     .glow(true)
                     .build());
 
@@ -136,25 +144,31 @@ public final class MinesGame extends AbstractSoloGame {
                 int slot = slotOf(index);
                 if (revealed.contains(index)) {
                     set(slot, Items.of(Material.EMERALD)
-                            .name("&aSegura")
-                            .lore("&7Pago acumulado: &f" + Text.multiplier(multiplier()))
+                            .name(label(player(), "panel.mines.safe"))
+                            .lore(label(player(), "panel.mines.safe-lore",
+                                    "multiplier", Text.multiplier(multiplier())))
                             .build());
                 } else if (resolved && mines.contains(index)) {
                     set(slot, Items.of(Material.TNT)
-                            .name("&cMine")
-                            .lore("&7The bomb was here.")
+                            .name(label(player(), "panel.mines.bomb"))
+                            .lore(label(player(), "panel.mines.bomb-lore"))
                             .build());
                 } else if (revealed.isEmpty() && !placed && !resolved) {
                     set(slot, Items.of(Material.LIGHT_GRAY_STAINED_GLASS_PANE)
-                            .name("&7Casilla " + (index + 1))
-                            .lore("&7Click to reveal", "&7Revealing it pays &f" + Text.multiplier(next))
+                            .name(label(player(), "panel.mines.tile", "number", index + 1))
+                            .lore(label(player(), "panel.mines.click-reveal"),
+                                    label(player(), "panel.mines.reveal-pays",
+                                            "multiplier", Text.multiplier(next)))
                             .build(), e -> reveal(cell));
                 } else if (resolved) {
-                    set(slot, Items.of(Material.GRAY_STAINED_GLASS_PANE).name("&8Cerrada").build());
+                    set(slot, Items.of(Material.GRAY_STAINED_GLASS_PANE)
+                            .name(label(player(), "panel.mines.closed")).build());
                 } else {
                     set(slot, Items.of(Material.LIGHT_GRAY_STAINED_GLASS_PANE)
-                            .name("&7Casilla " + (index + 1))
-                            .lore("&7Click to reveal", "&7Revealing it pays &f" + Text.multiplier(next))
+                            .name(label(player(), "panel.mines.tile", "number", index + 1))
+                            .lore(label(player(), "panel.mines.click-reveal"),
+                                    label(player(), "panel.mines.reveal-pays",
+                                            "multiplier", Text.multiplier(next)))
                             .build(), e -> reveal(cell));
                 }
             }
@@ -162,29 +176,33 @@ public final class MinesGame extends AbstractSoloGame {
             // Mine controls, only before the round starts.
             if (!placed && !resolved) {
                 set(45, Items.of(Material.RED_DYE)
-                        .name("&c-1 mine")
-                        .lore("&7Mines: &f" + minesCount)
+                        .name(label(player(), "panel.mines.remove"))
+                        .lore(label(player(), "panel.mines.count", "count", minesCount))
                         .build(), e -> adjustMines(-1));
                 set(47, Items.of(Material.LIME_DYE)
-                        .name("&a+1 mine")
-                        .lore("&7Mines: &f" + minesCount)
+                        .name(label(player(), "panel.mines.add"))
+                        .lore(label(player(), "panel.mines.count", "count", minesCount))
                         .build(), e -> adjustMines(1));
             }
 
             if (!resolved) {
                 set(49, Items.of(revealed.isEmpty() ? Material.CLOCK : Material.GOLD_BLOCK)
-                        .name(revealed.isEmpty() ? "&7Reveal a tile to start"
-                                : "&a&lCASH OUT &7(" + Text.multiplier(current) + ")")
+                        .name(revealed.isEmpty()
+                                ? label(player(), "panel.mines.start")
+                                : label(player(), "panel.mines.cash-out",
+                                        "multiplier", Text.multiplier(current)))
                         .lore(revealed.isEmpty()
-                                ? "&7The multiplier rises with every safe pick."
-                                : "&7Cobras &f" + plugin.economy().format(wager.amount() * current))
+                                ? label(player(), "panel.mines.start-lore")
+                                : label(player(), "panel.mines.cash-out-lore",
+                                        "prize", plugin.economy().format(wager.amount() * current)))
                         .glow(!revealed.isEmpty())
                         .build(), e -> cashOut());
             }
 
             set(53, Items.of(Material.BARRIER)
-                    .name("&cClose")
-                    .lore(resolved ? "&7Round finished." : "&7Leaving loses the stake.")
+                    .name(label(player(), "panel.common.close"))
+                    .lore(resolved ? label(player(), "panel.mines.close-lore-done")
+                            : label(player(), "panel.mines.close-lore-live"))
                     .build(), e -> close());
         }
 
@@ -205,10 +223,11 @@ public final class MinesGame extends AbstractSoloGame {
                 resolved = true;
                 double payout = game.settle(player(), wager, 0);
                 render();
-                game.announceResult(player(), false, "&cboom");
-                game.info(player(), game.title());
-                game.info(player(), "&7You stepped on a mine on tile &f" + (index + 1)
-                        + "&7 and you lost &f" + plugin.economy().format(wager.amount()));
+                game.announceResult(player(), false,
+                        plugin.messages().forSender(player(), "panel.mines.boom"));
+                game.info(player(), game.title(player()));
+                game.message(player(), "panel.mines.lost",
+                        "tile", index + 1, "bet", plugin.economy().format(wager.amount()));
                 game.showResult(player(), wager.amount(), payout);
                 game.sound(player(), Sound.ENTITY_GENERIC_EXPLODE, 0.9f, 0.8f);
                 game.offerReplay(player());
@@ -232,11 +251,13 @@ public final class MinesGame extends AbstractSoloGame {
             double multiplier = multiplier();
             double payout = game.settle(player(), wager, multiplier);
             render();
-            game.announceResult(player(), true, "&a" + Text.multiplier(multiplier));
-            game.info(player(), game.title());
-            game.info(player(), "&7Cashed out at &f" + Text.multiplier(multiplier)
-                    + "&7 with &f" + revealed.size() + "&7 safe tiles out of &f"
-                    + (tiles() - minesCount));
+            game.announceResult(player(), true,
+                    plugin.messages().forSender(player(), "panel.mines.cashed-subtitle",
+                            "multiplier", Text.multiplier(multiplier)));
+            game.info(player(), game.title(player()));
+            game.message(player(), "panel.mines.cashed",
+                    "multiplier", Text.multiplier(multiplier),
+                    "safe", revealed.size(), "total", tiles() - minesCount);
             game.showResult(player(), wager.amount(), payout);
             game.sound(player(), Sound.ENTITY_PLAYER_LEVELUP, 0.9f, 1.3f);
             game.offerReplay(player());

@@ -65,7 +65,8 @@ public final class TowersGame extends AbstractSoloGame {
         private boolean resolved;
 
         TowerGui(MultiverseGamblingPlugin plugin, Player player, TowersGame game, Wager wager) {
-            super(plugin, player, 5, "&8" + displayName(player) + " &7· &6Pick a safe tile");
+            super(plugin, player, 5, plugin.messages().forSender(player, "panel.towers.title",
+                    "game", displayName(player)));
             this.game = game;
             this.wager = wager;
             currentBomb = plugin.fair().rollInt(player.getUniqueId(), game.tiles());
@@ -85,16 +86,20 @@ public final class TowersGame extends AbstractSoloGame {
             boolean finished = level >= game.levels();
 
             set(4, Items.of(Material.LADDER)
-                    .name("&6Piso &f" + level + "&7/&f" + game.levels())
+                    .name(label(player(), "panel.towers.floor",
+                            "floor", level, "levels", game.levels()))
                     .lore(
-                            "&7Bet: &f" + plugin.economy().format(wager.amount()),
-                            "&7Multiplier: &a" + Text.multiplier(current),
-                            finished ? "&aTop of the tower reached"
-                                    : "&7If you clear the next floor: &f" + Text.multiplier(next),
-                            "&7Bombs per floor: &c" + game.bombs(),
+                            label(player(), "panel.common.bet",
+                                    "bet", plugin.economy().format(wager.amount())),
+                            label(player(), "panel.towers.multiplier",
+                                    "multiplier", Text.multiplier(current)),
+                            finished ? label(player(), "panel.towers.top")
+                                    : label(player(), "panel.towers.next",
+                                            "multiplier", Text.multiplier(next)),
+                            label(player(), "panel.towers.bombs", "count", game.bombs()),
                             "",
-                            level == 0 ? "&7The bomb is drawn when you pick."
-                                    : "&7Cash out before you fall.")
+                            level == 0 ? label(player(), "panel.towers.first")
+                                    : label(player(), "panel.towers.cash-hint"))
                     .glow(true)
                     .build());
 
@@ -105,46 +110,50 @@ public final class TowersGame extends AbstractSoloGame {
                 int slot = first + tile;
                 if (finished) {
                     set(slot, Items.of(Material.GREEN_STAINED_GLASS_PANE)
-                            .name("&aCima alcanzada")
+                            .name(label(player(), "panel.towers.top-tile"))
                             .build());
                 } else if (resolved) {
                     set(slot, Items.of(tile == currentBomb ? Material.TNT : Material.EMERALD)
-                            .name(tile == currentBomb ? "&cThe bomb" : "&aSafe tile")
+                            .name(label(player(), tile == currentBomb
+                                    ? "panel.towers.bomb" : "panel.towers.safe"))
                             .build());
                 } else {
                     set(slot, Items.of(Material.LIGHT_GRAY_STAINED_GLASS_PANE)
-                            .name("&7Casilla " + (tile + 1))
-                            .lore("&7Acierta y subes a " + Text.multiplier(next))
+                            .name(label(player(), "panel.towers.tile", "number", tile + 1))
+                            .lore(label(player(), "panel.towers.climb",
+                                    "multiplier", Text.multiplier(next)))
                             .build(), e -> climb(chosen));
                 }
             }
 
             // Floors already cleared.
             int row = 26;
-            StringBuilder trail = new StringBuilder("&7Camino: ");
-            if (bombs.isEmpty() && level == 0) {
-                trail.append("&8not started yet");
-            } else {
-                for (int i = 0; i < level; i++) {
-                    trail.append("&a✔ ");
-                }
-            }
-            set(row, Items.of(Material.PAPER).name("&7Progreso").lore(trail.toString()).build());
+            String trail = level == 0
+                    ? label(player(), "panel.towers.trail")
+                    : label(player(), "panel.towers.path", "marks", "&a✔ ".repeat(level));
+            set(row, Items.of(Material.PAPER)
+                    .name(label(player(), "panel.towers.progress"))
+                    .lore(trail)
+                    .build());
 
             if (!resolved) {
                 set(40, Items.of(level == 0 ? Material.CLOCK : Material.GOLD_BLOCK)
-                        .name(level == 0 ? "&7Pick a tile to start"
-                                : "&a&lCASH OUT &7(" + Text.multiplier(current) + ")")
+                        .name(level == 0
+                                ? label(player(), "panel.towers.start")
+                                : label(player(), "panel.towers.cash-out",
+                                        "multiplier", Text.multiplier(current)))
                         .lore(level == 0
-                                ? "&7The first floor does not pay anything yet."
-                                : "&7Cobras &f" + plugin.economy().format(wager.amount() * current))
+                                ? label(player(), "panel.towers.start-lore")
+                                : label(player(), "panel.towers.cash-out-lore",
+                                        "prize", plugin.economy().format(wager.amount() * current)))
                         .glow(level > 0)
                         .build(), e -> cashOut());
             }
 
             set(44, Items.of(Material.BARRIER)
-                    .name("&cClose")
-                    .lore(resolved ? "&7Round finished." : "&7Leaving loses the stake.")
+                    .name(label(player(), "panel.common.close"))
+                    .lore(resolved ? label(player(), "panel.common.round-finished")
+                            : label(player(), "panel.common.leaving-loses"))
                     .build(), e -> close());
         }
 
@@ -156,10 +165,12 @@ public final class TowersGame extends AbstractSoloGame {
                 resolved = true;
                 double payout = game.settle(player(), wager, 0);
                 render();
-                game.announceResult(player(), false, "&cboom on floor " + (level + 1));
-                game.info(player(), game.title());
-                game.info(player(), "&7The bomb hit floor &f" + (level + 1)
-                        + "&7 and you lost &f" + plugin.economy().format(wager.amount()));
+                game.announceResult(player(), false,
+                        plugin.messages().forSender(player(), "panel.towers.boom",
+                                "floor", level + 1));
+                game.info(player(), game.title(player()));
+                game.message(player(), "panel.towers.lost", "floor", level + 1,
+                        "bet", plugin.economy().format(wager.amount()));
                 game.showResult(player(), wager.amount(), payout);
                 game.sound(player(), Sound.ENTITY_GENERIC_EXPLODE, 0.9f, 0.8f);
                 game.offerReplay(player());
@@ -184,10 +195,12 @@ public final class TowersGame extends AbstractSoloGame {
             double multiplier = multiplierAt(level);
             double payout = game.settle(player(), wager, multiplier);
             render();
-            game.announceResult(player(), true, "&a" + Text.multiplier(multiplier));
-            game.info(player(), game.title());
-            game.info(player(), "&7You climbed &f" + level + " &7floors and cashed out at &f"
-                    + Text.multiplier(multiplier));
+            game.announceResult(player(), true,
+                    plugin.messages().forSender(player(), "panel.towers.cashed-subtitle",
+                            "multiplier", Text.multiplier(multiplier)));
+            game.info(player(), game.title(player()));
+            game.message(player(), "panel.towers.cashed",
+                    "floors", level, "multiplier", Text.multiplier(multiplier));
             game.showResult(player(), wager.amount(), payout);
             game.sound(player(), Sound.ENTITY_PLAYER_LEVELUP, 0.9f, 1.3f);
             game.offerReplay(player());

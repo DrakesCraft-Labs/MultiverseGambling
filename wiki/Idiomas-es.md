@@ -51,11 +51,14 @@ independientes del idioma del servidor.
 | Nombres y descripciones del catálogo de juegos | sí, con `catalog.<id-juego>.*` |
 | Carteles del mundo | sí, con el idioma por defecto |
 | Respuestas de administración (`/mvgam give`, `/mvgam reload`, `/mvgam world build`...) | sí, en el idioma de quien lo ejecutó |
-| Las etiquetas dibujadas **dentro** de cada juego (el botón "CASH OUT", las líneas "Bet:"...) | solo en inglés, por ahora |
+| Los paneles dibujados **dentro** de cada juego (el botón "RETIRARSE", las líneas "Apuesta:", el lore de los objetos, las líneas que el menú escribe en el chat) | sí, con `panel.<id-juego>.*` |
+| Las líneas de ronda de los juegos en grupo (botes, sorteos, bombas, carreras) | sí, con `group.<id-juego>.*` |
 
-Esa última fila es honesta, no está escondida: el dinero y las reglas son iguales en cualquier
-idioma, pero un jugador español todavía ve el interior del panel de un juego en inglés. Mover
-esas etiquetas a los archivos de idioma es el siguiente hito de traducción.
+La traducción llega hasta el último botón: títulos de ventana, nombres de objeto, lore y las
+líneas que imprime un menú salen de `panel.*`, con una sección por juego. Un test compara
+`lang/en.yml` con `lang/es.yml` y hace fallar la compilación cuando falta una clave o un
+placeholder en cualquiera de los dos, así que los ficheros no se pueden desincronizar sin que
+nadie se entere.
 
 ## Añadir otro idioma
 
@@ -67,6 +70,11 @@ esas etiquetas a los archivos de idioma es el siguiente hito de traducción.
 Si falta una clave, el plugin la busca en el idioma del jugador y después en inglés; si falta en
 todos, dibuja `&c[missing message: <clave>]` en vez de romper. Una traducción parcial siempre es
 segura de publicar.
+
+Las claves de panel llevan el nombre del juego: `panel.slots.title`, `panel.crash.cash-out`,
+`panel.blackjack.stand`... Las etiquetas compartidas viven en `panel.common.*` y los símbolos
+compartidos en `panel.symbols.*`, así que traducir "Cerrar" o "Paga" se hace una sola vez para
+todos los juegos.
 
 Un idioma que añadas tú no se puede detectar automáticamente desde el cliente de Minecraft:
 seguir el cliente solo resuelve los códigos que el plugin incluye (`en`, `es`). Los idiomas
@@ -97,10 +105,19 @@ Las llaves las rellena el plugin; déjalas tal cual:
 
 ```
 {bet} {prize} {profit} {amount} {game} {player} {min} {max} {seconds} {round}
-{current} {balance} {currency} {seed} {value} {usage} {language} {languages}
-{native} {world} {hash} {state} {description} {games} {wins} {rate} {wagered}
-{returned} {rtp} {biggest} {favourite} {provider} {limit} {edge} {name} {entry}
+{current} {balance} {seed} {value} {usage} {language} {languages} {native}
+{world} {hash} {state} {description} {games} {wins} {rate} {wagered}
+{returned} {rtp} {biggest} {favourite} {provider} {limit} {edge} {name}
 ```
+
+Los paneles añaden los suyos: {pot} {multiplier} {spot} {colour} {number} {card}
+{cards} {hand} {dice} {tile} {tiles} {bombs} {alive} {revealed} {safe} {count}
+{percent} {chance} {picks} {picked} {faces} {pair} {floors} {floor} {levels}
+{steps} {marks} {path} {rows} {level} {bucket} {bullets} {chambers} {horse}
+{tickets} {total} {staked} {price} {side} {result} {target} {direction} {crash}
+{list} {payouts} {leaders} {from} {to} {players} {symbol} {subcommand}
+
+La regla segura es simple: no traduzcas nunca un bloque `{...}` ni borres ninguno.
 
 ## Colores
 

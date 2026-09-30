@@ -31,14 +31,14 @@ class ScratchCardTableTest {
     @Test
     void twoOfAKindGivePartOfTheStakeBack() {
         assertEquals(ScratchCardTable.PAIR_PAYOUT,
-                table.payout(List.of(Face.CEREZA, Face.CEREZA, Face.CORONA)), 1e-9);
+                table.payout(List.of(Face.CHERRY, Face.CHERRY, Face.CROWN)), 1e-9);
         assertEquals(ScratchCardTable.PAIR_PAYOUT,
-                table.payout(List.of(Face.LIMON, Face.SIETE, Face.SIETE)), 1e-9);
+                table.payout(List.of(Face.LEMON, Face.SEVEN, Face.SEVEN)), 1e-9);
     }
 
     @Test
     void threeDifferentOnesPayNothing() {
-        assertEquals(0.0, table.payout(List.of(Face.CEREZA, Face.LIMON, Face.CAMPANA)), 1e-9);
+        assertEquals(0.0, table.payout(List.of(Face.CHERRY, Face.LEMON, Face.BELL)), 1e-9);
     }
 
     @Test
@@ -46,7 +46,7 @@ class ScratchCardTableTest {
         double rtp = table.rtp();
         assertTrue(rtp < 1.0, "the card cannot return more than it takes, it was " + rtp);
         assertTrue(rtp > 0.85, "the card should not be ruinous, it was " + rtp);
-        assertEquals(0.9215, rtp, 0.01, "la tabla esta calibrada al 92.2%");
+        assertEquals(0.9215, rtp, 0.01, "the table is calibrated at 92.15%");
     }
 
     @Test
@@ -70,6 +70,6 @@ class ScratchCardTableTest {
 
     @Test
     void revealingTheWrongNumberOfTilesIsRejected() {
-        assertThrows(IllegalArgumentException.class, () -> table.payout(List.of(Face.CEREZA)));
+        assertThrows(IllegalArgumentException.class, () -> table.payout(List.of(Face.CHERRY)));
     }
 }

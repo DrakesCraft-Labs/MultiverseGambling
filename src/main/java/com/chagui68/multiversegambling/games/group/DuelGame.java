@@ -16,6 +16,7 @@ import java.util.UUID;
 import net.kyori.adventure.title.Title;
 import org.bukkit.Material;
 import org.bukkit.Sound;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 /**
@@ -64,11 +65,11 @@ public final class DuelGame extends AbstractGame {
     }
 
     @Override
-    public List<String> statusLore() {
+    public List<String> statusLore(CommandSender viewer) {
         if (pending.isEmpty()) {
-            return List.of("&7No pending challenges");
+            return List.of(label(viewer, "panel.status.no-challenges"));
         }
-        return List.of("&ePending challenges: &f" + pending.size());
+        return List.of(label(viewer, "panel.status.pending-challenges", "amount", pending.size()));
     }
 
     /** Opens the menu to pick a rival. */
@@ -108,13 +109,16 @@ public final class DuelGame extends AbstractGame {
 
         message(challenger, "duel.challenge-sent",
                 "player", target.getName(), "amount", plugin.economy().format(stake));
-        target.sendMessage(Text.c("&8» &f" + challenger.getName() + " &7challenges you for &6"
-                        + plugin.economy().format(stake) + "&7. You have &f"
-                        + plugin.config().duelTimeoutSeconds() + "s&7.")
+        target.sendMessage(Text.c(plugin.messages().forSender(target, "duel.challenge-received",
+                        "player", challenger.getName(),
+                        "amount", plugin.economy().format(stake),
+                        "seconds", plugin.config().duelTimeoutSeconds()))
                 .append(Text.c(" "))
-                .append(Text.button("&a&lACCEPT", "/mvgam action accept", "&7Accept the duel"))
+                .append(Text.button(plugin.messages().forSender(target, "duel.accept"),
+                        "/mvgam action accept", plugin.messages().forSender(target, "duel.accept-hover")))
                 .append(Text.c(" "))
-                .append(Text.button("&c&lDECLINE", "/mvgam action decline", "&7Decline the duel")));
+                .append(Text.button(plugin.messages().forSender(target, "duel.decline"),
+                        "/mvgam action decline", plugin.messages().forSender(target, "duel.decline-hover"))));
         target.playSound(target.getLocation(), Sound.BLOCK_ANVIL_LAND, 0.8f, 1.4f);
     }
 
@@ -168,19 +172,21 @@ public final class DuelGame extends AbstractGame {
 
         announceBoth(winner, loser, total);
         if (challenger != null) {
-            info(challenger, title());
-            info(challenger, (challengerWins ? "&aYou won" : "&cYou lost") + " &7the duel against &f"
-                    + target.getName() + "&7 for &6" + plugin.economy().format(challenge.amount));
+            info(challenger, title(challenger));
+            message(challenger, challengerWins ? "duel.won-against" : "duel.lost-against",
+                    "player", target.getName(),
+                    "amount", plugin.economy().format(challenge.amount));
         }
-        info(target, title());
-        info(target, (challengerWins ? "&cYou lost" : "&aYou won") + " &7the duel against &f"
-                + playerName(challenge.challenger) + "&7 for &6"
-                + plugin.economy().format(challenge.amount));
+        info(target, title(target));
+        message(target, challengerWins ? "duel.lost-against" : "duel.won-against",
+                "player", playerName(challenge.challenger),
+                "amount", plugin.economy().format(challenge.amount));
     }
 
     private void announceBoth(Player winner, Player loser, double total) {
         if (winner != null) {
-            winner.showTitle(Title.title(Text.c("&6&lYOU WON THE DUEL"),
+            winner.showTitle(Title.title(
+                    Text.c(plugin.messages().forSender(winner, "duel.win-title")),
                     Text.c("&f" + plugin.economy().format(total)), Title.Times.times(
                             java.time.Duration.ofMillis(150),
                             java.time.Duration.ofMillis(2000),
@@ -188,8 +194,9 @@ public final class DuelGame extends AbstractGame {
             winner.playSound(winner.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.2f);
         }
         if (loser != null) {
-            loser.showTitle(Title.title(Text.c("&c&lYOU LOST"),
-                    Text.c("&7Luck was not on your side"), Title.Times.times(
+            loser.showTitle(Title.title(
+                    Text.c(plugin.messages().forSender(loser, "duel.lose-title")),
+                    Text.c(plugin.messages().forSender(loser, "duel.lose-subtitle")), Title.Times.times(
                             java.time.Duration.ofMillis(150),
                             java.time.Duration.ofMillis(1600),
                             java.time.Duration.ofMillis(300))));
@@ -259,7 +266,8 @@ public final class DuelGame extends AbstractGame {
         private final DuelGame game;
 
         RivalGui(MultiverseGamblingPlugin plugin, Player player, DuelGame game) {
-            super(plugin, player, 5, "&8" + displayName(player) + " &7· &6Pick a rival");
+            super(plugin, player, 5, plugin.messages().forSender(player, "panel.duel.title",
+                    "game", displayName(player)));
             this.game = game;
         }
 
@@ -269,14 +277,9 @@ public final class DuelGame extends AbstractGame {
             fill(Items.of(Material.BLACK_STAINED_GLASS_PANE).name(" ").build());
 
             set(4, Items.of(Material.IRON_SWORD)
-                    .name("&6Duel 1 vs 1")
-                    .lore(
-                            "&7Pick a player and an amount.",
-                            "&7The rival must accept within &f"
-                                    + plugin.config().duelTimeoutSeconds() + "s&7.",
-                            "&7The winner takes both stakes.",
-                            "",
-                            "&7If the rival does not accept, you get your money back.")
+                    .name(label(player(), "panel.duel.info"))
+                    .lore(labelLore(player(), "panel.duel.info-lore",
+                            "seconds", plugin.config().duelTimeoutSeconds()))
                     .glow(true)
                     .build());
 
@@ -293,11 +296,9 @@ public final class DuelGame extends AbstractGame {
                 }
                 double balance = plugin.economy().balance(target.getUniqueId());
                 set(slot, Items.of(Material.PLAYER_HEAD)
-                        .name("&f" + target.getName())
-                        .lore(
-                                "&7Balance: &f" + plugin.economy().format(balance),
-                                "",
-                                "&eClick to challenge them")
+                        .name(label(player(), "panel.duel.player", "player", target.getName()))
+                        .lore(labelLore(player(), "panel.duel.player-lore",
+                                "balance", plugin.economy().format(balance)))
                         .build(), e -> {
                     close();
                     plugin.guis().openBetSelector(player(), game, amount ->
@@ -307,7 +308,7 @@ public final class DuelGame extends AbstractGame {
             }
 
             set(40, Items.of(Material.BARRIER)
-                    .name("&cClose")
+                    .name(label(player(), "panel.common.close"))
                     .build(), e -> close());
         }
 

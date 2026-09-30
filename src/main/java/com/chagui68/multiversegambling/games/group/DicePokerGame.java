@@ -41,8 +41,8 @@ public final class DicePokerGame extends AbstractGroupGame {
         hands.clear();
         resolvedCount = 0;
         timer = 0;
-        broadcastRaw(roundHeader());
-        broadcastRaw("&7Dealing &f" + pot.size() + " &7hands of five dice...");
+        broadcastRoundHeader();
+        broadcastPlain("group.dice-poker.dealing", "players", pot.size());
         // The rolls are generated right here, before anybody can react.
         for (UUID id : pot.participants()) {
             int[] dice = new int[DicePoker.DICE];
@@ -59,7 +59,7 @@ public final class DicePokerGame extends AbstractGroupGame {
         if (timer <= 40) {
             if (timer % 20 == 0) {
                 soundAll(Sound.BLOCK_NOTE_BLOCK_HAT, 0.5f, 1.1f);
-                actionBarAll("&7The dice roll across the table...");
+                actionBarAllKey("group.dice-poker.rolling");
             }
             return;
         }
@@ -70,8 +70,12 @@ public final class DicePokerGame extends AbstractGroupGame {
             if ((timer - 40) % 40 == 0) {
                 UUID id = order.get(index);
                 int[] dice = hands.get(id);
-                broadcastRaw("&8» &f" + playerName(id) + " &7saca &f" + DicePoker.describe(dice)
-                        + " &8(&6" + DicePoker.handOf(dice).label() + "&8)");
+                DicePoker.Hand hand = DicePoker.handOf(dice);
+                broadcastPlainFor(player -> new Object[]{
+                        "player", playerName(id),
+                        "dice", DicePoker.describe(dice),
+                        "hand", handName(player, hand)},
+                        "group.dice-poker.reveal");
                 soundAll(Sound.BLOCK_ANVIL_LAND, 0.6f, 1.0f + index * 0.1f);
             }
             return;
@@ -97,27 +101,27 @@ public final class DicePokerGame extends AbstractGroupGame {
         double total = pot.total();
         if (tied.size() > 1) {
             // A real tie: the pot is split evenly.
-            broadcastRaw("&6A tie between " + tied.stream().map(this::playerName).toList()
-                    + "&6; the pot is split.");
+            broadcastPlain("group.dice-poker.tie",
+                    "players", String.join(", ", tied.stream().map(this::playerName).toList()));
             pot.shareAmong(new java.util.LinkedHashSet<>(tied));
         } else if (winner != null) {
+            final UUID winnerId = winner;
+            final DicePoker.Hand winningHand = DicePoker.handOf(hands.get(winnerId));
+            final String winningDice = DicePoker.describe(hands.get(winnerId));
             pot.payAllTo(winner, plugin.config().groupHouseCut());
-            broadcastRaw("&8&m        &r &6DICE POKER &8&m        ");
-            broadcastRaw("&6Gana &f" + playerName(winner) + " &6con &f"
-                    + DicePoker.handOf(hands.get(winner)).label() + "&6: &f"
-                    + DicePoker.describe(hands.get(winner)));
+            broadcastPlain("group.dice-poker.banner");
+            broadcastPlainFor(player -> new Object[]{
+                    "player", playerName(winnerId),
+                    "hand", handName(player, winningHand),
+                    "dice", winningDice},
+                    "group.dice-poker.winner");
         }
-        broadcastRaw("&7Pot paid out: &f" + plugin.economy().format(total));
+        broadcastPlain("group.dice-poker.paid", "pot", plugin.economy().format(total));
         soundAll(Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.2f);
         Player winnerPlayer = winner == null ? null : online(winner);
         if (winnerPlayer != null) {
-            winnerPlayer.showTitle(net.kyori.adventure.title.Title.title(
-                    com.chagui68.multiversegambling.util.Text.c("&6&lBEST HAND"),
-                    com.chagui68.multiversegambling.util.Text.c("&f" + DicePoker.handOf(hands.get(winner)).label()),
-                    net.kyori.adventure.title.Title.Times.times(
-                            java.time.Duration.ofMillis(200),
-                            java.time.Duration.ofMillis(2200),
-                            java.time.Duration.ofMillis(400))));
+            showTitle(winnerPlayer, "group.dice-poker.title",
+                    handKey(DicePoker.handOf(hands.get(winner))));
         }
         endRound();
     }
@@ -126,5 +130,15 @@ public final class DicePokerGame extends AbstractGroupGame {
     protected void onRoundEnd() {
         hands.clear();
         resolvedCount = 0;
+    }
+
+    /** Name of a hand in the language of the reader. */
+    String handName(Player viewer, DicePoker.Hand hand) {
+        return plugin.messages().forSender(viewer, handKey(hand));
+    }
+
+    private static String handKey(DicePoker.Hand hand) {
+        return "group.dice-poker.hand."
+                + hand.name().toLowerCase(java.util.Locale.ROOT).replace('_', '-');
     }
 }

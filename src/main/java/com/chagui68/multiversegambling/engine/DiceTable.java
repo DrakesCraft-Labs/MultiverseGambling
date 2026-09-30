@@ -27,7 +27,7 @@ public final class DiceTable {
         return round2(target);
     }
 
-    /** Pago justo recortado: (1 - edge) * 100 / prob. */
+    /** Trimmed fair payout: (1 - edge) * 100 / probability. */
     public static double payout(double winChancePercent, double houseEdge) {
         if (winChancePercent <= 0) {
             return 0;

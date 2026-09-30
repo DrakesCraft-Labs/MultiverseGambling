@@ -71,7 +71,9 @@ public final class PlinkoGame extends AbstractSoloGame {
                 for (int i = 0; i < level; i++) {
                     path.append(rolls[i] < 0.5 ? "&e>" : "&b<");
                 }
-                online.sendActionBar(Text.c("&7The ball falls &8" + path + " &7(" + level + "/" + rows + ")"));
+                online.sendActionBar(Text.c(plugin.messages().forSender(online,
+                        "panel.plinko.falling",
+                        "path", "&8" + path, "level", level, "rows", rows)));
                 if (elapsed % 3 == 0) {
                     online.playSound(online.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 0.4f,
                             0.9f + level * 0.05f);
@@ -88,12 +90,14 @@ public final class PlinkoGame extends AbstractSoloGame {
                 double multiplier = PlinkoGame.this.payoutFor(finalBucket);
                 double payout = settle(online, wager, multiplier);
                 announceResult(online, payout > wager.amount(),
-                        "&fCubo " + finalBucket + " &8· &a" + Text.multiplier(multiplier));
-                info(online, title());
-                info(online, "&7The ball landed in bucket &f" + finalBucket + "&7/&f" + rows
-                        + " y pago &f" + Text.multiplier(multiplier));
-                info(online, "&7Chance of that bucket: &f"
-                        + Text.percent(PlinkoTable.bucketChance(rows, finalBucket)));
+                        plugin.messages().forSender(online, "panel.plinko.bucket-subtitle",
+                                "bucket", finalBucket, "multiplier", Text.multiplier(multiplier)));
+                info(online, title(online));
+                message(online, "panel.plinko.landed",
+                        "bucket", finalBucket, "rows", rows,
+                        "multiplier", Text.multiplier(multiplier));
+                message(online, "panel.plinko.chance",
+                        "percent", Text.percent(PlinkoTable.bucketChance(rows, finalBucket)));
                 showResult(online, wager.amount(), payout);
                 sound(online, payout > wager.amount() ? Sound.ENTITY_PLAYER_LEVELUP : Sound.ENTITY_VILLAGER_NO,
                         0.9f, payout > wager.amount() ? 1.3f : 0.9f);
@@ -121,7 +125,8 @@ public final class PlinkoGame extends AbstractSoloGame {
         private boolean armed;
 
         PlinkoGui(MultiverseGamblingPlugin plugin, Player player, PlinkoGame game, Wager wager) {
-            super(plugin, player, 5, "&8" + displayName(player) + " &7· &6Drop the ball");
+            super(plugin, player, 5, plugin.messages().forSender(player, "panel.plinko.title",
+                    "game", displayName(player)));
             this.game = game;
             this.wager = wager;
         }
@@ -134,14 +139,15 @@ public final class PlinkoGame extends AbstractSoloGame {
             int rows = game.rows();
             double[] table = game.table();
             set(4, Items.of(Material.SNOWBALL)
-                    .name("&6Table of &f" + rows + " &6rows")
+                    .name(label(player(), "panel.plinko.table", "rows", rows))
                     .lore(
-                            "&7Bet: &f" + plugin.economy().format(wager.amount()),
-                            "&7Cubos: &f" + (rows + 1),
-                            "&7The edges are very rare and pay a lot;",
-                            "&7the middle comes up almost always and pays little.",
-                            "&7Theoretical return: &f"
-                                    + Text.percent(PlinkoTable.rtp(table, rows, 0)) + "&7.")
+                            label(player(), "panel.common.bet",
+                                    "bet", plugin.economy().format(wager.amount())),
+                            label(player(), "panel.plinko.buckets", "count", rows + 1),
+                            label(player(), "panel.plinko.edges"),
+                            label(player(), "panel.plinko.middle"),
+                            label(player(), "panel.plinko.rtp",
+                                    "percent", Text.percent(PlinkoTable.rtp(table, rows, 0))))
                     .glow(true)
                     .build());
 
@@ -152,17 +158,20 @@ public final class PlinkoGame extends AbstractSoloGame {
                 int bucket = offset + i;
                 int slot = 19 + i + (9 - shown) / 2;
                 set(slot, Items.of(bucket == 0 || bucket == rows ? Material.GOLD_BLOCK : Material.LIGHT_GRAY_STAINED_GLASS_PANE)
-                        .name("&fCubo " + bucket + ": &a" + Text.multiplier(table[bucket]))
-                        .lore("&7Probabilidad: &f" + Text.percent(PlinkoTable.bucketChance(rows, bucket)))
+                        .name(label(player(), "panel.plinko.bucket-name",
+                                "bucket", bucket, "multiplier", Text.multiplier(table[bucket])))
+                        .lore(label(player(), "panel.plinko.bucket-chance",
+                                "percent", Text.percent(PlinkoTable.bucketChance(rows, bucket))))
                         .glow(bucket == 0 || bucket == rows)
                         .build());
             }
 
             set(40, Items.of(Material.EMERALD_BLOCK)
-                    .name("&a&lDROP THE BALL")
-                    .lore("&7You stake &6" + plugin.economy().format(wager.amount()),
-                            "&7and the ball falls on its own.", "",
-                            "&eClick to drop")
+                    .name(label(player(), "panel.plinko.drop"))
+                    .lore(label(player(), "panel.plinko.will-stake",
+                                    "bet", plugin.economy().format(wager.amount())),
+                            label(player(), "panel.plinko.falls-alone"), "",
+                            label(player(), "panel.plinko.click-drop"))
                     .glow(true)
                     .build(), e -> {
                 armed = true;
@@ -171,8 +180,8 @@ public final class PlinkoGame extends AbstractSoloGame {
             });
 
             set(36, Items.of(Material.BARRIER)
-                    .name("&cCancelar")
-                    .lore("&7You get your stake back.")
+                    .name(label(player(), "panel.common.cancel"))
+                    .lore(label(player(), "panel.common.refund-lore"))
                     .build(), e -> close());
         }
 

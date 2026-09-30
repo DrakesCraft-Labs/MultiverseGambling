@@ -16,23 +16,21 @@ public final class ScratchCardTable {
 
     /** Faces of the card and how often they come up. */
     public enum Face {
-        CEREZA("cereza", 40, 3.0, "&cCereza"),
-        LIMON("limon", 30, 2.0, "&eLimon"),
-        CAMPANA("campana", 18, 1.5, "&6Campana"),
-        DIAMANTE("diamante", 8, 5.0, "&bDiamante"),
-        SIETE("siete", 3, 10.0, "&aSiete"),
-        CORONA("corona", 1, 50.0, "&dCorona");
+        CHERRY("cherry", 40, 3.0),
+        LEMON("lemon", 30, 2.0),
+        BELL("bell", 18, 1.5),
+        DIAMOND("diamond", 8, 5.0),
+        SEVEN("seven", 3, 10.0),
+        CROWN("crown", 1, 50.0);
 
         private final String id;
         private final double weight;
         private final double triple;
-        private final String label;
 
-        Face(String id, double weight, double triple, String label) {
+        Face(String id, double weight, double triple) {
             this.id = id;
             this.weight = weight;
             this.triple = triple;
-            this.label = label;
         }
 
         public String id() {
@@ -46,10 +44,6 @@ public final class ScratchCardTable {
         /** Payout for hitting three of a kind. */
         public double triple() {
             return triple;
-        }
-
-        public String label() {
-            return label;
         }
     }
 

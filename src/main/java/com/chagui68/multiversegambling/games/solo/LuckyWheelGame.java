@@ -70,8 +70,9 @@ public final class LuckyWheelGame extends AbstractSoloGame {
                 int wait = 1 + (int) (progress * progress * 10);
                 if (elapsed % wait == 0) {
                     int filler = (int) (elapsed * 1.7) % wheel.size();
-                    online.sendActionBar(Text.c("&7The wheel spins... &f"
-                            + Text.multiplier(wheel.multiplier(filler))));
+                    online.sendActionBar(Text.c(plugin.messages().forSender(online,
+                            "panel.lucky-wheel.spinning",
+                            "multiplier", Text.multiplier(wheel.multiplier(filler)))));
                     online.playSound(online.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 0.4f,
                             0.9f + (float) progress * 0.9f);
                 }
@@ -87,10 +88,13 @@ public final class LuckyWheelGame extends AbstractSoloGame {
                 double multiplier = wheel.multiplier(winner);
                 double payout = settle(online, wager, multiplier);
                 announceResult(online, payout > wager.amount(),
-                        multiplier > 0 ? "&a" + Text.multiplier(multiplier) : "&cno prize");
-                info(online, title());
-                info(online, "&7The wheel stopped on tile &f" + (winner + 1)
-                        + "&7, which pays &f" + Text.multiplier(multiplier));
+                        multiplier > 0
+                                ? plugin.messages().forSender(online, "panel.lucky-wheel.tile",
+                                        "multiplier", Text.multiplier(multiplier))
+                                : plugin.messages().forSender(online, "panel.common.no-prize"));
+                info(online, title(online));
+                message(online, "panel.lucky-wheel.result",
+                        "tile", winner + 1, "multiplier", Text.multiplier(multiplier));
                 showResult(online, wager.amount(), payout);
                 sound(online, payout > wager.amount() ? Sound.ENTITY_PLAYER_LEVELUP : Sound.ENTITY_VILLAGER_NO,
                         0.9f, payout > wager.amount() ? 1.3f : 0.9f);
@@ -107,7 +111,8 @@ public final class LuckyWheelGame extends AbstractSoloGame {
         private boolean armed;
 
         WheelGui(MultiverseGamblingPlugin plugin, Player player, LuckyWheelGame game, Wager wager) {
-            super(plugin, player, 5, "&8" + displayName(player));
+            super(plugin, player, 5, plugin.messages().forSender(player,
+                    "panel.lucky-wheel.title", "game", displayName(player)));
             this.game = game;
             this.wager = wager;
         }
@@ -119,15 +124,18 @@ public final class LuckyWheelGame extends AbstractSoloGame {
 
             PrizeWheel wheel = game.wheel();
             set(4, Items.of(Material.COMPASS)
-                    .name("&6Bet: &f" + plugin.economy().format(wager.amount()))
+                    .name(label(player(), "panel.common.bet",
+                            "bet", plugin.economy().format(wager.amount())))
                     .lore(
-                            "&7Segments: &f" + wheel.size(),
-                            "&7Top prize: &f" + Text.multiplier(wheel.best()),
-                            "&7Theoretical return: &f" + Text.percent(wheel.rtp()),
-                            "&7Chance of the top prize: &f"
-                                    + Text.percent(wheel.bestChance()),
+                            label(player(), "panel.lucky-wheel.segments", "count", wheel.size()),
+                            label(player(), "panel.lucky-wheel.top-prize",
+                                    "multiplier", Text.multiplier(wheel.best())),
+                            label(player(), "panel.lucky-wheel.rtp",
+                                    "percent", Text.percent(wheel.rtp())),
+                            label(player(), "panel.lucky-wheel.top-chance",
+                                    "percent", Text.percent(wheel.bestChance())),
                             "",
-                            "&7Every tile is equally likely.")
+                            label(player(), "panel.lucky-wheel.equally-likely"))
                     .glow(true)
                     .build());
 
@@ -137,18 +145,24 @@ public final class LuckyWheelGame extends AbstractSoloGame {
                 double multiplier = wheel.multiplier(i);
                 set(slots[i], Items.of(multiplier == 0 ? Material.GRAY_STAINED_GLASS_PANE
                                 : multiplier >= wheel.best() ? Material.GOLD_BLOCK : Material.LIME_STAINED_GLASS_PANE)
-                        .name(multiplier == 0 ? "&8No prize" : "&a" + Text.multiplier(multiplier))
-                        .lore("&7Probabilidad: &f" + Text.percent(1.0 / wheel.size()),
-                                "&7Pago: &f" + plugin.economy().format(wager.amount() * multiplier))
+                        .name(multiplier == 0
+                                ? label(player(), "panel.lucky-wheel.no-prize")
+                                : label(player(), "panel.lucky-wheel.tile",
+                                        "multiplier", Text.multiplier(multiplier)))
+                        .lore(label(player(), "panel.lucky-wheel.chance",
+                                        "percent", Text.percent(1.0 / wheel.size())),
+                                label(player(), "panel.lucky-wheel.pays",
+                                        "prize", plugin.economy().format(wager.amount() * multiplier)))
                         .glow(multiplier >= wheel.best())
                         .build());
             }
 
             set(40, Items.of(Material.EMERALD_BLOCK)
-                    .name("&a&lSPIN THE WHEEL")
-                    .lore("&7You stake &6" + plugin.economy().format(wager.amount()),
-                            "&7Everything rides on one spin.", "",
-                            "&eClick to spin")
+                    .name(label(player(), "panel.lucky-wheel.spin"))
+                    .lore(label(player(), "panel.lucky-wheel.will-stake",
+                                    "bet", plugin.economy().format(wager.amount())),
+                            label(player(), "panel.lucky-wheel.all-in"), "",
+                            label(player(), "panel.common.click-to-spin"))
                     .glow(true)
                     .build(), e -> {
                 armed = true;
@@ -157,8 +171,8 @@ public final class LuckyWheelGame extends AbstractSoloGame {
             });
 
             set(36, Items.of(Material.BARRIER)
-                    .name("&cCancelar")
-                    .lore("&7You get your stake back.")
+                    .name(label(player(), "panel.common.cancel"))
+                    .lore(label(player(), "panel.common.refund-lore"))
                     .build(), e -> close());
         }
 

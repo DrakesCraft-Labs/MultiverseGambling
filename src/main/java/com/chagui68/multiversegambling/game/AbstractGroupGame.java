@@ -8,8 +8,10 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Sound;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 /**
@@ -259,18 +261,20 @@ public abstract class AbstractGroupGame extends AbstractGame {
     }
 
     @Override
-    public List<String> statusLore() {
+    public List<String> statusLore(CommandSender viewer) {
         List<String> lore = new ArrayList<>();
         if (phase == Phase.IN_GAME) {
-            lore.add("&eRound " + round + " in progress");
+            lore.add(label(viewer, "panel.status.in-progress", "round", round));
         } else if (phase == Phase.BETTING) {
-            lore.add("&aBetting open &7(" + timer + "s)");
+            lore.add(label(viewer, "panel.status.betting-open", "seconds", timer));
         } else {
-            lore.add("&7Waiting for players");
+            lore.add(label(viewer, "panel.status.waiting"));
         }
-        lore.add("&7In the room: &f" + activePlayers() + "&7/&f" + maxPlayers());
-        lore.add("&7Pot: &6" + plugin.economy().shortFormat(pot.total()));
-        lore.add("&7Minimum to start: &f" + minPlayers());
+        lore.add(label(viewer, "panel.status.in-room",
+                "current", activePlayers(), "max", maxPlayers()));
+        lore.add(label(viewer, "panel.status.pot",
+                "pot", plugin.economy().shortFormat(pot.total())));
+        lore.add(label(viewer, "panel.status.minimum", "min", minPlayers()));
         return lore;
     }
 
@@ -337,6 +341,71 @@ public abstract class AbstractGroupGame extends AbstractGame {
         }
     }
 
+    /** Sends a language key without the prefix, each player reading it in their own language. */
+    protected final void broadcastPlain(String key, Object... replacements) {
+        for (UUID id : audience()) {
+            Player player = online(id);
+            if (player != null) {
+                player.sendMessage(plugin.messages().componentPlainFor(player, key, replacements));
+            }
+        }
+    }
+
+    /**
+     * Same as {@link #broadcastPlain(String, Object...)} but the replacements are built
+     * for each reader: needed when a value inside the line is itself translated, such as
+     * the name of a dice poker hand.
+     */
+    protected final void broadcastPlainFor(Function<Player, Object[]> replacements, String key) {
+        for (UUID id : audience()) {
+            Player player = online(id);
+            if (player != null) {
+                player.sendMessage(plugin.messages().componentPlainFor(player, key,
+                        replacements.apply(player)));
+            }
+        }
+    }
+
+    /** Action bar line in the language of every player of the room. */
+    protected final void actionBarAllKey(String key, Object... replacements) {
+        for (UUID id : audience()) {
+            Player player = online(id);
+            if (player != null) {
+                player.sendActionBar(plugin.messages().componentPlainFor(player, key, replacements));
+            }
+        }
+    }
+
+    /** Action bar line whose replacements are built for each reader. */
+    protected final void actionBarFor(Function<Player, Object[]> replacements, String key) {
+        for (UUID id : audience()) {
+            Player player = online(id);
+            if (player != null) {
+                player.sendActionBar(plugin.messages().componentPlainFor(player, key,
+                        replacements.apply(player)));
+            }
+        }
+    }
+
+    /** Sends a language key without the prefix to one player of the room. */
+    protected final void tellKeyed(UUID playerId, String key, Object... replacements) {
+        Player player = online(playerId);
+        if (player != null) {
+            player.sendMessage(plugin.messages().componentPlainFor(player, key, replacements));
+        }
+    }
+
+    /** Round header, each player reading it in their own language. */
+    protected final void broadcastRoundHeader() {
+        for (UUID id : audience()) {
+            Player player = online(id);
+            if (player != null) {
+                player.sendMessage(plugin.messages().componentPlainFor(player, "panel.round-header",
+                        "game", displayName(player), "round", round));
+            }
+        }
+    }
+
     protected final void actionBarAll(String legacyText) {
         Component component = Text.c(legacyText);
         for (UUID id : audience()) {
@@ -373,8 +442,4 @@ public abstract class AbstractGroupGame extends AbstractGame {
         soundAll(Sound.BLOCK_NOTE_BLOCK_HAT, 0.6f, 1.4f);
     }
 
-    /** Round header text. */
-    protected final String roundHeader() {
-        return "&8&m     &r &6" + name() + " &7· round &f" + round + " &8&m     ";
-    }
 }

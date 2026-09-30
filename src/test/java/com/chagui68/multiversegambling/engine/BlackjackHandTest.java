@@ -11,7 +11,7 @@ import java.util.List;
 class BlackjackHandTest {
 
     private static Card c(int rank) {
-        return Card.of(Suit.PICAS, rank);
+        return Card.of(Suit.SPADES, rank);
     }
 
     @Test

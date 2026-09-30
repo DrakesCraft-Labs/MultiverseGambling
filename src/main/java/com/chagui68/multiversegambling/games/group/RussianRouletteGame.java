@@ -11,7 +11,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import net.kyori.adventure.title.Title;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
@@ -69,13 +68,14 @@ public final class RussianRouletteGame extends AbstractGroupGame {
         started = false;
         timer = 0;
 
-        broadcastRaw(roundHeader());
-        broadcastRaw("&7Pot: &6" + plugin.economy().format(pot.total()));
-        broadcastRaw("&7Revolver: &f" + bullets() + " bullet(s) &7in &f" + chambers()
-                + " chambers &8(&7" + Text.percent((double) bullets() / chambers())
-                + " per pull&8)");
-        broadcastRaw("&7Turn of &f" + playerName(current()) + "&7. You have &f"
-                + plugin.config().groupCountdownSeconds() + " &7segundos.");
+        broadcastRoundHeader();
+        broadcastPlain("panel.common.pot", "pot", plugin.economy().format(pot.total()));
+        broadcastPlain("group.russian-roulette.revolver",
+                "bullets", bullets(), "chambers", chambers(),
+                "chance", Text.percent((double) bullets() / chambers()));
+        broadcastPlain("group.russian-roulette.turn",
+                "player", playerName(current()),
+                "seconds", plugin.config().groupCountdownSeconds());
         prompt();
     }
 
@@ -98,15 +98,14 @@ public final class RussianRouletteGame extends AbstractGroupGame {
         Player player = online(currentId);
         if (player != null) {
             int left = Math.max(0, plugin.config().groupCountdownSeconds() - turnTicks / 20);
-            player.sendActionBar(Text.c("&7Your turn &8| &f" + left
-                    + "s &8| &7pot &6" + plugin.economy().format(pot.total())));
+            actionBarKey(player, "group.russian-roulette.your-turn",
+                    "seconds", left, "pot", plugin.economy().format(pot.total()));
         }
         if (turnTicks % 20 == 0 && turnTicks / 20 > 0) {
             soundAll(Sound.BLOCK_NOTE_BLOCK_HAT, 0.4f, 1.5f);
         }
         if (turnTicks >= plugin.config().groupCountdownSeconds() * 20) {
-            broadcastRaw("&7Out of time for &f" + playerName(currentId)
-                    + "&7, the trigger is pulled for them.");
+            broadcastPlain("group.russian-roulette.out-of-time", "player", playerName(currentId));
             pull(currentId);
         }
     }
@@ -134,7 +133,7 @@ public final class RussianRouletteGame extends AbstractGroupGame {
             if (player != null) {
                 player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 0.8f, 0.6f);
             }
-            broadcastRaw("&8» &f" + playerName(shooter) + " &7pulls the trigger... &a&lclick&7.");
+            broadcastPlain("group.russian-roulette.empty", "player", playerName(shooter));
             advance();
             return;
         }
@@ -142,17 +141,14 @@ public final class RussianRouletteGame extends AbstractGroupGame {
         alive.remove(shooter);
         soundAll(Sound.ENTITY_GENERIC_EXPLODE, 1.0f, 0.8f);
         if (player != null) {
-            player.showTitle(Title.title(Text.c("&c&lBANG"),
-                    Text.c("&7Your stake feeds the pot"), Title.Times.times(
-                            java.time.Duration.ofMillis(100),
-                            java.time.Duration.ofMillis(1400),
-                            java.time.Duration.ofMillis(300))));
+            showTitle(player, "group.russian-roulette.bang-title",
+                    "group.russian-roulette.bang-subtitle");
         }
-        broadcastRaw("&c&lBANG &8» &f" + playerName(shooter)
-                + " &7cae y sus &6" + plugin.economy().format(pot.amountOf(shooter))
-                + " &7go to the pot.");
-        broadcastRaw("&7Pot: &6" + plugin.economy().format(pot.total())
-                + " &8| &7left: &f" + alive.size());
+        broadcastPlain("group.russian-roulette.bang",
+                "player", playerName(shooter),
+                "amount", plugin.economy().format(pot.amountOf(shooter)));
+        broadcastPlain("group.russian-roulette.pot-now",
+                "pot", plugin.economy().format(pot.total()), "alive", alive.size());
 
         if (alive.size() <= 1) {
             settle();
@@ -183,15 +179,16 @@ public final class RussianRouletteGame extends AbstractGroupGame {
         if (player == null) {
             return;
         }
-        player.sendMessage(Text.c("&8» &7Your turn: pull the trigger whenever you want.")
-                .append(chatButton("&c&lPULL THE TRIGGER", "shoot",
-                        "&7Chance of a shot: "
-                                + Text.percent((double) bullets() / chambers()))));
+        player.sendMessage(plugin.messages().componentPlainFor(player, "group.russian-roulette.prompt")
+                .append(chatButton(
+                        plugin.messages().forSender(player, "group.russian-roulette.pull"), "shoot",
+                        plugin.messages().forSender(player, "group.russian-roulette.pull-hover",
+                                "chance", Text.percent((double) bullets() / chambers())))));
     }
 
     private void settle() {
         if (alive.isEmpty()) {
-            broadcastRaw("&cNobody was left standing; the pot goes to the house.");
+            broadcastPlain("group.russian-roulette.no-survivors");
             pot.burn();
             endRound();
             return;
@@ -199,18 +196,13 @@ public final class RussianRouletteGame extends AbstractGroupGame {
         UUID winner = alive.iterator().next();
         double total = pot.total();
         pot.payAllTo(winner);
-        broadcastRaw("&8&m        &r &6RULETA RUSA &8&m        ");
-        broadcastRaw("&a&f" + playerName(winner) + " &ais the last one standing and takes &6"
-                + plugin.economy().format(total) + "&a.");
+        broadcastPlain("group.russian-roulette.banner");
+        broadcastPlain("group.russian-roulette.winner",
+                "player", playerName(winner), "pot", plugin.economy().format(total));
         soundAll(Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.1f);
-        Player winnerPlayer = online(winner);
-        if (winnerPlayer != null) {
-            winnerPlayer.showTitle(Title.title(Text.c("&a&lSOBREVIVISTE"),
-                    Text.c("&f" + plugin.economy().format(total)), Title.Times.times(
-                            java.time.Duration.ofMillis(200),
-                            java.time.Duration.ofMillis(2500),
-                            java.time.Duration.ofMillis(400))));
-        }
+        showTitle(online(winner), "group.russian-roulette.title",
+                "group.russian-roulette.title-subtitle",
+                "prize", plugin.economy().format(total));
         endRound();
     }
 

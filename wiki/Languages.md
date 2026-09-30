@@ -51,11 +51,13 @@ independent of the server language.
 | Game catalogue names and descriptions | yes, through `catalog.<game-id>.*` |
 | World signs | yes, with the default language |
 | Admin answers (`/mvgam give`, `/mvgam reload`, `/mvgam world build`...) | yes, in the language of whoever ran them |
-| The panel labels drawn **inside** each game (the "CASH OUT" button, "Bet:" lines...) | English only for now |
+| The panels drawn **inside** each game (the "CASH OUT" button, "Bet:" lines, item lore, the lines a menu prints in the chat) | yes, under `panel.<game-id>.*` |
+| The in round lines of the group games (pots, draws, bombs, races) | yes, under `group.<game-id>.*` |
 
-That last row is honest rather than hidden: the money and the rules are the same in every
-language, but a Spanish player still sees the inside of a game panel in English. Moving those
-labels into the language files is the next translation milestone.
+The translation reaches the last button: window titles, item names, item lore and the chat
+lines printed by a menu all come from `panel.*`, with one section per game. A test compares
+`lang/en.yml` against `lang/es.yml` and fails the build when a key or a placeholder is missing
+from either side, so the two files cannot drift apart unnoticed.
 
 ## Adding another language
 
@@ -67,6 +69,10 @@ labels into the language files is the next translation milestone.
 If a key is missing, the plugin looks for it in the player's language and then in English;
 if it is missing everywhere it prints `&c[missing message: <key>]` instead of breaking. A
 partial translation is therefore always safe to ship.
+
+Panel keys are named after the game: `panel.slots.title`, `panel.crash.cash-out`,
+`panel.blackjack.stand`... Shared labels live in `panel.common.*` and shared symbols in
+`panel.symbols.*`, so a translator has one place to fix "Close" or "Pays" for every game.
 
 A language you drop in yourself cannot be picked up automatically from a Minecraft client:
 following the client only resolves codes the plugin ships (`en`, `es`). Custom languages are
@@ -97,10 +103,19 @@ Curly braces are filled in by the plugin; keep them as they are:
 
 ```
 {bet} {prize} {profit} {amount} {game} {player} {min} {max} {seconds} {round}
-{current} {balance} {currency} {seed} {value} {usage} {language} {languages}
-{native} {world} {hash} {state} {description} {games} {wins} {rate} {wagered}
-{returned} {rtp} {biggest} {favourite} {provider} {limit} {edge} {name} {entry}
+{current} {balance} {seed} {value} {usage} {language} {languages} {native}
+{world} {hash} {state} {description} {games} {wins} {rate} {wagered}
+{returned} {rtp} {biggest} {favourite} {provider} {limit} {edge} {name}
 ```
+
+Panels add their own values: {pot} {multiplier} {spot} {colour} {number} {card}
+{cards} {hand} {dice} {tile} {tiles} {bombs} {alive} {revealed} {safe} {count}
+{percent} {chance} {picks} {picked} {faces} {pair} {floors} {floor} {levels}
+{steps} {marks} {path} {rows} {level} {bucket} {bullets} {chambers} {horse}
+{tickets} {total} {staked} {price} {side} {result} {target} {direction} {crash}
+{list} {payouts} {leaders} {from} {to} {players} {symbol} {subcommand}
+
+The safe rule is simple: never translate a `{...}` block, and never delete one.
 
 ## Colours
 

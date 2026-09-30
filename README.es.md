@@ -182,6 +182,10 @@ Cómo funciona:
   sobrescribir por idioma con un bloque `catalog.<id-juego>.name` /
   `catalog.<id-juego>.description`; `lang/es.yml` incluye todo el catálogo español como
   ejemplo.
+- Los **paneles de cada juego** — títulos de ventana, botones, descripciones de objetos y
+  las líneas que esos menús escriben en el chat — viven en `panel.*`, una sección por juego,
+  así que el interior de un minijuego también se lee en el idioma del jugador. Un test hace
+  fallar la compilación si `lang/en.yml` y `lang/es.yml` se desvían en claves o placeholders.
 
 ```yaml
 language:

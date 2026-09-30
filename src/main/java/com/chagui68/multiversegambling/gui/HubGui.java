@@ -77,7 +77,7 @@ public final class HubGui extends Gui {
             boolean enabled = game.enabled();
             List<String> lore = new ArrayList<>(game.displayDescription(viewer));
             lore.add("");
-            lore.addAll(game.statusLore());
+            lore.addAll(game.statusLore(viewer));
             lore.add(messages().forSender(viewer, "gui.hub.bet",
                     "min", plugin.economy().format(game.minBet()),
                     "max", plugin.economy().format(game.maxBet())));

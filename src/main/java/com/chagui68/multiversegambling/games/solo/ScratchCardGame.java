@@ -51,13 +51,18 @@ public final class ScratchCardGame extends AbstractSoloGame {
 
     private static Material iconOf(Face face) {
         return switch (face) {
-            case CEREZA -> Material.RED_DYE;
-            case LIMON -> Material.YELLOW_DYE;
-            case CAMPANA -> Material.BELL;
-            case DIAMANTE -> Material.DIAMOND;
-            case SIETE -> Material.GOLD_INGOT;
-            case CORONA -> Material.NETHER_STAR;
+            case CHERRY -> Material.RED_DYE;
+            case LEMON -> Material.YELLOW_DYE;
+            case BELL -> Material.BELL;
+            case DIAMOND -> Material.DIAMOND;
+            case SEVEN -> Material.GOLD_INGOT;
+            case CROWN -> Material.NETHER_STAR;
         };
+    }
+
+    /** Name of a card face in the language of the reader. */
+    String faceName(Player viewer, Face face) {
+        return plugin.messages().forSenderOr(viewer, "panel.scratch.face." + face.id(), face.id());
     }
 
     private final class ScratchGui extends Gui {
@@ -69,7 +74,8 @@ public final class ScratchCardGame extends AbstractSoloGame {
         private boolean resolved;
 
         ScratchGui(MultiverseGamblingPlugin plugin, Player player, ScratchCardGame game, Wager wager, List<Face> card) {
-            super(plugin, player, 5, "&8" + displayName(player) + " &7· &6Pick 3 tiles");
+            super(plugin, player, 5, plugin.messages().forSender(player, "panel.scratch.title",
+                    "game", displayName(player)));
             this.game = game;
             this.wager = wager;
             this.card = card;
@@ -81,15 +87,13 @@ public final class ScratchCardGame extends AbstractSoloGame {
             fill(Items.of(Material.BLACK_STAINED_GLASS_PANE).name(" ").build());
 
             set(4, Items.of(Material.MAP)
-                    .name("&6Your card")
-                    .lore(
-                            "&7Bet: &f" + plugin.economy().format(wager.amount()),
-                            "&7Scratched: &f" + picked.size() + " &7of &f" + ScratchCardTable.PICKS,
-                            "&7Prizes: &f3 of a kind&7 and &f2 of a kind &7at "
-                                    + Text.multiplier(ScratchCardTable.PAIR_PAYOUT),
-                            "",
-                            "&7A winning card comes up &f"
-                                    + Text.percent(game.table.rtp()) + " &7of what is staked.")
+                    .name(label(player(), "panel.scratch.card"))
+                    .lore(labelLore(player(), "panel.scratch.card-lore",
+                            "bet", plugin.economy().format(wager.amount()),
+                            "picked", picked.size(),
+                            "picks", ScratchCardTable.PICKS,
+                            "pair", Text.multiplier(ScratchCardTable.PAIR_PAYOUT),
+                            "rtp", Text.percent(game.table.rtp())))
                     .glow(true)
                     .build());
 
@@ -101,14 +105,17 @@ public final class ScratchCardGame extends AbstractSoloGame {
                 Face face = card.get(cell);
                 if (!shown) {
                     set(slot, Items.of(Material.GRAY_STAINED_GLASS_PANE)
-                            .name("&8? ? ?")
-                            .lore("&7Click to reveal")
+                            .name(label(player(), "panel.scratch.hidden"))
+                            .lore(label(player(), "panel.scratch.click-reveal"))
                             .build(), e -> reveal(cell));
                 } else {
                     set(slot, Items.of(iconOf(face))
-                            .name(face.label())
-                            .lore(picked.contains(cell) ? "&7Picked by you" : "&7You did not reveal it",
-                                    "&7Three of a kind pay &f" + Text.multiplier(face.triple()))
+                            .name(game.faceName(player(), face))
+                            .lore(picked.contains(cell)
+                                            ? label(player(), "panel.scratch.picked")
+                                            : label(player(), "panel.scratch.not-picked"),
+                                    label(player(), "panel.scratch.triple-pays",
+                                            "multiplier", Text.multiplier(face.triple())))
                             .glow(picked.contains(cell))
                             .build());
                 }
@@ -116,13 +123,16 @@ public final class ScratchCardGame extends AbstractSoloGame {
 
             int remaining = ScratchCardTable.PICKS - picked.size();
             set(40, Items.of(remaining > 0 ? Material.CLOCK : Material.EMERALD_BLOCK)
-                    .name(remaining > 0 ? "&7You have &f" + remaining + " &7picks left" : "&a&lCARD COMPLETE")
-                    .lore("&7Two of a kind already give part of the stake back.")
+                    .name(remaining > 0
+                            ? label(player(), "panel.scratch.picks-left", "picks", remaining)
+                            : label(player(), "panel.scratch.complete"))
+                    .lore(label(player(), "panel.scratch.complete-lore"))
                     .build());
 
             set(36, Items.of(Material.BARRIER)
-                    .name("&cClose")
-                    .lore(resolved ? "&7Card already settled." : "&7You get your stake back.")
+                    .name(label(player(), "panel.common.close"))
+                    .lore(resolved ? label(player(), "panel.scratch.done-lore")
+                            : label(player(), "panel.common.refund-lore"))
                     .build(), e -> close());
         }
 
@@ -143,10 +153,12 @@ public final class ScratchCardGame extends AbstractSoloGame {
             render();
 
             game.announceResult(player(), payout > wager.amount(),
-                    payout > 0 ? "&f" + plugin.economy().format(payout) : "no prize");
-            game.info(player(), game.title());
-            game.info(player(), "&7You scratched: &f" + chosen.stream()
-                    .map(Face::label).reduce((a, b) -> a + "&7, " + b).orElse("-"));
+                    payout > 0 ? "&f" + plugin.economy().format(payout)
+                            : plugin.messages().forSender(player(), "panel.common.no-prize"));
+            game.info(player(), game.title(player()));
+            game.message(player(), "panel.scratch.scratched",
+                    "faces", chosen.stream().map(face -> game.faceName(player(), face))
+                            .reduce((a, b) -> a + "&7, " + b).orElse("-"));
             game.showResult(player(), wager.amount(), payout);
             game.sound(player(), payout > wager.amount() ? Sound.ENTITY_PLAYER_LEVELUP : Sound.ENTITY_VILLAGER_NO,
                     0.9f, payout > wager.amount() ? 1.3f : 0.9f);

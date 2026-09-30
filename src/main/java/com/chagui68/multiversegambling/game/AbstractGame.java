@@ -3,8 +3,10 @@ package com.chagui68.multiversegambling.game;
 import com.chagui68.multiversegambling.MultiverseGamblingPlugin;
 import com.chagui68.multiversegambling.economy.Wager;
 import com.chagui68.multiversegambling.util.Text;
+import java.time.Duration;
 import java.util.List;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.title.Title;
 import org.bukkit.Sound;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -107,8 +109,38 @@ public abstract class AbstractGame implements Game {
         return wager.amount();
     }
 
-    /** Header line with the game name. */
-    public String title() {
-        return "&8&m        &r &6" + name() + " &8&m        ";
+    /** Header line with the game name, in the language of the reader. */
+    public String title(CommandSender viewer) {
+        return plugin.messages().forSender(viewer, "panel.header", "game", displayName(viewer));
+    }
+
+    /** Panel label (item name, button or title) in the language of the reader. */
+    public String label(CommandSender viewer, String key, Object... replacements) {
+        return plugin.messages().forSender(viewer, key, replacements);
+    }
+
+    /** Panel lore block in the language of the reader. */
+    public List<String> labelLore(CommandSender viewer, String key, Object... replacements) {
+        return plugin.messages().loreFor(viewer, key, replacements);
+    }
+
+    /** On screen title with its subtitle, both built from language keys. */
+    public void showTitle(Player player, String titleKey, String subtitleKey, Object... replacements) {
+        if (player == null) {
+            return;
+        }
+        player.showTitle(Title.title(
+                plugin.messages().componentPlainFor(player, titleKey),
+                plugin.messages().componentPlainFor(player, subtitleKey, replacements),
+                Title.Times.times(Duration.ofMillis(200), Duration.ofMillis(2500),
+                        Duration.ofMillis(400))));
+    }
+
+    /** Action bar line built from a language key, in the language of the reader. */
+    public void actionBarKey(Player player, String key, Object... replacements) {
+        if (player == null) {
+            return;
+        }
+        player.sendActionBar(plugin.messages().componentPlainFor(player, key, replacements));
     }
 }

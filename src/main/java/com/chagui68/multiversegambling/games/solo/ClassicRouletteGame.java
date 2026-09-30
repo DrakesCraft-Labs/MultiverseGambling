@@ -14,6 +14,7 @@ import com.chagui68.multiversegambling.util.Items;
 import com.chagui68.multiversegambling.util.Text;
 import org.bukkit.Material;
 import org.bukkit.Sound;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
@@ -85,7 +86,8 @@ public final class ClassicRouletteGame extends AbstractSoloGame {
                 double progress = (double) elapsed / duration;
                 int wait = 1 + (int) (progress * progress * 12);
                 if (elapsed % wait == 0) {
-                    online.sendActionBar(Text.c("&7The wheel spins... &f" + RouletteTable.label(shown)));
+                    actionBarKey(online, "panel.roulette.spinning",
+                            "number", RouletteTable.label(shown));
                     online.playSound(online.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 0.4f,
                             0.8f + (float) progress * 1.2f);
                 }
@@ -106,11 +108,16 @@ public final class ClassicRouletteGame extends AbstractSoloGame {
 
                 String colour = colourCode(result);
                 announceResult(online, payout > wager.amount(),
-                        colour + RouletteTable.label(result) + " " + colourName(result));
-                info(online, title());
-                info(online, "&7Apostaste a &f" + RouletteTable.describeBet(type, selection)
-                        + " &7y salio " + colour + RouletteTable.label(result)
-                        + " &7(" + colourName(result) + "&7)");
+                        label(online, "panel.roulette.subtitle",
+                                "colour", colour,
+                                "number", RouletteTable.label(result),
+                                "name", colourName(online, result)));
+                info(online, title(online));
+                message(online, "panel.roulette.result",
+                        "spot", betDescription(online, type, selection),
+                        "colour", colour,
+                        "number", RouletteTable.label(result),
+                        "name", colourName(online, result));
                 showResult(online, wager.amount(), payout);
                 sound(online, payout > wager.amount() ? Sound.ENTITY_PLAYER_LEVELUP : Sound.ENTITY_VILLAGER_NO,
                         0.9f, payout > wager.amount() ? 1.2f : 0.9f);
@@ -128,8 +135,45 @@ public final class ClassicRouletteGame extends AbstractSoloGame {
         };
     }
 
-    static String colourName(int pocket) {
-        return RouletteTable.colorOf(pocket).name().toLowerCase();
+    /** Colour of a pocket, in the language of the reader. */
+    String colourName(CommandSender viewer, int pocket) {
+        return plugin.messages().forSender(viewer, "panel.colour."
+                + RouletteTable.colorOf(pocket).name().toLowerCase(java.util.Locale.ROOT));
+    }
+
+    /** Name of a board spot, in the language of the reader. */
+    String betName(CommandSender viewer, Bet bet, int selection) {
+        return switch (bet) {
+            case NUMBER -> label(viewer, "panel.roulette.bet-number",
+                    "number", RouletteTable.label(selection));
+            case COLOR -> label(viewer, selection == 0
+                    ? "panel.roulette.bet-red" : "panel.roulette.bet-black");
+            case PARITY -> label(viewer, selection == 0
+                    ? "panel.roulette.bet-even" : "panel.roulette.bet-odd");
+            case HALF -> label(viewer, selection == 0
+                    ? "panel.roulette.bet-low" : "panel.roulette.bet-high");
+            case DOZEN -> label(viewer, "panel.roulette.bet-dozen",
+                    "from", selection * 12 + 1, "to", selection * 12 + 12);
+            case COLUMN -> label(viewer, "panel.roulette.bet-column", "number", selection + 1);
+        };
+    }
+
+    /** Spot description for the chat, in the language of the reader. */
+    String betDescription(CommandSender viewer, Bet bet, int selection) {
+        return switch (bet) {
+            case NUMBER -> label(viewer, "panel.roulette.spot-number",
+                    "number", RouletteTable.label(selection));
+            case COLOR -> label(viewer, selection == 0
+                    ? "panel.roulette.spot-red" : "panel.roulette.spot-black");
+            case PARITY -> label(viewer, selection == 0
+                    ? "panel.roulette.spot-even" : "panel.roulette.spot-odd");
+            case HALF -> label(viewer, selection == 0
+                    ? "panel.roulette.spot-low" : "panel.roulette.spot-high");
+            case DOZEN -> label(viewer, "panel.roulette.spot-dozen",
+                    "number", selection + 1,
+                    "from", selection * 12 + 1, "to", selection * 12 + 12);
+            case COLUMN -> label(viewer, "panel.roulette.spot-column", "number", selection + 1);
+        };
     }
 
     static ItemStack filler() {
@@ -148,7 +192,8 @@ public final class ClassicRouletteGame extends AbstractSoloGame {
         private boolean armed;
 
         RouletteGui(MultiverseGamblingPlugin plugin, Player player, ClassicRouletteGame game, Wager wager) {
-            super(plugin, player, 6, "&8" + displayName(player) + " &7· &6Place your bet");
+            super(plugin, player, 6, plugin.messages().forSender(player, "panel.roulette.title",
+                    "game", displayName(player)));
             this.game = game;
             this.wager = wager;
         }
@@ -159,47 +204,54 @@ public final class ClassicRouletteGame extends AbstractSoloGame {
             fill(filler());
 
             set(4, Items.of(Material.GOLD_INGOT)
-                    .name("&6Bet: &f" + plugin.economy().format(wager.amount()))
+                    .name(label(player(), "panel.common.bet",
+                            "bet", plugin.economy().format(wager.amount())))
                     .lore(
-                            "&7Punto elegido: &f" + RouletteTable.describeBet(type, selection),
-                            "&7Pays: &f" + Text.multiplier(type.payout()),
+                            label(player(), "panel.roulette.point",
+                                    "spot", game.betName(player(), type, selection)),
+                            label(player(), "panel.common.pays",
+                                    "multiplier", Text.multiplier(type.payout())),
                             "",
-                            "&7Pick another spot if you want to change it.")
+                            label(player(), "panel.roulette.change"))
                     .glow(true)
                     .build());
 
-            set(10, spot(Material.RED_WOOL, "&cRED", Bet.COLOR, 0));
-            set(11, spot(Material.BLACK_WOOL, "&8BLACK", Bet.COLOR, 1));
-            set(12, spot(Material.GREEN_WOOL, "&aGREEN (0)", Bet.NUMBER, 0));
+            set(10, spot(Material.RED_WOOL, Bet.COLOR, 0));
+            set(11, spot(Material.BLACK_WOOL, Bet.COLOR, 1));
+            set(12, spot(Material.GREEN_WOOL, Bet.NUMBER, 0));
             set(14, Items.of(Material.PAPER)
-                    .name("&fPick an exact number")
-                    .lore("&7Opens the grid from 0 to 36.", "&7A hit pays &f36x&7.")
+                    .name(label(player(), "panel.roulette.pick-exact"))
+                    .lore(label(player(), "panel.roulette.exact-lore"),
+                            label(player(), "panel.roulette.exact-lore-2"))
                     .build(), e -> {
                 armed = true;
                 close();
                 new NumberGrid(plugin, player(), game, wager).show();
             });
 
-            set(19, spot(Material.LIGHT_BLUE_DYE, "&bEVEN", Bet.PARITY, 0));
-            set(20, spot(Material.ORANGE_DYE, "&6ODD", Bet.PARITY, 1));
-            set(21, spot(Material.LIME_DYE, "&a1 - 18", Bet.HALF, 0));
-            set(22, spot(Material.MAGENTA_DYE, "&d19 - 36", Bet.HALF, 1));
+            set(19, spot(Material.LIGHT_BLUE_DYE, Bet.PARITY, 0));
+            set(20, spot(Material.ORANGE_DYE, Bet.PARITY, 1));
+            set(21, spot(Material.LIME_DYE, Bet.HALF, 0));
+            set(22, spot(Material.MAGENTA_DYE, Bet.HALF, 1));
 
-            set(24, spot(Material.YELLOW_WOOL, "&eDozen 1-12", Bet.DOZEN, 0));
-            set(25, spot(Material.YELLOW_WOOL, "&eDozen 13-24", Bet.DOZEN, 1));
-            set(26, spot(Material.YELLOW_WOOL, "&eDozen 25-36", Bet.DOZEN, 2));
-            set(29, spot(Material.CYAN_WOOL, "&3Column 1", Bet.COLUMN, 0));
-            set(30, spot(Material.CYAN_WOOL, "&3Column 2", Bet.COLUMN, 1));
-            set(31, spot(Material.CYAN_WOOL, "&3Column 3", Bet.COLUMN, 2));
+            set(24, spot(Material.YELLOW_WOOL, Bet.DOZEN, 0));
+            set(25, spot(Material.YELLOW_WOOL, Bet.DOZEN, 1));
+            set(26, spot(Material.YELLOW_WOOL, Bet.DOZEN, 2));
+            set(29, spot(Material.CYAN_WOOL, Bet.COLUMN, 0));
+            set(30, spot(Material.CYAN_WOOL, Bet.COLUMN, 1));
+            set(31, spot(Material.CYAN_WOOL, Bet.COLUMN, 2));
 
             set(40, Items.of(Material.EMERALD_BLOCK)
-                    .name("&a&lSPIN THE WHEEL")
+                    .name(label(player(), "panel.roulette.spin"))
                     .lore(
-                            "&7Bet: &6" + plugin.economy().format(wager.amount()),
-                            "&7Punto: &f" + RouletteTable.describeBet(type, selection),
-                            "&7If it hits you get &f" + Text.multiplier(type.payout()) + "&7.",
+                            label(player(), "panel.roulette.spin-bet",
+                                    "bet", plugin.economy().format(wager.amount())),
+                            label(player(), "panel.roulette.spin-point",
+                                    "spot", game.betDescription(player(), type, selection)),
+                            label(player(), "panel.roulette.spin-hit",
+                                    "multiplier", Text.multiplier(type.payout())),
                             "",
-                            "&eClick to spin")
+                            label(player(), "panel.common.click-to-spin"))
                     .glow(true)
                     .build(), e -> {
                 armed = true;
@@ -208,17 +260,20 @@ public final class ClassicRouletteGame extends AbstractSoloGame {
             });
 
             set(49, Items.of(Material.BARRIER)
-                    .name("&cCancelar")
-                    .lore("&7You get your &f" + plugin.economy().format(wager.amount()) + "&7 back.")
+                    .name(label(player(), "panel.common.cancel"))
+                    .lore(label(player(), "panel.roulette.cancel-lore",
+                            "bet", plugin.economy().format(wager.amount())))
                     .build(), e -> close());
         }
 
-        private ItemStack spot(Material material, String name, Bet bet, int index) {
+        private ItemStack spot(Material material, Bet bet, int index) {
             boolean selected = type == bet && selection == index;
             return Items.of(material)
-                    .name((selected ? "&a> " : "") + name)
-                    .lore("&7Pays &f" + Text.multiplier(bet.payout()),
-                            selected ? "&aSelected" : "&7Click to bet here")
+                    .name((selected ? "&a> " : "") + game.betName(player(), bet, index))
+                    .lore(label(player(), "panel.common.pays",
+                                    "multiplier", Text.multiplier(bet.payout())),
+                            selected ? label(player(), "panel.common.selected")
+                                    : label(player(), "panel.common.click-to-pick"))
                     .glow(selected)
                     .build();
         }
@@ -249,7 +304,8 @@ public final class ClassicRouletteGame extends AbstractSoloGame {
         private final Wager wager;
 
         NumberGrid(MultiverseGamblingPlugin plugin, Player player, ClassicRouletteGame game, Wager wager) {
-            super(plugin, player, 6, "&8" + displayName(player) + " &7· &6Pick a number");
+            super(plugin, player, 6, plugin.messages().forSender(player, "panel.roulette.grid-title",
+                    "game", displayName(player)));
             this.game = game;
             this.wager = wager;
         }
@@ -259,9 +315,9 @@ public final class ClassicRouletteGame extends AbstractSoloGame {
             clearActions();
             fill(filler());
             set(4, Items.of(Material.PAPER)
-                    .name("&6Straight up bet")
-                    .lore("&7Click a number from 0 to 36.",
-                            "&7Acierta y cobras &f36x&7.")
+                    .name(label(player(), "panel.roulette.straight"))
+                    .lore(label(player(), "panel.roulette.straight-lore"),
+                            label(player(), "panel.roulette.straight-lore-2"))
                     .build());
 
             for (int pocket = 0; pocket <= 36; pocket++) {
@@ -273,7 +329,7 @@ public final class ClassicRouletteGame extends AbstractSoloGame {
                 final int chosen = pocket;
                 set(9 + pocket, Items.of(material)
                         .name(ClassicRouletteGame.colourCode(pocket) + RouletteTable.label(pocket))
-                        .lore("&7Pays &f36x")
+                        .lore(label(player(), "panel.roulette.pays-36"))
                         .build(), e -> {
                     close();
                     game.betOnPocket(player(), wager, chosen);
@@ -281,8 +337,8 @@ public final class ClassicRouletteGame extends AbstractSoloGame {
             }
 
             set(49, Items.of(Material.ARROW)
-                    .name("&eBack to the board")
-                    .lore("&7You keep your current bet.")
+                    .name(label(player(), "panel.common.back-to-board"))
+                    .lore(label(player(), "panel.common.keep-bet"))
                     .build(), e -> {
                 close();
                 new RouletteGui(plugin, player(), game, wager).show();

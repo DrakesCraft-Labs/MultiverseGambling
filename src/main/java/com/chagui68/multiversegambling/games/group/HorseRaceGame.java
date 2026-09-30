@@ -15,7 +15,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import net.kyori.adventure.title.Title;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
@@ -53,11 +52,18 @@ public final class HorseRaceGame extends AbstractGroupGame {
 
     private void sendHorseChooser(UUID playerId) {
         int runners = plugin.config().horseRaceRunners();
+        Player player = online(playerId);
+        if (player == null) {
+            return;
+        }
         for (int i = 0; i < runners; i++) {
-            final int horse = i;
-            String label = "&7[" + (i + 1) + "]";
-            tell(playerId, Text.c("&7Horse &f" + (i + 1) + " &8- ")
-                    .append(chatButton(label, "horse " + (i + 1), "&7Bet on horse " + (i + 1))));
+            int horse = i + 1;
+            player.sendMessage(plugin.messages().componentPlainFor(player,
+                            "group.race.horse-button", "horse", horse)
+                    .append(chatButton(
+                            plugin.messages().forSender(player, "group.race.ticket", "horse", horse),
+                            "horse " + horse,
+                            plugin.messages().forSender(player, "group.race.bet-horse", "horse", horse))));
         }
     }
 
@@ -70,27 +76,33 @@ public final class HorseRaceGame extends AbstractGroupGame {
         step = 0;
         timer = 0;
 
-        broadcastRaw(roundHeader());
-        StringBuilder odds = new StringBuilder("&7Probabilidades: ");
-        for (int i = 0; i < field.size(); i++) {
-            odds.append("&f[").append(i + 1).append("]&7 pays &f")
-                    .append(Text.multiplier(field.get(i).odds())).append(" &8| ");
-        }
-        broadcastRaw(odds.toString());
-        broadcastRaw("&7Pot: &6" + plugin.economy().format(pot.total()));
+        broadcastRoundHeader();
+        broadcastPlainFor(viewer -> {
+            StringBuilder list = new StringBuilder();
+            for (int i = 0; i < field.size(); i++) {
+                if (list.length() > 0) {
+                    list.append(" &8| ");
+                }
+                list.append(plugin.messages().forSender(viewer, "group.race.odds-entry",
+                        "horse", i + 1,
+                        "multiplier", Text.multiplier(field.get(i).odds())));
+            }
+            return new Object[]{"list", list.toString()};
+        }, "group.race.odds");
+        broadcastPlain("panel.common.pot", "pot", plugin.economy().format(pot.total()));
 
         // Whoever did not pick a horse gets their money back.
         for (UUID id : pot.participants()) {
             if (!picks.containsKey(id)) {
                 pot.remove(id);
-                tell(id, "&7You did not pick a horse, so your stake is refunded.");
+                tellKeyed(id, "group.race.refunded");
             }
         }
         if (pot.size() < minPlayers()) {
             endRound();
             return;
         }
-        broadcastRaw("&7The race starts!");
+        broadcastPlain("group.race.starting");
         soundAll(Sound.ENTITY_FIREWORK_ROCKET_BLAST, 0.8f, 1.0f);
     }
 
@@ -141,7 +153,7 @@ public final class HorseRaceGame extends AbstractGroupGame {
             }
         }
         if (timer % 5 == 0) {
-            actionBarAll("&7Race &8| &f" + leaderBoard());
+            actionBarAllKey("group.race.bar", "leaders", leaderBoard());
         }
         if (timer >= steps * 3 + 5) {
             resolve();
@@ -174,28 +186,21 @@ public final class HorseRaceGame extends AbstractGroupGame {
             return horse != null && horse == winner ? odds[horse] : 0;
         });
 
-        broadcastRaw("&8&m        &r &6RACE &8&m        ");
-        broadcastRaw("&6The winner is horse &f" + (winner + 1) + " &6(paying &f"
-                + Text.multiplier(odds[winner]) + "&6).");
+        broadcastPlain("group.race.banner");
+        broadcastPlain("group.race.winner",
+                "horse", winner + 1, "multiplier", Text.multiplier(odds[winner]));
         for (Map.Entry<UUID, Integer> entry : bets.entrySet()) {
             boolean won = entry.getValue() == winner;
-            tell(entry.getKey(), won
-                    ? "&aYou won with horse &f" + (winner + 1) + "&a: you collect &f"
-                            + Text.multiplier(odds[winner])
-                    : "&cYour horse &f" + (entry.getValue() + 1) + " &cdid not win.");
+            tellKeyed(entry.getKey(), won ? "group.race.you-won" : "group.race.you-lost",
+                    "horse", won ? winner + 1 : entry.getValue() + 1,
+                    "multiplier", Text.multiplier(odds[winner]));
         }
-        broadcastRaw("&7Pot paid out: &f" + plugin.economy().format(total));
+        broadcastPlain("group.race.paid", "pot", plugin.economy().format(total));
         soundAll(Sound.ENTITY_FIREWORK_ROCKET_BLAST, 1.0f, 1.2f);
         for (Map.Entry<UUID, Integer> entry : bets.entrySet()) {
             if (entry.getValue() == winner) {
-                Player player = online(entry.getKey());
-                if (player != null) {
-                    player.showTitle(Title.title(Text.c("&6&lYOU WON!"),
-                            Text.c("&fHorse " + (winner + 1)), Title.Times.times(
-                                    java.time.Duration.ofMillis(200),
-                                    java.time.Duration.ofMillis(2200),
-                                    java.time.Duration.ofMillis(400))));
-                }
+                showTitle(online(entry.getKey()), "group.race.title", "group.race.title-subtitle",
+                        "horse", winner + 1);
             }
         }
         endRound();
@@ -215,11 +220,9 @@ public final class HorseRaceGame extends AbstractGroupGame {
                     return;
                 }
                 picks.put(player.getUniqueId(), horse);
-                Player online = online(player.getUniqueId());
-                if (online != null) {
-                    online.sendMessage(Text.c("&7You bet on horse &f" + (horse + 1) + "&7."));
-                }
-                broadcastRaw("&8» &f" + player.getName() + " &7goes with horse &f" + (horse + 1) + "&7.");
+                tellKeyed(player.getUniqueId(), "group.race.picked", "horse", horse + 1);
+                broadcastPlain("group.race.goes-with",
+                        "player", player.getName(), "horse", horse + 1);
             } catch (NumberFormatException error) {
                 message(player, "group.invalid-horse");
             }

@@ -9,7 +9,6 @@ import com.chagui68.multiversegambling.game.AbstractGroupGame;
 import com.chagui68.multiversegambling.game.GameCategory;
 import com.chagui68.multiversegambling.game.GameMeta;
 import com.chagui68.multiversegambling.gui.Gui;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -52,8 +51,10 @@ public final class ColorRouletteGame extends AbstractGroupGame {
     protected void onBetPlaced(Player player, double amount) {
         choices.putIfAbsent(player.getUniqueId(), Outcome.RED);
         new ColorGui(plugin, player, this).show();
-        broadcastRaw("&8» &f" + player.getName() + " &7joined with &6"
-                + plugin.economy().format(amount) + "&7. Pot: &6" + plugin.economy().format(pot.total()));
+        broadcastPlain("group.color-roulette.joined",
+                "player", player.getName(),
+                "amount", plugin.economy().format(amount),
+                "pot", plugin.economy().format(pot.total()));
     }
 
     /** The player picks which colour to back. */
@@ -64,8 +65,17 @@ public final class ColorRouletteGame extends AbstractGroupGame {
         }
         choices.put(player.getUniqueId(), outcome);
         ColorWheel wheel = wheel();
-        broadcastRaw("&8» &f" + player.getName() + " &7goes for " + colour(outcome)
-                + " &8(&7pays &f" + Text.multiplier(wheel.payout(outcome)) + "&8)");
+        broadcastPlainFor(viewer -> new Object[]{
+                "player", player.getName(),
+                "colour", colourFor(viewer, outcome),
+                "multiplier", Text.multiplier(wheel.payout(outcome))},
+                "group.color-roulette.chose");
+    }
+
+    /** Colour name in the language of the reader. */
+    String colourFor(Player viewer, Outcome outcome) {
+        return plugin.messages().forSender(viewer, "group.color-roulette.colour-"
+                + outcome.name().toLowerCase(java.util.Locale.ROOT));
     }
 
     Outcome choiceOf(UUID playerId) {
@@ -76,22 +86,22 @@ public final class ColorRouletteGame extends AbstractGroupGame {
     protected void onRoundStart() {
         result = null;
         timer = 0;
-        broadcastRaw(roundHeader());
+        broadcastRoundHeader();
 
         // Whoever did not pick a colour gets their money back and leaves the round.
         for (UUID id : pot.participants()) {
             if (!choices.containsKey(id)) {
                 pot.remove(id);
-                tell(id, "&7You did not pick a colour, so your stake is refunded for this round.");
+                tellKeyed(id, "group.color-roulette.refunded");
             }
         }
         if (pot.size() < minPlayers()) {
-            tellAll("&7Not enough players picked a colour.");
+            broadcastPlain("group.color-roulette.not-enough");
             endRound();
             return;
         }
         showOdds();
-        tellAll("&7The wheel spins in &f3 &7seconds. You can still change colour until then.");
+        broadcastPlain("group.color-roulette.spins-in", "seconds", 3);
     }
 
     @Override
@@ -102,7 +112,7 @@ public final class ColorRouletteGame extends AbstractGroupGame {
             if (timer % 20 == 0) {
                 int seconds = (ANNOUNCE_TICKS - timer) / 20;
                 if (seconds > 0) {
-                    broadcastRaw("&7The wheel spins in &f" + seconds + "&7...");
+                    broadcastPlain("group.color-roulette.counts", "seconds", seconds);
                     soundAll(Sound.BLOCK_NOTE_BLOCK_HAT, 0.5f, 1.4f);
                 }
             }
@@ -115,7 +125,8 @@ public final class ColorRouletteGame extends AbstractGroupGame {
             int wait = 1 + (int) (progress * progress * 8);
             if (elapsed % wait == 0) {
                 Outcome filler = Outcome.values()[Rng.intBetween(0, Outcome.values().length - 1)];
-                actionBarAll("&7The colour roulette... " + colour(filler));
+                actionBarFor(viewer -> new Object[]{"colour", colourFor(viewer, filler)},
+                        "group.color-roulette.spinning");
                 soundAll(Sound.BLOCK_NOTE_BLOCK_HAT, 0.5f, 0.9f + (float) progress * 0.9f);
             }
             return;
@@ -129,14 +140,20 @@ public final class ColorRouletteGame extends AbstractGroupGame {
         Map<UUID, Double> stakes = new LinkedHashMap<>(pot.amounts());
         pot.payoutByMultiplier(id -> bets.get(id) == result ? multiplier : 0);
 
-        broadcastRaw("&8&m        &r &6The wheel stopped on " + colour(result) + " &8&m        ");
+        broadcastPlainFor(viewer -> new Object[]{"colour", colourFor(viewer, result)},
+                "group.color-roulette.stopped");
         for (Map.Entry<UUID, Outcome> entry : bets.entrySet()) {
             boolean won = entry.getValue() == result;
-            tell(entry.getKey(), won
-                    ? "&aYour bet on " + colour(result) + " pays &f" + Text.multiplier(multiplier)
-                            + "&a, that is &f"
-                            + plugin.economy().format(stakes.getOrDefault(entry.getKey(), 0.0) * multiplier)
-                    : "&cYour bet on " + colour(entry.getValue()) + " did not come in.");
+            Player viewer = online(entry.getKey());
+            if (viewer == null) {
+                continue;
+            }
+            viewer.sendMessage(plugin.messages().componentPlainFor(viewer,
+                    won ? "group.color-roulette.won" : "group.color-roulette.lost",
+                    "colour", colourFor(viewer, won ? result : entry.getValue()),
+                    "multiplier", Text.multiplier(multiplier),
+                    "prize", plugin.economy().format(
+                            stakes.getOrDefault(entry.getKey(), 0.0) * multiplier)));
         }
         soundAll(wonSound(bets), 0.9f, 1.2f);
         choices.clear();
@@ -150,38 +167,23 @@ public final class ColorRouletteGame extends AbstractGroupGame {
 
     private void showOdds() {
         ColorWheel wheel = wheel();
-        StringBuilder builder = new StringBuilder("&7Wheel payouts: ");
-        for (Outcome outcome : Outcome.values()) {
-            builder.append(colour(outcome)).append(" &f")
-                    .append(Text.multiplier(wheel.payout(outcome))).append(" &8| ");
-        }
-        broadcastRaw(builder.toString());
-    }
-
-    private void tellAll(String legacyText) {
-        for (UUID id : audienceIds()) {
-            tell(id, legacyText);
-        }
-    }
-
-    private java.util.Set<UUID> audienceIds() {
-        java.util.Set<UUID> ids = new java.util.LinkedHashSet<>(pot.participants());
-        ids.addAll(waiting);
-        return ids;
+        broadcastPlainFor(viewer -> {
+            StringBuilder builder = new StringBuilder();
+            for (Outcome outcome : Outcome.values()) {
+                if (builder.length() > 0) {
+                    builder.append(" &8| ");
+                }
+                builder.append(colourFor(viewer, outcome)).append(" &f")
+                        .append(Text.multiplier(wheel.payout(outcome)));
+            }
+            return new Object[]{"payouts", builder.toString()};
+        }, "group.color-roulette.odds");
     }
 
     @Override
     protected void onRoundEnd() {
         choices.clear();
         result = null;
-    }
-
-    static String colour(Outcome outcome) {
-        return switch (outcome) {
-            case RED -> "&cRed";
-            case BLACK -> "&8Black";
-            case GREEN -> "&aGreen";
-        };
     }
 
     private static Material materialOf(Outcome outcome) {
@@ -198,7 +200,8 @@ public final class ColorRouletteGame extends AbstractGroupGame {
         private final ColorRouletteGame game;
 
         ColorGui(MultiverseGamblingPlugin plugin, Player player, ColorRouletteGame game) {
-            super(plugin, player, 3, "&8" + displayName(player) + " &7· &6Pick a colour");
+            super(plugin, player, 3, plugin.messages().forSender(player, "panel.color-roulette.title",
+                    "game", displayName(player)));
             this.game = game;
         }
 
@@ -209,15 +212,15 @@ public final class ColorRouletteGame extends AbstractGroupGame {
 
             ColorWheel wheel = game.wheel();
             Outcome chosen = game.choiceOf(player().getUniqueId());
+            String state = chosen == null
+                    ? label(player(), "panel.color-roulette.not-picked")
+                    : label(player(), "panel.color-roulette.picked",
+                            "colour", game.colourFor(player(), chosen));
             set(4, Items.of(Material.GOLD_INGOT)
-                    .name("&6Pick your colour")
-                    .lore(
-                            "&7Bet registered. Current pot: &6"
-                                    + plugin.economy().format(game.pot.total()),
-                            chosen == null ? "&7You have not picked yet."
-                                    : "&7You picked " + colour(chosen) + "&7.",
-                            "",
-                            "&7You can change it until the wheel spins.")
+                    .name(label(player(), "panel.color-roulette.info"))
+                    .lore(labelLore(player(), "panel.color-roulette.info-lore",
+                            "pot", plugin.economy().format(game.pot.total()),
+                            "state", state))
                     .glow(true)
                     .build());
 
@@ -227,13 +230,18 @@ public final class ColorRouletteGame extends AbstractGroupGame {
                 Outcome outcome = values[i];
                 boolean selected = outcome == chosen;
                 set(slots[i], Items.of(materialOf(outcome))
-                        .name((selected ? "&a> " : "") + colour(outcome))
+                        .name((selected ? "&a> " : "")
+                                + game.colourFor(player(), outcome))
                         .lore(
-                                "&7Pockets on the wheel: &f" + wheel.pockets(outcome),
-                                "&7Pays: &f" + Text.multiplier(wheel.payout(outcome)),
-                                "&7Probabilidad: &f" + Text.percent(wheel.chance(outcome)),
+                                label(player(), "panel.color-roulette.pockets",
+                                        "count", wheel.pockets(outcome)),
+                                label(player(), "panel.common.pays",
+                                        "multiplier", Text.multiplier(wheel.payout(outcome))),
+                                label(player(), "panel.color-roulette.chance",
+                                        "percent", Text.percent(wheel.chance(outcome))),
                                 "",
-                                selected ? "&aSelected" : "&eClick to pick")
+                                selected ? label(player(), "panel.common.selected")
+                                        : label(player(), "panel.color-roulette.click-pick"))
                         .glow(selected)
                         .build(), e -> {
                     game.choose(player(), outcome);
@@ -242,8 +250,8 @@ public final class ColorRouletteGame extends AbstractGroupGame {
             }
 
             set(22, Items.of(Material.BARRIER)
-                    .name("&cClose")
-                    .lore("&7You stay in the round with your current colour.")
+                    .name(label(player(), "panel.common.close"))
+                    .lore(label(player(), "panel.color-roulette.close-lore"))
                     .build(), e -> close());
         }
 

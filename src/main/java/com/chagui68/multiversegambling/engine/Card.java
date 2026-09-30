@@ -8,25 +8,19 @@ import java.util.random.RandomGenerator;
 public record Card(Suit suit, int rank) {
 
     public enum Suit {
-        PICAS("\u2660", "Picas"),
-        CORAZONES("\u2665", "Corazones"),
-        DIAMANTES("\u2666", "Diamantes"),
-        TREBOLES("\u2663", "Treboles");
+        SPADES("\u2660"),
+        HEARTS("\u2665"),
+        DIAMONDS("\u2666"),
+        CLUBS("\u2663");
 
         private final String glyph;
-        private final String label;
 
-        Suit(String glyph, String label) {
+        Suit(String glyph) {
             this.glyph = glyph;
-            this.label = label;
         }
 
         public String glyph() {
             return glyph;
-        }
-
-        public String label() {
-            return label;
         }
     }
 

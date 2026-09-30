@@ -1,18 +1,15 @@
 package com.chagui68.multiversegambling.games.group;
 
 import com.chagui68.multiversegambling.MultiverseGamblingPlugin;
-import com.chagui68.multiversegambling.engine.Rng;
 import com.chagui68.multiversegambling.fair.FairnessService;
 import com.chagui68.multiversegambling.game.AbstractGroupGame;
 import com.chagui68.multiversegambling.game.GameCategory;
 import com.chagui68.multiversegambling.game.GameMeta;
-import com.chagui68.multiversegambling.util.Text;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import net.kyori.adventure.title.Title;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
@@ -49,12 +46,13 @@ public final class HotBombGame extends AbstractGroupGame {
         holder = pickHolder(null);
         fuseTicks = rollFuse();
         passTicks = 20;
-        broadcastRaw(roundHeader());
-        broadcastRaw("&7Pot: &6" + plugin.economy().format(pot.total())
-                + " &8| &7players: &f" + alive.size());
-        broadcastRaw("&cThe bomb starts in the hands of &f" + playerName(holder) + "&c.");
-        broadcastRaw("&7Fuse lit: between &f" + (int) plugin.config().hotBombMinSeconds()
-                + " &7y &f" + (int) plugin.config().hotBombMaxSeconds() + " &7segundos.");
+        broadcastRoundHeader();
+        broadcastPlain("group.hot-bomb.pot-line",
+                "pot", plugin.economy().format(pot.total()), "players", alive.size());
+        broadcastPlain("group.hot-bomb.starts-with", "player", playerName(holder));
+        broadcastPlain("group.hot-bomb.fuse",
+                "min", (int) plugin.config().hotBombMinSeconds(),
+                "max", (int) plugin.config().hotBombMaxSeconds());
         soundAll(Sound.ENTITY_TNT_PRIMED, 0.8f, 1.0f);
     }
 
@@ -94,15 +92,15 @@ public final class HotBombGame extends AbstractGroupGame {
             if (!next.equals(holder)) {
                 UUID previous = holder;
                 holder = next;
-                tell(previous, "&7You passed the bomb to &f" + playerName(holder) + "&7.");
+                Player previousPlayer = online(previous);
+                if (previousPlayer != null) {
+                    previousPlayer.sendMessage(plugin.messages().componentPlainFor(previousPlayer,
+                            "group.hot-bomb.passed", "player", playerName(holder)));
+                }
                 Player target = online(holder);
                 if (target != null) {
                     target.playSound(target.getLocation(), Sound.ENTITY_TNT_PRIMED, 0.9f, 1.4f);
-                    target.showTitle(Title.title(Text.c("&cYOU HAVE IT!"),
-                            Text.c("&7Pass it on, quick!"), Title.Times.times(
-                                    java.time.Duration.ofMillis(100),
-                                    java.time.Duration.ofMillis(600),
-                                    java.time.Duration.ofMillis(100))));
+                    showTitle(target, "group.hot-bomb.you-have-it", "group.hot-bomb.pass-quick");
                 }
             }
         }
@@ -112,8 +110,8 @@ public final class HotBombGame extends AbstractGroupGame {
             Player current = online(holder);
             if (current != null) {
                 // Only the holder sees the constant reminder that they are carrying it.
-                current.sendActionBar(Text.c("&cBomb in your hands &8| &7pot &6"
-                        + plugin.economy().format(pot.total())));
+                actionBarKey(current, "group.hot-bomb.carrying",
+                        "pot", plugin.economy().format(pot.total()));
             }
         }
         if (fuseTicks <= 0) {
@@ -132,17 +130,13 @@ public final class HotBombGame extends AbstractGroupGame {
         soundAll(Sound.ENTITY_GENERIC_EXPLODE, 1.0f, 0.9f);
         Player victimPlayer = online(victim);
         if (victimPlayer != null) {
-            victimPlayer.showTitle(Title.title(Text.c("&c&lBOOM"),
-                    Text.c("&7Estabas sosteniendola"), Title.Times.times(
-                            java.time.Duration.ofMillis(100),
-                            java.time.Duration.ofMillis(1400),
-                            java.time.Duration.ofMillis(300))));
+            showTitle(victimPlayer, "group.hot-bomb.boom-title", "group.hot-bomb.boom-subtitle");
         }
-        broadcastRaw("&c&lBOOM &8» &f" + playerName(victim)
-                + " &7blows up and their stake of &6"
-                + plugin.economy().format(pot.amountOf(victim)) + " &7stays in the pot.");
-        broadcastRaw("&7Pot now: &6" + plugin.economy().format(pot.total())
-                + " &8| &7left: &f" + alive.size());
+        broadcastPlain("group.hot-bomb.boom",
+                "player", playerName(victim),
+                "amount", plugin.economy().format(pot.amountOf(victim)));
+        broadcastPlain("group.hot-bomb.pot-now",
+                "pot", plugin.economy().format(pot.total()), "alive", alive.size());
 
         if (alive.size() <= 1) {
             settle();
@@ -151,13 +145,13 @@ public final class HotBombGame extends AbstractGroupGame {
         holder = pickHolder(victim);
         fuseTicks = rollFuse();
         passTicks = 20;
-        broadcastRaw("&7The bomb reappears in the hands of &f" + playerName(holder) + "&7.");
+        broadcastPlain("group.hot-bomb.reappears", "player", playerName(holder));
     }
 
     private void settle() {
         if (alive.isEmpty()) {
             // Nobody survived: the pot stays with the house.
-            broadcastRaw("&cNobody survived; the pot goes to the house.");
+            broadcastPlain("group.hot-bomb.no-survivors");
             pot.burn();
             endRound();
             return;
@@ -165,18 +159,12 @@ public final class HotBombGame extends AbstractGroupGame {
         UUID winner = alive.iterator().next();
         double total = pot.total();
         pot.payAllTo(winner);
-        broadcastRaw("&8&m        &r &6HOT BOMB &8&m        ");
-        broadcastRaw("&aGana &f" + playerName(winner) + " &acon &6"
-                + plugin.economy().format(total) + " &adel jackpot.");
+        broadcastPlain("group.hot-bomb.banner");
+        broadcastPlain("group.hot-bomb.winner",
+                "player", playerName(winner), "pot", plugin.economy().format(total));
         soundAll(Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.1f);
-        Player winnerPlayer = online(winner);
-        if (winnerPlayer != null) {
-            winnerPlayer.showTitle(Title.title(Text.c("&a&lSOBREVIVISTE"),
-                    Text.c("&f" + plugin.economy().format(total)), Title.Times.times(
-                            java.time.Duration.ofMillis(200),
-                            java.time.Duration.ofMillis(2500),
-                            java.time.Duration.ofMillis(400))));
-        }
+        showTitle(online(winner), "group.hot-bomb.survived", "group.hot-bomb.survived-subtitle",
+                "prize", plugin.economy().format(total));
         endRound();
     }
 

@@ -18,25 +18,25 @@ class SlotsTableTest {
 
     @Test
     void threeOfAKindPayTheBiggestPrize() {
-        Symbol corona = symbol("corona");
-        assertEquals(corona.triple(), slots.payout(List.of(corona, corona, corona)), 1e-9);
+        Symbol crown = symbol("crown");
+        assertEquals(crown.triple(), slots.payout(List.of(crown, crown, crown)), 1e-9);
     }
 
     @Test
     void twoCherriesPayTheSmallPrizeButNotWithOtherCoins() {
-        Symbol cereza = symbol("cereza");
-        Symbol limon = symbol("limon");
-        assertEquals(cereza.pair(), slots.payout(List.of(cereza, cereza, limon)), 1e-9);
-        assertEquals(cereza.pair(), slots.payout(List.of(limon, cereza, cereza)), 1e-9);
-        assertEquals(0.0, slots.payout(List.of(limon, limon, cereza)), 1e-9);
+        Symbol cherry = symbol("cherry");
+        Symbol lemon = symbol("lemon");
+        assertEquals(cherry.pair(), slots.payout(List.of(cherry, cherry, lemon)), 1e-9);
+        assertEquals(cherry.pair(), slots.payout(List.of(lemon, cherry, cherry)), 1e-9);
+        assertEquals(0.0, slots.payout(List.of(lemon, lemon, cherry)), 1e-9);
     }
 
     @Test
     void withoutCombinationsNothingIsPaid() {
-        Symbol cereza = symbol("cereza");
-        Symbol limon = symbol("limon");
-        Symbol campana = symbol("campana");
-        assertEquals(0.0, slots.payout(List.of(cereza, limon, campana)), 1e-9);
+        Symbol cherry = symbol("cherry");
+        Symbol lemon = symbol("lemon");
+        Symbol bell = symbol("bell");
+        assertEquals(0.0, slots.payout(List.of(cherry, lemon, bell)), 1e-9);
     }
 
     @Test
@@ -44,7 +44,7 @@ class SlotsTableTest {
         double rtp = slots.rtp();
         assertTrue(rtp > 0.90, "the RTP should not be ruinous, it was " + rtp);
         assertTrue(rtp < 0.99, "the RTP cannot approach 1 or the house never wins, it was " + rtp);
-        assertEquals(0.9475, rtp, 0.005, "la tabla por defecto esta calibrada al 94.75%");
+        assertEquals(0.9475, rtp, 0.005, "the default table is calibrated at 94.75%");
     }
 
     @Test
@@ -64,7 +64,7 @@ class SlotsTableTest {
 
     @Test
     void theJackpotIsReallyRare() {
-        double chance = slots.chanceOf("corona");
+        double chance = slots.chanceOf("crown");
         assertTrue(chance < 0.03, "the jackpot should come up less than 3% of the time");
         assertFalse(Double.isNaN(chance));
     }

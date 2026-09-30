@@ -39,6 +39,11 @@ public final class DiceGame extends AbstractSoloGame {
         return plugin.config().houseEdge();
     }
 
+    /** "over" or "under", already coloured, in the language of the reader. */
+    String direction(Player viewer, boolean over) {
+        return plugin.messages().forSender(viewer, over ? "panel.dice.over" : "panel.dice.under");
+    }
+
     void roll(Player player, Wager wager, double target, boolean over) {
         TimedSession animation = new TimedSession(plugin, player, id(), 25) {
 
@@ -48,8 +53,9 @@ public final class DiceGame extends AbstractSoloGame {
                 if (online == null) {
                     return;
                 }
-                online.sendActionBar(Text.c("&7Tirando... &f"
-                        + Text.number(Math.floor(Rng.next() * 10000) / 100.0)));
+                online.sendActionBar(Text.c(plugin.messages().forSender(online,
+                        "panel.dice.rolling",
+                        "value", Text.number(Math.floor(Rng.next() * 10000) / 100.0))));
                 if (elapsed % 3 == 0) {
                     online.playSound(online.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 0.4f, 1.2f);
                 }
@@ -70,9 +76,10 @@ public final class DiceGame extends AbstractSoloGame {
                 double payout = settle(online, wager, multiplier);
 
                 announceResult(online, won, "&f" + Text.number(result));
-                info(online, title());
-                info(online, "&7Target: " + (over ? "&aover " : "&aunder ") + "&f"
-                        + Text.number(target) + " &8| &7Salio: &f" + Text.number(result));
+                info(online, title(online));
+                message(online, "panel.dice.info",
+                        "direction", direction(online, over),
+                        "target", Text.number(target), "result", Text.number(result));
                 showResult(online, wager.amount(), payout);
                 sound(online, won ? Sound.ENTITY_PLAYER_LEVELUP : Sound.ENTITY_VILLAGER_NO,
                         0.9f, won ? 1.3f : 0.9f);
@@ -93,7 +100,8 @@ public final class DiceGame extends AbstractSoloGame {
         private boolean armed;
 
         DiceGui(MultiverseGamblingPlugin plugin, Player player, DiceGame game, Wager wager) {
-            super(plugin, player, 5, "&8" + displayName(player) + " &7· &6Set your target");
+            super(plugin, player, 5, plugin.messages().forSender(player, "panel.dice.title",
+                    "game", displayName(player)));
             this.game = game;
             this.wager = wager;
         }
@@ -118,29 +126,37 @@ public final class DiceGame extends AbstractSoloGame {
             double expected = wager.amount() * chance / 100.0 * payout;
 
             set(4, Items.of(Material.PAPER)
-                    .name("&6Objetivo: " + (over ? "&a>" : "&c<") + " &f" + Text.number(target))
+                    .name(label(player(), over ? "panel.dice.target-over" : "panel.dice.target-under",
+                            "value", Text.number(target)))
                     .lore(
-                            "&7Chance of winning: &f" + Text.percent(chance / 100.0),
-                            "&7Pago: &f" + Text.multiplier(payout),
-                            "&7Ganarias: &f" + plugin.economy().format(wager.amount() * payout),
-                            "&7Valor medio: &f" + plugin.economy().format(expected),
+                            label(player(), "panel.dice.chance",
+                                    "percent", Text.percent(chance / 100.0)),
+                            label(player(), "panel.dice.pays",
+                                    "multiplier", Text.multiplier(payout)),
+                            label(player(), "panel.dice.would-win",
+                                    "prize", plugin.economy().format(wager.amount() * payout)),
+                            label(player(), "panel.dice.expected",
+                                    "value", plugin.economy().format(expected)),
                             "",
-                            "&7The house keeps &f"
-                                    + Text.percent(game.houseEdge()) + "&7 on average.")
+                            label(player(), "panel.dice.house",
+                                    "edge", Text.percent(game.houseEdge())))
                     .glow(true)
                     .build());
 
-            set(10, button(Material.RED_DYE, "&c-10"), e -> shift(-10 * STEP));
-            set(11, button(Material.RED_DYE, "&c-1"), e -> shift(-STEP));
-            set(12, button(Material.ORANGE_DYE, "&6-0.1"), e -> shift(-0.1));
-            set(14, button(Material.LIME_DYE, "&a+0.1"), e -> shift(0.1));
-            set(15, button(Material.LIME_DYE, "&a+1"), e -> shift(STEP));
-            set(16, button(Material.LIME_DYE, "&a+10"), e -> shift(10 * STEP));
+            set(10, button(Material.RED_DYE, amount(-10)), e -> shift(-10 * STEP));
+            set(11, button(Material.RED_DYE, amount(-1)), e -> shift(-STEP));
+            set(12, button(Material.ORANGE_DYE, amount(-0.1)), e -> shift(-0.1));
+            set(14, button(Material.LIME_DYE, amount(0.1)), e -> shift(0.1));
+            set(15, button(Material.LIME_DYE, amount(1)), e -> shift(STEP));
+            set(16, button(Material.LIME_DYE, amount(10)), e -> shift(10 * STEP));
 
             set(22, Items.of(over ? Material.LIME_CONCRETE : Material.RED_CONCRETE)
-                    .name("&fDirection: " + (over ? "&aOVER" : "&cUNDER"))
-                    .lore("&7Switch between rolling over", "&7or under the target.", "",
-                            "&eClick to flip")
+                    .name(label(player(), "panel.dice.direction",
+                            "direction", label(player(), over
+                                    ? "panel.dice.over-label" : "panel.dice.under-label")))
+                    .lore(label(player(), "panel.dice.switch"),
+                            label(player(), "panel.dice.switch-2"), "",
+                            label(player(), "panel.dice.click-flip"))
                     .build(), e -> {
                 over = !over;
                 target = DiceTable.round2(100.0 - target);
@@ -148,14 +164,17 @@ public final class DiceGame extends AbstractSoloGame {
             });
 
             set(40, Items.of(Material.EMERALD_BLOCK)
-                    .name("&a&lROLL THE DICE")
+                    .name(label(player(), "panel.dice.roll"))
                     .lore(
-                            "&7Apostando &6" + plugin.economy().format(wager.amount()),
-                            "&7You need the roll to be " + (over ? "&aover" : "&aunder") + " &f"
-                                    + Text.number(target),
-                            "&7Pays &f" + Text.multiplier(payout),
+                            label(player(), "panel.dice.staking",
+                                    "bet", plugin.economy().format(wager.amount())),
+                            label(player(), "panel.dice.need-roll",
+                                    "direction", game.direction(player(), over),
+                                    "target", Text.number(target)),
+                            label(player(), "panel.dice.pays-short",
+                                    "multiplier", Text.multiplier(payout)),
                             "",
-                            "&eClick to roll")
+                            label(player(), "panel.common.click-to-roll"))
                     .glow(true)
                     .build(), e -> {
                 armed = true;
@@ -164,13 +183,21 @@ public final class DiceGame extends AbstractSoloGame {
             });
 
             set(36, Items.of(Material.BARRIER)
-                    .name("&cCancelar")
-                    .lore("&7You get your stake back.")
+                    .name(label(player(), "panel.common.cancel"))
+                    .lore(label(player(), "panel.common.refund-lore"))
                     .build(), e -> close());
         }
 
+        /** Name of a step button such as -10 or +0.1. */
+        private String amount(double step) {
+            String shown = Text.number(Math.abs(step));
+            return label(player(), step < 0 ? "panel.dice.minus" : "panel.dice.plus",
+                    "amount", shown);
+        }
+
         private org.bukkit.inventory.ItemStack button(Material material, String name) {
-            return Items.of(material).name(name).lore("&7Click to adjust").build();
+            return Items.of(material).name(name)
+                    .lore(label(player(), "panel.common.click-to-adjust")).build();
         }
 
         @Override

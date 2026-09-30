@@ -147,15 +147,4 @@ public final class RouletteTable {
         };
         return wins ? bet.payout() : 0.0;
     }
-
-    public static String describeBet(Bet bet, int selection) {
-        return switch (bet) {
-            case NUMBER -> "Number " + label(selection);
-            case COLOR -> selection == 0 ? "Red" : "Black";
-            case PARITY -> selection == 0 ? "Even" : "Odd";
-            case HALF -> selection == 0 ? "1-18" : "19-36";
-            case DOZEN -> "Dozen " + (selection + 1) + " (" + (selection * 12 + 1) + "-" + (selection * 12 + 12) + ")";
-            case COLUMN -> "Column " + (selection + 1);
-        };
-    }
 }

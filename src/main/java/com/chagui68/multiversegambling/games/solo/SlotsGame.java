@@ -1,7 +1,7 @@
 package com.chagui68.multiversegambling.games.solo;
 
 import com.chagui68.multiversegambling.MultiverseGamblingPlugin;
-import com.chagui68.multiversegambling.engine.Rng;
+import com.chagui68.multiversegambling.config.Messages;
 import com.chagui68.multiversegambling.engine.SlotsTable;
 import com.chagui68.multiversegambling.engine.SlotsTable.Symbol;
 import com.chagui68.multiversegambling.economy.Wager;
@@ -15,6 +15,7 @@ import com.chagui68.multiversegambling.util.Text;
 import java.util.List;
 import org.bukkit.Material;
 import org.bukkit.Sound;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 /**
@@ -65,8 +66,9 @@ public final class SlotsGame extends AbstractSoloGame {
                 int wait = 1 + (int) (progress * progress * 6);
                 if (elapsed % wait == 0) {
                     List<Symbol> filler = table.spin();
-                    online.sendActionBar(Text.c("&8[ &r" + glyph(filler.get(0)) + " &8| &r"
-                            + glyph(filler.get(1)) + " &8| &r" + glyph(filler.get(2)) + " &8]"));
+                    online.sendActionBar(Text.c("&8[ &r" + glyph(online, filler.get(0)) + " &8| &r"
+                            + glyph(online, filler.get(1)) + " &8| &r"
+                            + glyph(online, filler.get(2)) + " &8]"));
                     online.playSound(online.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 0.4f,
                             0.9f + (float) progress * 0.8f);
                 }
@@ -81,16 +83,19 @@ public final class SlotsGame extends AbstractSoloGame {
                 }
                 double multiplier = table.payout(result);
                 double payout = settle(online, wager, multiplier);
-                String reels = "&8[ &r" + glyph(result.get(0)) + " &8| &r" + glyph(result.get(1))
-                        + " &8| &r" + glyph(result.get(2)) + " &8]";
+                String reels = "&8[ &r" + glyph(online, result.get(0)) + " &8| &r"
+                        + glyph(online, result.get(1)) + " &8| &r" + glyph(online, result.get(2))
+                        + " &8]";
                 online.sendActionBar(Text.c(reels));
 
                 announceResult(online, payout > wager.amount(),
-                        multiplier > 0 ? Text.multiplier(multiplier) : "no prize");
-                info(online, title());
+                        multiplier > 0 ? Text.multiplier(multiplier)
+                                : plugin.messages().forSender(online, "panel.common.no-prize"));
+                info(online, title(online));
                 info(online, reels);
                 if (multiplier > 0) {
-                    info(online, "&7Winning combination: &f" + Text.multiplier(multiplier));
+                    message(online, "panel.slots.winning-combination",
+                            "multiplier", Text.multiplier(multiplier));
                 }
                 showResult(online, wager.amount(), payout);
                 sound(online, payout > wager.amount() ? Sound.ENTITY_PLAYER_LEVELUP : Sound.ENTITY_VILLAGER_NO,
@@ -102,18 +107,27 @@ public final class SlotsGame extends AbstractSoloGame {
         animation.run();
     }
 
-    static String glyph(Symbol symbol) {
-        return symbol.glyph() + " &7" + symbol.id();
+    /** Reel look with the symbol name translated for the reader. */
+    String glyph(CommandSender viewer, Symbol symbol) {
+        return symbol.glyph() + " &7" + symbolName(viewer, symbol);
+    }
+
+    static String symbolName(Messages messages, CommandSender viewer, Symbol symbol) {
+        return messages.forSenderOr(viewer, "panel.symbols." + symbol.id(), symbol.id());
+    }
+
+    private String symbolName(CommandSender viewer, Symbol symbol) {
+        return symbolName(plugin.messages(), viewer, symbol);
     }
 
     private static Material iconOf(String id) {
         return switch (id) {
-            case "cereza" -> Material.RED_DYE;
-            case "limon" -> Material.YELLOW_DYE;
-            case "campana" -> Material.BELL;
-            case "diamante" -> Material.DIAMOND;
-            case "siete" -> Material.GOLD_INGOT;
-            case "estrella" -> Material.NETHER_STAR;
+            case "cherry" -> Material.RED_DYE;
+            case "lemon" -> Material.YELLOW_DYE;
+            case "bell" -> Material.BELL;
+            case "diamond" -> Material.DIAMOND;
+            case "seven" -> Material.GOLD_INGOT;
+            case "star" -> Material.NETHER_STAR;
             default -> Material.EMERALD;
         };
     }
@@ -126,7 +140,7 @@ public final class SlotsGame extends AbstractSoloGame {
         private final double lastPayout;
 
         SlotsGui(MultiverseGamblingPlugin plugin, Player player, SlotsGame game, List<Symbol> reels, double lastPayout) {
-            super(plugin, player, 5, "&8Slots");
+            super(plugin, player, 5, plugin.messages().forSender(player, "panel.slots.title"));
             this.game = game;
             this.reels = reels;
             this.lastPayout = lastPayout;
@@ -141,9 +155,14 @@ public final class SlotsGame extends AbstractSoloGame {
             for (int i = 0; i < 3; i++) {
                 Symbol symbol = reels == null ? null : reels.get(i);
                 set(slots[i], Items.of(symbol == null ? Material.GRAY_DYE : iconOf(symbol.id()))
-                        .name(symbol == null ? "&8?" : "&f" + symbol.glyph() + " " + symbol.id())
-                        .lore(symbol == null ? "&7Click SPIN" : "&7Three of a kind: &f"
-                                + Text.multiplier(symbol.triple()))
+                        .name(symbol == null
+                                ? label(player(), "panel.slots.hidden")
+                                : label(player(), "panel.slots.symbol", "symbol", symbol.glyph(),
+                                        "name", symbolName(player(), symbol)))
+                        .lore(symbol == null
+                                ? label(player(), "panel.slots.click-spin")
+                                : label(player(), "panel.slots.triple-lore",
+                                        "multiplier", Text.multiplier(symbol.triple())))
                         .glow(symbol != null)
                         .build());
             }
@@ -153,22 +172,29 @@ public final class SlotsGame extends AbstractSoloGame {
             boolean afford = balance >= game.minBet();
 
             set(4, Items.of(Material.PAPER)
-                    .name("&6Prize table")
+                    .name(label(player(), "panel.slots.prize-table"))
                     .lore(game.table().symbols().stream()
-                            .map(s -> "&7" + s.glyph() + " " + s.id() + ": &f"
-                                    + Text.multiplier(s.triple()) + " &8(at " + Text.percent(
-                                            game.table().chanceOf(s.id())) + ")")
+                            .map(s -> label(player(), "panel.slots.table-line",
+                                    "symbol", s.glyph(), "name", symbolName(player(), s),
+                                    "multiplier", Text.multiplier(s.triple()),
+                                    "chance", Text.percent(game.table().chanceOf(s.id()))))
                             .toList())
                     .build());
 
             set(40, Items.of(afford ? Material.EMERALD_BLOCK : Material.RED_CONCRETE)
-                    .name(afford ? "&a&lSPIN" : "&c&lNOT ENOUGH BALANCE")
+                    .name(label(player(), afford ? "panel.slots.spin" : "panel.common.not-enough"))
                     .lore(
-                            "&7You will stake &6" + plugin.economy().format(bet),
-                            "&7Balance: &f" + plugin.economy().format(balance),
-                            lastPayout > 0 ? "&7Last prize: &f" + plugin.economy().format(lastPayout) : "",
+                            label(player(), "panel.slots.will-stake", "bet",
+                                    plugin.economy().format(bet)),
+                            label(player(), "panel.common.balance", "balance",
+                                    plugin.economy().format(balance)),
+                            lastPayout > 0
+                                    ? label(player(), "panel.slots.last-prize", "prize",
+                                            plugin.economy().format(lastPayout))
+                                    : "",
                             "",
-                            afford ? "&eClick to spin" : "&7You need more balance")
+                            afford ? label(player(), "panel.common.click-to-spin")
+                                    : label(player(), "panel.slots.need-money"))
                     .glow(afford)
                     .build(), e -> {
                 if (!afford) {
@@ -183,11 +209,11 @@ public final class SlotsGame extends AbstractSoloGame {
             });
 
             set(36, Items.of(Material.BARRIER)
-                    .name("&cClose")
+                    .name(label(player(), "panel.common.close"))
                     .build(), e -> close());
 
             set(44, Items.of(Material.ARROW)
-                    .name("&eChange the bet")
+                    .name(label(player(), "panel.common.change-bet"))
                     .build(), e -> {
                 close();
                 plugin.guis().openBetSelector(player(), game, amount -> game.start(player(), amount));

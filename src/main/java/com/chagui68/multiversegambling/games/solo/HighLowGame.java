@@ -82,7 +82,8 @@ public final class HighLowGame extends AbstractSoloGame {
         private boolean resolved;
 
         HighLowGui(MultiverseGamblingPlugin plugin, Player player, HighLowGame game, Wager wager, int rank) {
-            super(plugin, player, 5, "&8" + displayName(player));
+            super(plugin, player, 5, plugin.messages().forSender(player, "panel.high-low.title",
+                    "game", displayName(player)));
             this.game = game;
             this.wager = wager;
             this.currentRank = rank;
@@ -108,48 +109,63 @@ public final class HighLowGame extends AbstractSoloGame {
             boolean maxSteps = steps >= plugin.config().highLowMaxChain();
 
             set(4, Items.of(Material.PAPER)
-                    .name("&6Carta actual: &f" + rankLabel(currentRank))
+                    .name(label(player(), "panel.high-low.current",
+                            "card", rankLabel(currentRank)))
                     .lore(
-                            "&7Bet: &f" + plugin.economy().format(wager.amount()),
-                            "&7Encadenado: &a" + Text.multiplier(chain),
-                            "&7Pasos: &f" + steps + "&7/&f" + plugin.config().highLowMaxChain(),
-                            steps > 0 ? "&7Cashing out pays &f"
-                                    + plugin.economy().format(wager.amount() * chain) : "&7No hits yet")
+                            label(player(), "panel.common.bet",
+                                    "bet", plugin.economy().format(wager.amount())),
+                            label(player(), "panel.high-low.chain",
+                                    "multiplier", Text.multiplier(chain)),
+                            label(player(), "panel.high-low.steps",
+                                    "steps", steps, "max", plugin.config().highLowMaxChain()),
+                            steps > 0
+                                    ? label(player(), "panel.high-low.cash-pays", "prize",
+                                            plugin.economy().format(wager.amount() * chain))
+                                    : label(player(), "panel.high-low.no-hits"))
                     .glow(true)
                     .build());
 
             set(21, Items.of(Material.LIME_CONCRETE)
-                    .name("&aMAYOR")
-                    .lore("&7The next card will be higher.",
-                            "&7Pays &f" + Text.multiplier(higher) + " &7if you are right.",
-                            "&7Rangos favorables: &f" + rankCount(currentRank, true),
-                            "", "&eClick to go higher")
+                    .name(label(player(), "panel.high-low.higher"))
+                    .lore(label(player(), "panel.high-low.higher-lore"),
+                            label(player(), "panel.high-low.pays-if-right",
+                                    "multiplier", Text.multiplier(higher)),
+                            label(player(), "panel.high-low.favourable",
+                                    "count", rankCount(currentRank, true)),
+                            "", label(player(), "panel.high-low.click-higher"))
                     .build(), e -> guess(true));
 
             set(23, Items.of(Material.RED_CONCRETE)
-                    .name("&cMENOR")
-                    .lore("&7The next card will be lower.",
-                            "&7Pays &f" + Text.multiplier(lower) + " &7if you are right.",
-                            "&7Rangos favorables: &f" + rankCount(currentRank, false),
-                            "", "&eClick to go lower")
+                    .name(label(player(), "panel.high-low.lower"))
+                    .lore(label(player(), "panel.high-low.lower-lore"),
+                            label(player(), "panel.high-low.pays-if-right",
+                                    "multiplier", Text.multiplier(lower)),
+                            label(player(), "panel.high-low.favourable",
+                                    "count", rankCount(currentRank, false)),
+                            "", label(player(), "panel.high-low.click-lower"))
                     .build(), e -> guess(false));
 
             set(40, Items.of(steps > 0 && !resolved ? Material.GOLD_BLOCK : Material.GRAY_DYE)
-                    .name(steps > 0 ? "&6&lCASH OUT" : "&7Nothing to cash out")
-                    .lore(steps > 0 ? "&7Cobras &f" + plugin.economy().format(wager.amount() * chain)
-                            : "&7Get at least one hit.")
+                    .name(steps > 0 ? label(player(), "panel.high-low.cash-out")
+                            : label(player(), "panel.high-low.nothing"))
+                    .lore(steps > 0
+                            ? label(player(), "panel.high-low.cash-lore", "prize",
+                                    plugin.economy().format(wager.amount() * chain))
+                            : label(player(), "panel.high-low.cash-first"))
                     .glow(steps > 0 && !resolved)
                     .build(), e -> cashOut());
 
             set(36, Items.of(Material.BARRIER)
-                    .name("&cClose")
-                    .lore(resolved ? "&7Round finished." : "&7Cash out so you do not lose the chain.")
+                    .name(label(player(), "panel.common.close"))
+                    .lore(resolved ? label(player(), "panel.common.round-finished")
+                            : label(player(), "panel.high-low.close-lore"))
                     .build(), e -> close());
 
             if (maxSteps) {
                 set(44, Items.of(Material.NETHER_STAR)
-                        .name("&6Racha maxima alcanzada")
-                        .lore("&7You reached the step limit.", "&7Cash out to collect.")
+                        .name(label(player(), "panel.high-low.max-chain"))
+                        .lore(label(player(), "panel.high-low.max-lore"),
+                                label(player(), "panel.high-low.max-collect"))
                         .build());
             }
         }
@@ -163,7 +179,7 @@ public final class HighLowGame extends AbstractSoloGame {
             // A tie does not break the chain: the card is drawn again.
             if (next == currentRank) {
                 game.sound(player(), Sound.BLOCK_NOTE_BLOCK_HAT, 0.6f, 1.0f);
-                game.info(player(), "&7The same card came up, the turn repeats.");
+                game.message(player(), "panel.high-low.tie");
                 return;
             }
             boolean won = higher ? next > currentRank : next < currentRank;
@@ -172,9 +188,9 @@ public final class HighLowGame extends AbstractSoloGame {
                 double payout = game.settle(player(), wager, 0);
                 render();
                 game.announceResult(player(), false, "&c" + rankLabel(next));
-                game.info(player(), game.title());
-                game.info(player(), "&7It came up &f" + rankLabel(next) + "&7 and you lost a chain of &f"
-                        + Text.multiplier(chain));
+                game.info(player(), game.title(player()));
+                game.message(player(), "panel.high-low.lost", "card", rankLabel(next),
+                        "multiplier", Text.multiplier(chain));
                 game.showResult(player(), wager.amount(), payout);
                 game.sound(player(), Sound.ENTITY_VILLAGER_NO, 0.9f, 0.9f);
                 game.offerReplay(player());
@@ -198,9 +214,12 @@ public final class HighLowGame extends AbstractSoloGame {
             resolved = true;
             double payout = game.settle(player(), wager, chain);
             render();
-            game.announceResult(player(), true, "&a" + Text.multiplier(chain));
-            game.info(player(), game.title());
-            game.info(player(), "&7Encadenaste &f" + steps + " &7aciertos hasta &f" + Text.multiplier(chain));
+            game.announceResult(player(), true,
+                    plugin.messages().forSender(player(), "panel.high-low.cashed-subtitle",
+                            "multiplier", Text.multiplier(chain)));
+            game.info(player(), game.title(player()));
+            game.message(player(), "panel.high-low.cashed",
+                    "steps", steps, "multiplier", Text.multiplier(chain));
             game.showResult(player(), wager.amount(), payout);
             game.sound(player(), Sound.ENTITY_PLAYER_LEVELUP, 0.9f, 1.3f);
             game.offerReplay(player());
@@ -219,8 +238,9 @@ public final class HighLowGame extends AbstractSoloGame {
             // to give the stake away to somebody who has already won.
             resolved = true;
             double payout = game.settle(player(), wager, chain);
-            game.info(player(), "&7You closed the menu: your chain was cashed out at &f"
-                    + Text.multiplier(chain) + " &7(" + plugin.economy().format(payout) + "&7).");
+            game.message(player(), "panel.high-low.closed",
+                    "multiplier", Text.multiplier(chain),
+                    "prize", plugin.economy().format(payout));
         }
 
         @Override
