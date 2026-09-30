@@ -1,4 +1,4 @@
-# Mundo Casino
+# Mundo
 
 [English](Casino-World) · **Español**
 

@@ -17,7 +17,7 @@
 #  block at the end of this file: see lang/es.yml for the full Spanish catalogue.
 # ============================================================================
 
-prefix: '&8[&6Casino&8] &r'
+prefix: '&8[&6MultiverseGambling&8] &r'
 
 general:
   no-permission: '&cYou do not have permission to do that.'
@@ -33,7 +33,7 @@ games:
   tie: '&ePush: you get your {bet} back.'
   lose: '&cYou lost the {bet} you had staked.'
   abandoned: '&cYou left the game and lost {bet}.'
-  global-announcement: '&8[&6Casino&8] &f{player} &7just won &6{prize} &7at the casino (profit of &6{profit}&7).'
+  global-announcement: '&8[&6MultiverseGambling&8] &f{player} &7just won &6{prize} &7at the casino (profit of &6{profit}&7).'
   play-again-prompt: '&7Another round? '
   play-again-button: '&a&l[ PLAY AGAIN ]'
   play-again-hover: '&7Play {game} again'
@@ -270,7 +270,7 @@ gui:
       name: 'Group'
       description: 'Bets against and with other players.'
   hub:
-    title: '&8Casino &7· &6Main menu'
+    title: '&8MultiverseGambling &7· &6Main menu'
     balance: '&6Your balance: &f{balance}'
     balance-lore:
       - '&7Economy: &f{provider}'
@@ -311,7 +311,7 @@ gui:
       - '&7with nobody else to wait for.'
     close: '&cClose'
   stats:
-    title: '&8Casino &7· &6Statistics'
+    title: '&8MultiverseGambling &7· &6Statistics'
     lore:
       - '&7Games played: &f{games}'
       - '&7Wins: &f{wins} &7({rate})'

@@ -13,7 +13,7 @@
 #  group.* guarda las lineas de ronda de los juegos en grupo (botes, sorteos...).
 #  ============================================================================
 
-prefix: '&8[&6Casino&8] &r'
+prefix: '&8[&6MultiverseGambling&8] &r'
 
 general:
   no-permission: '&cNo tienes permiso para hacer eso.'
@@ -29,7 +29,7 @@ games:
   tie: '&eEmpate: recuperas tus {bet}.'
   lose: '&cHas perdido los {bet} que tenias apostados.'
   abandoned: '&cHas dejado la partida y has perdido {bet}.'
-  global-announcement: '&8[&6Casino&8] &f{player} &7acaba de ganar &6{prize} &7en el casino (beneficio de &6{profit}&7).'
+  global-announcement: '&8[&6MultiverseGambling&8] &f{player} &7acaba de ganar &6{prize} &7en el casino (beneficio de &6{profit}&7).'
   play-again-prompt: '&7¿Otra ronda? '
   play-again-button: '&a&l[ JUGAR OTRA VEZ ]'
   play-again-hover: '&7Jugar a {game} otra vez'
@@ -266,7 +266,7 @@ gui:
       name: 'En grupo'
       description: 'Apuestas contra y con otros jugadores.'
   hub:
-    title: '&8Casino &7· &6Menu principal'
+    title: '&8MultiverseGambling &7· &6Menu principal'
     balance: '&6Tu saldo: &f{balance}'
     balance-lore:
       - '&7Economia: &f{provider}'
@@ -307,7 +307,7 @@ gui:
       - '&7sin esperar a nadie.'
     close: '&cCerrar'
   stats:
-    title: '&8Casino &7· &6Estadisticas'
+    title: '&8MultiverseGambling &7· &6Estadisticas'
     lore:
       - '&7Partidas jugadas: &f{games}'
       - '&7Victorias: &f{wins} &7({rate})'

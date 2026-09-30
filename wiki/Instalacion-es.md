@@ -56,7 +56,7 @@ saldos, se los pregunta a Vault.
 
 En el primer arranque el plugin crea el mundo casino aparte (`mvgam_casino` por defecto)
 y levanta la plaza, las carreteras y una arena por juego. Nunca construye nada en tu mundo
-principal. Lo tienes en [Mundo Casino](Mundo-Casino-es).
+principal. Lo tienes en [Mundo](Mundo-Casino-es).
 
 ## Actualizar desde una versión con `messages.yml`
 

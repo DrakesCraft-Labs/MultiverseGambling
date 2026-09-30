@@ -146,7 +146,7 @@ Cosas que conviene saber:
 - El texto de los carteles usa el catálogo del idioma por defecto, así que un servidor en
   español tiene las arenas rotuladas en español.
 
-La referencia completa está en la página [Mundo Casino](wiki/Mundo-Casino-es.md) de la wiki.
+La referencia completa está en la página [Mundo](wiki/Mundo-Casino-es.md) de la wiki.
 
 ---
 

@@ -57,7 +57,7 @@ plugin never touches the balances, it asks Vault for them.
 
 On first start the plugin creates the separate casino world (`mvgam_casino` by
 default) and builds the plaza, the roads and one arena per game. Nothing is built in your
-main world. See [Casino World](Casino-World).
+main world. See [World](Casino-World).
 
 ## Updating from a version with `messages.yml`
 

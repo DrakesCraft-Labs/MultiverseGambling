@@ -61,7 +61,7 @@ See [Languages](Languages).
 | `build-structures` | `true` | Builds the plaza, the roads and the arenas the first time the world is used |
 | `teleport-on-join` | `false` | Sends players to the casino world when they join the server |
 
-See [Casino World](Casino-World).
+See [World](Casino-World).
 
 ## `group`
 

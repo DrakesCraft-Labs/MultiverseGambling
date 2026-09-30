@@ -61,7 +61,7 @@ Ver [Idiomas](Idiomas-es).
 | `build-structures` | `true` | Construye la plaza, las carreteras y las arenas la primera vez que se usa el mundo |
 | `teleport-on-join` | `false` | Manda a los jugadores al mundo casino cuando entran al servidor |
 
-Ver [Mundo Casino](Mundo-Casino-es).
+Ver [Mundo](Mundo-Casino-es).
 
 ## `group`
 

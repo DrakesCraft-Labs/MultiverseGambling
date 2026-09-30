@@ -10,7 +10,7 @@
 * [Configuration](Configuration)
 
 **Features**
-* [Casino World](Casino-World)
+* [World](Casino-World)
 * [Languages](Languages)
 * [Solo Games](Games-Solo)
 * [Group Games](Games-Group)
@@ -33,7 +33,7 @@
 * [Comandos](Comandos-es)
 * [Permisos](Permisos-es)
 * [Configuración](Configuracion-es)
-* [Mundo Casino](Mundo-Casino-es)
+* [Mundo](Mundo-Casino-es)
 * [Idiomas](Idiomas-es)
 * [Juegos en solitario](Juegos-Solo-es)
 * [Juegos en grupo](Juegos-Grupo-es)

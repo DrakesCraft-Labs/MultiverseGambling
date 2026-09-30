@@ -22,7 +22,7 @@ world** and **in-game translation** into English or Spanish.
 | [Commands](Commands) | Every `/mvgam` subcommand, with examples |
 | [Permissions](Permissions) | The three permissions and what they open |
 | [Configuration](Configuration) | Every key of `config.yml` |
-| [Casino World](Casino-World) | The separate world, the plaza, the arenas and the roads |
+| [World](Casino-World) | The separate world, the plaza, the arenas and the roads |
 | [Languages](Languages) | Self translation, `/mvgam language` and adding a new language |
 | [Solo Games](Games-Solo) | The 12 games against the house |
 | [Group Games](Games-Group) | The 9 games with automatic rounds |

@@ -22,7 +22,7 @@ casino** y **traducción dentro del juego** al inglés o al español.
 | [Comandos](Comandos-es) | Todos los subcomandos de `/mvgam`, con ejemplos |
 | [Permisos](Permisos-es) | Los tres permisos y qué abre cada uno |
 | [Configuración](Configuracion-es) | Todas las claves de `config.yml` |
-| [Mundo Casino](Mundo-Casino-es) | El mundo aparte, la plaza, las arenas y las carreteras |
+| [Mundo](Mundo-Casino-es) | El mundo aparte, la plaza, las arenas y las carreteras |
 | [Idiomas](Idiomas-es) | La autotraducción, `/mvgam language` y añadir un idioma |
 | [Juegos en solitario](Juegos-Solo-es) | Los 12 juegos contra la casa |
 | [Juegos en grupo](Juegos-Grupo-es) | Los 9 juegos con rondas automáticas |

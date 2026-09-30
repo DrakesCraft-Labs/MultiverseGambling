@@ -156,7 +156,7 @@ public final class MultiverseGamblingCommand implements CommandExecutor, TabComp
             filter = args[1].toLowerCase(Locale.ROOT).startsWith("g") ? GameCategory.GROUP
                     : (args[1].toLowerCase(Locale.ROOT).startsWith("s") ? GameCategory.SOLO : null);
         }
-        plugin.messages().sendRaw(sender, "&8&m        &r &6Casino catalogue &8&m        ");
+        plugin.messages().sendRaw(sender, "&8&m        &r &6MultiverseGambling catalogue &8&m        ");
         for (GameCategory category : GameCategory.values()) {
             if (filter != null && category != filter) {
                 continue;
@@ -381,7 +381,7 @@ public final class MultiverseGamblingCommand implements CommandExecutor, TabComp
         plugin.messages().sendRaw(sender, "&7Provably fair: &f"
                 + (plugin.fair().enabled() ? "enabled" : "disabled"));
         plugin.messages().sendRaw(sender, "&7Current secret: &f" + plugin.fair().serverSeedHash());
-        plugin.messages().sendRaw(sender, "&7Casino world: &f"
+        plugin.messages().sendRaw(sender, "&7World: &f"
                 + (plugin.config().worldEnabled() ? plugin.config().worldName() : "disabled"));
         return true;
     }

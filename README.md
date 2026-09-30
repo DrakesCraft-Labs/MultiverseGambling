@@ -142,7 +142,7 @@ Notes worth knowing:
 - Sign text uses the catalogue of the default language, so a Spanish server gets Spanish
   arena signs.
 
-The full reference is in the [Casino World](wiki/Casino-World.md) wiki page.
+The full reference is in the [World](wiki/Casino-World.md) wiki page.
 
 ---
 
