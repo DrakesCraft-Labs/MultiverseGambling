@@ -1,0 +1,14 @@
+target/
+.idea/
+*.iml
+.vscode/
+run/
+*.log
+
+# Estado interno de las herramientas de desarrollo, no forma parte del proyecto.
+.freebuff/
+
+# Datos de ejecucion del plugin (se generan en la carpeta del servidor).
+balances.json
+stats.json
+fairness.json

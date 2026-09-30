@@ -1,0 +1,278 @@
+# FreebuffCasino
+
+Motor de azar y apuestas para **Paper 1.21.11** con un catálogo de **21 minijuegos**:
+12 en solitario contra la casa y 9 en grupo con rondas automáticas.
+
+No es una colección de comandos suelta: es un motor donde cada euro pasa por el mismo
+sitio, cada tirada de dinero sale de un **azar verificable** y cada tabla de premios
+está **auditada por tests**.
+
+```
+mvn package      →  target/FreebuffCasino-1.0.0.jar
+```
+
+---
+
+## Índice
+
+- [Por qué este diseño](#por-qué-este-diseño)
+- [Instalación](#instalación)
+- [El catálogo](#el-catálogo)
+- [Retornos reales](#retornos-reales)
+- [Azar verificable](#azar-verificable)
+- [Comandos](#comandos)
+- [Arquitectura](#arquitectura)
+- [Añadir un juego nuevo](#añadir-un-juego-nuevo)
+- [Qué cubren los tests](#qué-cubren-los-tests)
+
+---
+
+## Por qué este diseño
+
+Un casino de servidor se rompe siempre de la misma forma: una tabla de premios que
+paga de más, un pago que se aplica dos veces, o una tirada que un jugador puede
+predecir. FreebuffCasino está construido para hacer esos tres fallos **imposibles
+por construcción**, no por cuidado al escribir el código.
+
+Tres decisiones sostienen todo lo demás:
+
+1. **La matemática del azar vive en `com.freebuff.casino.engine`, sin Bukkit.**
+   Son clases de Java puro (ruleta, minas, crash, plinko, blackjack, póker de dados,
+   tragaperras, rasca, rueda de premios, azar verificable). Se testean en milisegundos
+   y el plugin solo puede *usar* esas fórmulas, nunca reinterpretarlas.
+
+2. **Todo el dinero pasa por `EconomyManager` y `Wager`.** Una apuesta se retira del
+   monedero al empezar y queda envuelta en un objeto que **solo se puede liquidar una
+   vez**. Pagar dos veces la misma jugada deja de ser posible, no improbable.
+
+3. **El azar que decide dinero es siempre `FairnessService`.** El `Rng` normal solo se
+   usa para pintar animaciones. Cualquiera puede reproducir una tirada después.
+
+Los tests ya han cazado bugs reales durante el desarrollo: el generador verificable
+devolvía la mitad de las tiradas en negativo, el Plinko pagaba 9 veces de más por
+olvidar el divisor de cubos, la ruleta calculaba mal su ventaja, cara o cruz no tenía
+ventaja ninguna y la ruleta "clásica" ofrecía apostar al verde a 2x cuando eso es un
+timo. Todos están cubiertos por un test que impide que vuelvan.
+
+---
+
+## Instalación
+
+**Requisitos:** Paper 1.21.11, Java 21. Vault es opcional pero recomendado.
+
+El plugin se compila contra `paper-api:1.21.11-R0.1-SNAPSHOT` y declara
+`api-version: '1.21'`, así que también carga en cualquier servidor de la serie 1.21.x.
+No depende de NMS ni de ningún módulo interno: solo API pública.
+
+```bash
+mvn package
+cp target/FreebuffCasino-1.0.0.jar ~/servidor/plugins/
+```
+
+Sin Vault el plugin arranca su propio monedero en `plugins/FreebuffCasino/balances.json`,
+con saldo de bienvenida configurable. Con Vault usa la economía del servidor y no
+duplica nada. Se controla con `economia.proveedor: auto | vault | interno`.
+
+Archivos de datos que crea:
+
+| Archivo | Contenido |
+|---|---|
+| `balances.json` | Monedero interno (solo sin Vault) |
+| `stats.json` | Estadísticas y rankings por jugador |
+| `fairness.json` | Semillas de cliente para la auditoría |
+
+---
+
+## El catálogo
+
+### En solitario
+
+| Juego | Id | Reglas | Paga |
+|---|---|---|---|
+| **Ruleta Clásica** | `ruleta` | Rojo, negro, par/impar, 1-18/19-36, docenas, columnas o número exacto. El 0 es verde y **solo** paga a la apuesta directa, como en la ruleta real. | 2x / 3x / 36x |
+| **Tragamonedas** | `tragamonedas` | 3 rodillos, 7 símbolos ponderados. Tres iguales pagan la tabla; las cerezas pagan algo con dos. | hasta 600x |
+| **Crash** | `crash` | La curva sube sola y hay que retirarse antes de que estalle. El punto de explosión sale de una sola tirada verificable. | 1.00x en adelante |
+| **Minas** | `minas` | Rejilla de 25 casillas con 1 a 24 minas. Cada acierto sube el multiplicador; te retiras cuando quieras. | crece con la dificultad |
+| **La Torre** | `torre` | 9 pisos, 4 casillas y 1 bomba por piso. Elige casilla segura para subir, retírate antes de caer. | crece por piso |
+| **Blackjack** | `blackjack` | Baraja de 6 mazos. Natural 3:2, empate devuelve apuesta, se puede doblar. El crupier puede pedir con 17 blando (configurable). | hasta 2.5x |
+| **Mayor o Menor** | `mayor-menor` | Adivina si la siguiente carta es mayor o menor y encadena aciertos. El pago de cada paso sale de los rangos que quedan de verdad. | encadenable |
+| **Dados** | `dados` | Objetivo del 0.01 al 99.99 con apuesta por encima o por debajo. Pago justo recortado. | hasta ~99x |
+| **Plinko** | `plinko` | La bolita cae por la pirámide. Los cubos salen de la distribución binomial real, no de una tabla inventada. | hasta cientos de x |
+| **Rasca y Gana** | `rasca` | Destapa 3 de 9 casillas. Tres iguales pagan el premio del símbolo, dos devuelven parte. | hasta 50x |
+| **Ruleta de la Suerte** | `ruleta-suerte` | 12 casillas igual de probables, la mayoría sin premio y un par de golpes grandes. | hasta 4x |
+| **Cara o Cruz** | `cara-o-cruz` | Elige cara o cruz. Pago justo recortado (no 2x fijo: eso no daría ventaja a la casa). | ~1.96x |
+
+### En grupo
+
+Todos funcionan por rondas automáticas: entra quien quiere, apuesta durante la ventana,
+la ronda se juega sola y la siguiente arranca sin que nadie lance comandos.
+
+| Juego | Id | Reglas | Jugadores |
+|---|---|---|---|
+| **Ruleta de Colores** | `ruleta-colores` | Cada uno apuesta a rojo, negro o verde. El verde es una casilla única, así que paga ~36x con la misma ventaja que el rojo. | 2-24 |
+| **Bote Común** | `bote` | Todos ponen dinero y las papeletas son proporcionales a lo apostado. Un ganador se lo lleva todo. | 2-24 |
+| **Bomba Caliente** | `bomba-caliente` | La TNT pasa de mano en mano con una mecha sorteada. Al que le pille, fuera y su dinero al bote. | 2-12 |
+| **Tablero de Bombas** | `tablero-bombas` | Tablero compartido con bombas escondidas; por turnos cada uno destapa. El último en pie cobra. | 2-12 |
+| **Ruleta Rusa** | `ruleta-rusa` | Por turnos, cada uno aprieta el gatillo con 1 bala en 6 recámaras. El superviviente se lleva el bote. | 2-8 |
+| **Carrera de Caballos** | `carrera` | 8 caballos con probabilidades publicadas. Elegir el favorito paga poco; el tapado, mucho. | 2-24 |
+| **Duelo 1v1** | `duelo` | Retas a alguien por una cantidad; los dos ponen lo mismo y una moneda decide. Si no acepta a tiempo, recuperas tu dinero. | 2 |
+| **Rifa** | `rifa` | Boletas a precio fijo y sorteo de **tres premios**: 70%, 20% y 10% del bote. | 2-24 |
+| **Póker de Dados** | `poker-dados` | Cinco dados cada uno; gana la mejor mano. Los empates reparten el bote. | 2-16 |
+
+---
+
+## Retornos reales
+
+Estos números no están estimados: salen de las fórmulas y los fija la suite de tests.
+`mvn test` los vuelve a comprobar en cada compilación.
+
+| Juego | Retorno | Nota |
+|---|---|---|
+| Ruleta Clásica (europea) | **97.30%** | Todas las apuestas comparten retorno: 36/37 |
+| Ruleta Clásica (americana) | **94.74%** | El 00 duplica la ventaja |
+| Ruleta de Colores | **97.30%** | Igual en rojo, negro y verde |
+| Tragamonedas | **94.75%** | Tabla calibrada a mano y verificada |
+| Crash | **98.00%** | El mismo valor esperado en cualquier objetivo |
+| Minas / La Torre | **98.00%** | El multiplicador es la inversa exacta de la probabilidad |
+| Mayor o Menor | **~98.15%** | Por paso, contando los empates |
+| Dados / Plinko | **98.00%** | Plinko baja algo más por el tope de 500x |
+| Cara o Cruz | **98.00%** | Pago justo recortado |
+| Rasca y Gana | **92.15%** | La tarjeta más generosa en premios pequeños |
+| Ruleta de la Suerte | **95.00%** | Es la media de sus 12 casillas |
+| Carrera de Caballos | **98.00%** | Cada caballo por separado |
+| Bote, Rifa, Póker, Duelo, Bombas, Ruleta Rusa | **100% − comisión** | Jugador contra jugador: por defecto sin comisión |
+
+Todos los juegos contra la casa usan `juego.ventaja-casa` (2% por defecto) salvo
+aquellos cuya ventaja está fijada por la propia rueda, como la ruleta.
+
+---
+
+## Azar verificable
+
+Al arrancar, el plugin genera un secreto y **publica su hash**:
+
+```
+/casino verificar
+```
+
+Cada tirada se deriva de `HMAC-SHA256(secreto, semillaDelJugador:nonce:cursor)`.
+Cuando el secreto rota, se revela el anterior y cualquiera puede recalcular las
+tiradas para comprobar que la casa no las retocó. La semilla de cliente es tuya y se
+puede cambiar con `/casino verificar <texto>`; mezclarla con el secreto del servidor
+es lo que impide que el servidor pueda elegir el resultado después de conocerte.
+
+Las tiradas de las partidas en grupo se atribuyen a la identidad fija del casino
+(UUID cero), así que una ronda de bomba caliente o una carrera se puede auditar
+entera, paso a paso.
+
+---
+
+## Comandos
+
+| Comando | Qué hace |
+|---|---|
+| `/casino` | Abre el menú principal con las dos pestañas |
+| `/casino juegos [solo\|grupo]` | Lista el catálogo con sus límites de apuesta |
+| `/casino jugar <juego>` | Juega a un juego por su id o su nombre |
+| `/casino accion <accion>` | Punto de entrada de los **botones del chat** (disparar, caballo 3...) |
+| `/casino saldo [jugador]` | Consulta el saldo |
+| `/casino stats [jugador]` | Estadísticas: partidas, retorno real, juego favorito |
+| `/casino top [beneficio\|apostado\|premio]` | Ranking del servidor |
+| `/casino verificar [semilla]` | Auditoría del azar y cambio de semilla |
+| `/casino info` | Economía activa, juegos y secreto actual |
+| `/casino dar \| quitar \| set` | Administración de saldo |
+| `/casino cancelar <jugador>` | Cierra la partida de alguien y devuelve su dinero |
+| `/casino reload` | Recarga config y mensajes sin tocar las partidas en curso |
+
+Permisos: `casino.play` (por defecto todos), `casino.top` y `casino.admin` (operadores).
+
+---
+
+## Arquitectura
+
+```
+com.freebuff.casino
+├── engine/        ← Java puro, sin Bukkit, cubierto por tests
+│   ├── ProvablyFair, Rng, WeightedTable
+│   ├── RouletteTable, ColorWheel, PrizeWheel, SlotsTable, ScratchCardTable
+│   ├── MinesTable, CrashTable, DiceTable, PlinkoTable
+│   ├── Card.Deck, BlackjackHand, DicePoker, HorseOdds
+├── economy/       ← EconomyProvider (Vault | interno), Wager, Pot, EconomyManager
+├── fair/          ← FairnessService: secreto del servidor, semillas, nonces
+├── game/          ← Game, GameMeta, AbstractSoloGame, AbstractGroupGame, GameRegistry
+├── session/       ← SessionManager (reloj único), SoloSession, TimedSession
+├── gui/           ← Gui, GuiListener, HubGui, BetSelectorGui, StatsGui
+├── games/solo/    ← los 12 juegos en solitario
+├── games/group/   ← los 9 juegos en grupo
+├── stats/         ← PlayerStats, StatsStore
+├── config/        ← CasinoConfig, Messages
+├── command/  listener/  util/
+```
+
+Cuatro piezas merecen explicación:
+
+**`Wager`** es una apuesta ya cobrada. `pay()`, `refund()` y `lose()` marcan la apuesta
+como liquidada, así que una segunda llamada no hace nada. Es la diferencia entre "hay
+que acordarse de no pagar dos veces" y "no se puede pagar dos veces".
+
+**`Pot`** es el bote común de los juegos en grupo. Guarda un `Wager` por jugador, de
+modo que el dinero está fuera de los monederos desde la ventana de apuestas. Cuando
+alguien se desconecta en mitad de una ronda no recupera su dinero: su apuesta sigue en
+el bote y la puede ganar cualquier otro. Si se va antes de empezar, se le devuelve
+íntegra. Nunca hay un camino en el que el dinero se quede a medio camino.
+
+**`SessionManager`** es un único planificador para todo el plugin, en lugar de una tarea
+por jugador. Cuando el servidor se apaga, `shutdownAll()` cierra todas las partidas y
+devuelve el dinero de las que estaban a medias. No quedan inventarios huérfanos ni
+tareas colgadas.
+
+**`AbstractGroupGame`** lleva el ciclo de rondas completo (espera → apuestas → juego) una
+sola vez, para que ningún juego pueda saltarse el cobro ni la devolución. Un juego en
+grupo solo escribe `onRoundStart()`, `tickRound()` y llama a `endRound()` cuando termina;
+toda la contabilidad de dinero queda garantizada por la clase base.
+
+---
+
+## Añadir un juego nuevo
+
+Un juego en solitario son unas 60 líneas: extiende `AbstractSoloGame`, declara su
+`GameMeta` y escribe `start(Player, double)`. Ya hereda permisos, comprobación de saldo,
+selector de apuesta, tickets de estadísticas, anuncios globales y el botón de "jugar
+otra vez".
+
+Un juego en grupo son unas 80: extiende `AbstractGroupGame` y escribe `onRoundStart()`
+y `tickRound()`. El lobby, la ventana de apuestas, el bote, las desconexiones y el
+reparto los lleva la clase base.
+
+En ambos casos, si el juego necesita una tabla de premios nueva, **esa tabla va al
+paquete `engine` con sus tests**, no dentro del juego. Por último, registra la instancia
+en `CasinoPlugin.registerGames()`: es la única línea extra.
+
+---
+
+## Qué cubren los tests
+
+**91 tests** sobre el paquete `engine`. No comprueban que el código haga lo que dice,
+sino que **no pueda explotarse**:
+
+- **Invariantes de retorno.** El multiplicador de Minas multiplicado por la probabilidad
+  de sobrevivir da exactamente `1 − ventaja` para las 24 dificultades y cada número de
+  casillas destapadas. En la ruleta, *todas* las apuestas comparten el mismo retorno.
+- **Valor esperado del Crash.** Retirarse en cualquier objetivo tiene el mismo valor
+  esperado, comprobado por fórmula y con 400.000 simulaciones.
+- **Nada puede pagar de más.** La tabla del Plinko nunca devuelve más de lo que cobra,
+  ni siquiera sin tope; la tragaperras está calibrada al 94.75%; el rasca al 92.15%; y
+  un test auxiliar crea a propósito una rueda que regala dinero para comprobar que el
+  detector de trampas funciona.
+- **Uniformidad del azar verificable.** 100.000 tiradas repartidas en 10 cubos, cada uno
+  al 10%. Además, determinismo: la misma semilla y nonce dan siempre el mismo resultado.
+- **Corrección de las reglas.** Los Ases del blackjack como 11 o 1, las 8 categorías del
+  póker de dados contando los desempates, las 5 categorías de estrella, las escaleras
+  que no deben contar, el 0 que no paga apuestas exteriores.
+- **Distribuciones simuladas.** La bolita del Plinko sigue la binomial, cada caballo gana
+  con la frecuencia de su fuerza, cada color de la rueda sale con sus casillas y el
+  ganador del bote se elige con la probabilidad que le corresponde.
+
+```bash
+mvn test
+```

@@ -1,0 +1,25 @@
+name: FreebuffCasino
+version: '${project.version}'
+main: com.freebuff.casino.CasinoPlugin
+api-version: '1.21'
+authors: [Freebuff]
+description: Motor de azar y apuestas con catalogo de minijuegos en solitario y en grupo.
+website: https://freebuff.com
+softdepend: [Vault]
+
+commands:
+  casino:
+    description: Menu y comandos del casino.
+    usage: /casino menu
+    aliases: [apuestas, azar, freebuffcasino, apuesta]
+
+permissions:
+  casino.play:
+    description: Permite entrar al casino y jugar a los juegos publicos.
+    default: true
+  casino.top:
+    description: Permite ver el ranking del servidor.
+    default: true
+  casino.admin:
+    description: Recargar, dar o quitar saldo y cancelar partidas.
+    default: op

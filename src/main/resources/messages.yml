@@ -1,0 +1,87 @@
+# ============================================================================
+#  Mensajes de FreebuffCasino
+#
+#  Colores con el formato clasico de ampersand: &6 dorado, &7 gris, &c rojo...
+#  Los textos entre llaves son marcadores y los rellena el plugin:
+#    {apuesta} {premio} {beneficio} {cantidad} {juego} {jugador} {minimo}
+#    {maximo} {segundos} {ronda} {actual} {saldo} {moneda} {semilla} {valor} {uso}
+# ============================================================================
+
+prefijo: '&8[&6Casino&8] &r'
+
+general:
+  sin-permiso: '&cNo tienes permiso para hacer eso.'
+
+economia:
+  sin-saldo: '&cNo te llega el saldo para apostar {apuesta}.'
+  cuenta-creada: '&7Bienvenido al casino. Te hemos abierto una cuenta con {saldo}.'
+
+juegos:
+  desactivado: '&cEl juego &f{juego} &cesta desactivado en la configuracion.'
+  ya-jugando: '&cYa tienes una partida abierta. Terminala o cierrala antes de empezar otra.'
+  ganaste: '&aGanaste &f{premio} &a(apostaste {apuesta}, beneficio de {beneficio}).'
+  empate: '&eEmpate: recuperas tus {apuesta}.'
+  perdiste: '&cPerdiste los {apuesta} que habias puesto.'
+  abandonada: '&cAbandonaste la partida y perdiste {apuesta}.'
+  anuncio-global: '&8[&6Casino&8] &f{jugador} &7acaba de ganar &6{premio} &7en el casino (beneficio de &6{beneficio}&7).'
+  repetir-pregunta: '&7¿Otra ronda? '
+  boton-repetir: '&a&l[ JUGAR OTRA VEZ ]'
+  boton-repetir-hover: '&7Volver a jugar a {juego}'
+  titulo-ganaste: '&6&l¡GANASTE!'
+  titulo-perdiste: '&c&lSIN PREMIO'
+
+grupo:
+  esperando-jugadores: '&7Esperando jugadores para empezar: &f{actual}&7/&f{minimo}&7.'
+  apuestas-abiertas: '&aApuestas abiertas durante &f{segundos}s&a. Ya puedes entrar.'
+  apunte-apuestas: '&7Usa &f/casino jugar <juego> &7para entrar.'
+  cuenta-atras: '&eLa ronda empieza en &f{segundos}&e...'
+  tiempo-restante: '&7Quedan &f{segundos}s &7para que cierren las apuestas.'
+  ronda-empezando: '&6¡Empieza la ronda &f{ronda}&6!'
+  ronda-terminada: '&7Ronda terminada. La siguiente empieza cuando haya jugadores.'
+  ronda-anulada: '&cLa ronda se ha anulado y se ha devuelto el dinero.'
+  ronda-cancelada: '&cNo hay suficientes jugadores con apuesta (minimo {minimo}); se devuelve el dinero.'
+  ronda-en-curso: '&eLa ronda esta en curso; te apuntamos para la siguiente.'
+  apuntado-proxima: '&7Te hemos apuntado a la siguiente ronda de &f{juego}&7. Te avisamos.'
+  ya-apuntado: '&7Ya estabas apuntado a la siguiente ronda.'
+  apuesta-registrada: '&aApuesta de &f{cantidad} &aaceptada en &f{juego}&a.'
+  tu-turno-de-apostar: '&eEmpieza una ronda nueva de &f{juego}&e: vuelve a entrar y apuesta.'
+  lleno: '&cLa sala esta llena (maximo {maximo}). Intentalo en la siguiente ronda.'
+  sin-mesa: '&cNo estas en ninguna partida abierta.'
+  sin-mesa-color: '&cNo estas dentro de esta ronda de la ruleta.'
+  no-estas-en-la-ronda: '&cNo estas apostando en esta ronda.'
+  accion-desconocida: '&cEsa accion no existe en este juego.'
+  casilla-invalida: '&cEsa casilla no es valida.'
+  caballo-invalido: '&cEse caballo no existe.'
+  ruleta-rusa-terminada: '&7La partida ya ha terminado.'
+  ruleta-rusa-no-es-tu-turno: '&cNo es tu turno; le toca a &f{jugador}&c.'
+
+duelo:
+  a-ti-mismo: '&cNo puedes retarte a ti mismo.'
+  ya-ocupado: '&cTanto tu como esa persona ya teneis un duelo pendiente.'
+  rival-sin-saldo: '&c{jugador} no tiene saldo suficiente para aceptar ese duelo.'
+  reto-enviado: '&aReto enviado a &f{jugador} &apor &f{cantidad}&a. Espera su respuesta.'
+  reto-sin-fondos: '&cTu rival no tenia saldo; te devolvemos la apuesta.'
+  reto-expirado: '&c{jugador} no respondio al reto y te devolvemos la apuesta.'
+  reto-rechazado-por: '&c{jugador} ha rechazado tu duelo y te devolvemos la apuesta.'
+  reto-caducado: '&7El duelo ha caducado sin respuesta.'
+  rechazado: '&7Has rechazado el duelo.'
+  sin-reto: '&cNo tienes ningun duelo pendiente.'
+
+azar:
+  explicacion: '&7Cada tirada se deriva de un secreto del servidor y de tu semilla. Cuando el secreto rote, podras recalcularla y comprobar que no se toco nada.'
+  tu-semilla: '&7Tu semilla actual es &f{semilla}&7. Puedes cambiarla con &f/casino verificar <texto>&7.'
+  semilla-cambiada: '&aTu semilla ahora es &f{semilla}&a.'
+
+comando:
+  solo-jugadores: '&cEste comando esta pensado para usarlo dentro del juego.'
+  desconocido: '&cSubcomando desconocido: &f{subcomando}&c. Prueba con &f/casino menu&c.'
+  jugar-ayuda: '&7Juega a cualquiera con &f/casino jugar <juego>&7.'
+  juego-desconocido: '&cNo existe ningun juego llamado &f{juego}&c.'
+  jugador-desconocido: '&cNo encuentro al jugador &f{jugador}&c.'
+  cantidad-invalida: '&c&f{valor} &cno es una cantidad valida.'
+  uso: '&cUso correcto: &f{uso}'
+  saldo: '&7Tu saldo es &6{saldo}&7.'
+  saldo-otro: '&7El saldo de &f{jugador} &7es &6{saldo}&7.'
+  saldo-actualizado: '&aSaldo de &f{jugador} &aactualizado a &6{saldo}&a.'
+  recargado: '&aConfiguracion y mensajes recargados. Juegos activos: &f{juegos}&a.'
+  sesion-cancelada: '&aSe ha cerrado la partida de &f{jugador}&a y se ha devuelto su dinero.'
