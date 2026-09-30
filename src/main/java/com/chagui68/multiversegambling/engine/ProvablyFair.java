@@ -24,14 +24,18 @@ public final class ProvablyFair {
     private ProvablyFair() {
     }
 
-    /** 256 bit server secret, in hexadecimal. */
+    /**
+     * 256 bit server secret, in hexadecimal.
+     */
     public static String randomSeed() {
         byte[] bytes = new byte[32];
         SECURE.nextBytes(bytes);
         return hex(bytes);
     }
 
-    /** Reasonable client seed for when the player does not bring their own. */
+    /**
+     * Reasonable client seed for when the player does not bring their own.
+     */
     public static String randomClientSeed() {
         byte[] bytes = new byte[8];
         SECURE.nextBytes(bytes);
@@ -68,12 +72,16 @@ public final class ProvablyFair {
         return value / 4294967296.0;
     }
 
-    /** Uniform in [0, 1) for roll {@code cursor} of a given nonce. */
+    /**
+     * Uniform in [0, 1) for roll {@code cursor} of a given nonce.
+     */
     public static double roll(String serverSeed, String clientSeed, long nonce, int cursor) {
         return message(serverSeed, clientSeed, nonce, cursor);
     }
 
-    /** Verified uniform integer in [0, bound). */
+    /**
+     * Verified uniform integer in [0, bound).
+     */
     public static int rollInt(String serverSeed, String clientSeed, long nonce, int cursor, int bound) {
         if (bound <= 0) {
             throw new IllegalArgumentException("bound must be > 0");
@@ -81,7 +89,9 @@ public final class ProvablyFair {
         return (int) Math.floor(message(serverSeed, clientSeed, nonce, cursor) * bound);
     }
 
-    /** Generates {@code count} consecutive uniform values (a multi point roll). */
+    /**
+     * Generates {@code count} consecutive uniform values (a multi point roll).
+     */
     public static double[] rollMany(String serverSeed, String clientSeed, long nonce, int count) {
         double[] out = new double[count];
         for (int i = 0; i < count; i++) {
@@ -100,7 +110,9 @@ public final class ProvablyFair {
         return new String(out);
     }
 
-    /** Console helper: {@code ProvablyFair <hash|seed|roll> ...}. */
+    /**
+     * Console helper: {@code ProvablyFair <hash|seed|roll> ...}.
+     */
     public static void main(String[] args) {
         if (args.length == 0) {
             String seed = randomSeed();

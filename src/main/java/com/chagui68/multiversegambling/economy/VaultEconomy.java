@@ -1,13 +1,16 @@
 package com.chagui68.multiversegambling.economy;
 
 import java.util.UUID;
+
 import net.milkbowl.vault.economy.Economy;
 import net.milkbowl.vault.economy.EconomyResponse;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.plugin.RegisteredServiceProvider;
 
-/** Bridge to whatever economy the server already has. Vault is never bundled. */
+/**
+ * Bridge to whatever economy the server already has. Vault is never bundled.
+ */
 public final class VaultEconomy implements EconomyProvider {
 
     private final Economy economy;
@@ -16,7 +19,9 @@ public final class VaultEconomy implements EconomyProvider {
         this.economy = economy;
     }
 
-    /** @return the bridge, or {@code null} when there is no Vault or no economy registered. */
+    /**
+     * @return the bridge, or {@code null} when there is no Vault or no economy registered.
+     */
     public static EconomyProvider tryHook() {
         if (Bukkit.getPluginManager().getPlugin("Vault") == null) {
             return null;

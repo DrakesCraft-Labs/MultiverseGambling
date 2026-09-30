@@ -10,7 +10,9 @@ import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.inventory.InventoryType;
 
-/** Blocks anything that is not clicking a button inside a casino menu. */
+/**
+ * Blocks anything that is not clicking a button inside a casino menu.
+ */
 public final class GuiListener implements Listener {
 
     private final MultiverseGamblingPlugin plugin;

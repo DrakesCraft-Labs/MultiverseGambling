@@ -4,6 +4,7 @@ import com.chagui68.multiversegambling.MultiverseGamblingPlugin;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
@@ -15,6 +16,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+
 import org.bukkit.Bukkit;
 
 /**
@@ -113,7 +115,9 @@ public final class InternalEconomy implements EconomyProvider {
         }
     }
 
-    /** Dumps to disk. Safe to call from an asynchronous thread. */
+    /**
+     * Dumps to disk. Safe to call from an asynchronous thread.
+     */
     public void save() {
         Map<String, Double> raw = new HashMap<>();
         balances.forEach((id, value) -> raw.put(id.toString(), value));

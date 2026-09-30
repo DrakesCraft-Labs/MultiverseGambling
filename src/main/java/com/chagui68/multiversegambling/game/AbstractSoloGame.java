@@ -3,8 +3,10 @@ package com.chagui68.multiversegambling.game;
 import com.chagui68.multiversegambling.MultiverseGamblingPlugin;
 import com.chagui68.multiversegambling.economy.Wager;
 import com.chagui68.multiversegambling.util.Text;
+
 import java.time.Duration;
 import java.util.function.DoubleConsumer;
+
 import net.kyori.adventure.title.Title;
 import net.kyori.adventure.title.Title.Times;
 import org.bukkit.entity.Player;
@@ -40,19 +42,23 @@ public abstract class AbstractSoloGame extends AbstractGame {
         plugin.guis().openBetSelector(player, this, begin(player));
     }
 
-    /** Bet confirmation callback, ready to hand over to the menu. */
+    /**
+     * Bet confirmation callback, ready to hand over to the menu.
+     */
     protected final DoubleConsumer begin(Player player) {
         return bet -> start(player, bet);
     }
 
-    /** Runs the round. It must charge the stake with {@link #stake}. */
+    /**
+     * Runs the round. It must charge the stake with {@link #stake}.
+     */
     protected abstract void start(Player player, double bet);
 
     /**
      * Takes the stake out of the wallet.
      *
      * @return {@code null} when the balance is gone, in which case the player has
-     *         already been told about it
+     * already been told about it
      */
     public final Wager stake(Player player, double bet) {
         Wager wager = plugin.economy().stake(player, bet);
@@ -62,7 +68,9 @@ public abstract class AbstractSoloGame extends AbstractGame {
         return wager;
     }
 
-    /** Result message shared by every game. */
+    /**
+     * Result message shared by every game.
+     */
     public void showResult(Player player, double bet, double payout) {
         if (payout > bet) {
             message(player, "games.win",
@@ -76,12 +84,16 @@ public abstract class AbstractSoloGame extends AbstractGame {
         }
     }
 
-    /** Multiplier the house can pay without emptying its chests. */
+    /**
+     * Multiplier the house can pay without emptying its chests.
+     */
     public double cappedMultiplier(double multiplier, double cap) {
         return Math.min(Math.max(0, multiplier), cap);
     }
 
-    /** Offers another round with a chat button, without going back to the menu. */
+    /**
+     * Offers another round with a chat button, without going back to the menu.
+     */
     public void offerReplay(Player player) {
         if (!player.isOnline()) {
             return;
@@ -94,7 +106,9 @@ public abstract class AbstractSoloGame extends AbstractGame {
                                 "game", displayName(player)))));
     }
 
-    /** Result header with the on screen title. */
+    /**
+     * Result header with the on screen title.
+     */
     public void announceResult(Player player, boolean won, String detail) {
         String title = plugin.messages().forSender(player, won ? "games.win-title" : "games.lose-title");
         String subtitle = detail == null ? "" : detail;

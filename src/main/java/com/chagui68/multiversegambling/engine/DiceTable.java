@@ -6,7 +6,9 @@ package com.chagui68.multiversegambling.engine;
  */
 public final class DiceTable {
 
-    /** Rolls move in [0, 100) with two decimals. */
+    /**
+     * Rolls move in [0, 100) with two decimals.
+     */
     public static final double MIN_TARGET = 0.01;
     public static final double MAX_TARGET = 99.99;
 
@@ -17,17 +19,23 @@ public final class DiceTable {
         return Math.floor(Rng.next() * 10000.0) / 100.0;
     }
 
-    /** Chance (in %) of winning when betting over the target. */
+    /**
+     * Chance (in %) of winning when betting over the target.
+     */
     public static double winChanceOver(double target) {
         return round2(100.0 - target);
     }
 
-    /** Chance (in %) of winning when betting under the target. */
+    /**
+     * Chance (in %) of winning when betting under the target.
+     */
     public static double winChanceUnder(double target) {
         return round2(target);
     }
 
-    /** Trimmed fair payout: (1 - edge) * 100 / probability. */
+    /**
+     * Trimmed fair payout: (1 - edge) * 100 / probability.
+     */
     public static double payout(double winChancePercent, double houseEdge) {
         if (winChancePercent <= 0) {
             return 0;

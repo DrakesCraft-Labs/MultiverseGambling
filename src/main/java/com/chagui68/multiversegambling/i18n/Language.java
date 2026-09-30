@@ -27,12 +27,16 @@ public enum Language {
         this.englishName = englishName;
     }
 
-    /** Two letter code, also the name of the message file. */
+    /**
+     * Two letter code, also the name of the message file.
+     */
     public String code() {
         return code;
     }
 
-    /** Name written in the language itself, for the language picker. */
+    /**
+     * Name written in the language itself, for the language picker.
+     */
     public String nativeName() {
         return nativeName;
     }
@@ -72,18 +76,24 @@ public enum Language {
         return null;
     }
 
-    /** Like {@link #match(String)} but never fails: unknown input means English. */
+    /**
+     * Like {@link #match(String)} but never fails: unknown input means English.
+     */
     public static Language of(String input) {
         Language match = match(input);
         return match == null ? EN : match;
     }
 
-    /** True when the input names a language the plugin ships. */
+    /**
+     * True when the input names a language the plugin ships.
+     */
     public static boolean isShipped(String input) {
         return match(input) != null;
     }
 
-    /** Every shipped code, in declaration order. */
+    /**
+     * Every shipped code, in declaration order.
+     */
     public static List<String> codes() {
         List<String> codes = new ArrayList<>(values().length);
         for (Language language : values()) {

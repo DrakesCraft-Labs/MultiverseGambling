@@ -5,6 +5,7 @@ import com.chagui68.multiversegambling.engine.ProvablyFair;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
@@ -15,6 +16,7 @@ import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+
 import org.bukkit.entity.Player;
 
 /**
@@ -57,7 +59,9 @@ public final class FairnessService {
         return plugin.config().provablyFairEnabled();
     }
 
-    /** Generates a new secret and leaves the previous one available for auditing. */
+    /**
+     * Generates a new secret and leaves the previous one available for auditing.
+     */
     public void rotateServerSeed() {
         previousSeed = serverSeed;
         serverSeed = ProvablyFair.randomSeed();
@@ -90,7 +94,9 @@ public final class FairnessService {
         return nonce++;
     }
 
-    /** Next uniform roll in [0,1) attributed to the player. */
+    /**
+     * Next uniform roll in [0,1) attributed to the player.
+     */
     public double roll(UUID playerId) {
         if (!enabled()) {
             return Math.random();
@@ -116,10 +122,12 @@ public final class FairnessService {
         return ProvablyFair.rollInt(serverSeed, clientSeed(playerId), nextNonce(), 0, bound);
     }
 
-    /** Text ready for /mvgam verify. */
+    /**
+     * Text ready for /mvgam verify.
+     */
     public String[] auditLines(UUID playerId) {
         String revealed = previousSeed == null ? null : ProvablyFair.sha256(previousSeed);
-        return new String[] {
+        return new String[]{
                 "&7Current secret (hash): &f" + serverSeedHash(),
                 "&7Previous secret: &f" + (previousSeed == null ? "none yet" : previousSeed),
                 "&7Hash left by the previous secret: &f" + (revealed == null ? "-" : revealed),

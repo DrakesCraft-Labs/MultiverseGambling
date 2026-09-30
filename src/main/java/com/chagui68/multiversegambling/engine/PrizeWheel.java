@@ -47,7 +47,9 @@ public final class PrizeWheel {
         return pockets.clone();
     }
 
-    /** Winning index: every tile weighs the same. */
+    /**
+     * Winning index: every tile weighs the same.
+     */
     public int spin(DoubleSupplier uniforms) {
         double uniform = uniforms.getAsDouble();
         int index = (int) Math.floor(uniform * pockets.length);
@@ -74,7 +76,9 @@ public final class PrizeWheel {
         return best;
     }
 
-    /** Chance of landing on the highest tile. */
+    /**
+     * Chance of landing on the highest tile.
+     */
     public double bestChance() {
         int count = 0;
         double best = best();

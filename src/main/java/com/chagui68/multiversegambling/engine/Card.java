@@ -4,7 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.random.RandomGenerator;
 
-/** One card of the French deck. */
+/**
+ * One card of the French deck.
+ */
 public record Card(Suit suit, int rank) {
 
     public enum Suit {
@@ -43,7 +45,9 @@ public record Card(Suit suit, int rank) {
         };
     }
 
-    /** Blackjack value of this single card; an ace counts as 11 and is adjusted in the hand. */
+    /**
+     * Blackjack value of this single card; an ace counts as 11 and is adjusted in the hand.
+     */
     public int blackjackValue() {
         if (rank == ACE) {
             return 11;
@@ -64,7 +68,9 @@ public record Card(Suit suit, int rank) {
         return display();
     }
 
-    /** Multi deck shoe shuffled with Fisher-Yates. */
+    /**
+     * Multi deck shoe shuffled with Fisher-Yates.
+     */
     public static final class Deck {
 
         private final List<Card> cards = new ArrayList<>();

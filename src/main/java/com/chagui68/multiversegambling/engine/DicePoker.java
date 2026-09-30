@@ -44,7 +44,9 @@ public final class DicePoker {
         return Rng.dice(DICE, 6);
     }
 
-    /** Category of a roll of 5 six sided dice. */
+    /**
+     * Category of a roll of 5 six sided dice.
+     */
     public static Hand handOf(int[] dice) {
         int[] counts = counts(dice);
         int max = 0;
@@ -129,7 +131,9 @@ public final class DicePoker {
         return counts[1] == 0 || counts[6] == 0;
     }
 
-    /** Helper to debug hand against hand. */
+    /**
+     * Helper to debug hand against hand.
+     */
     public static void main(String[] args) {
         for (int i = 0; i < 10; i++) {
             int[] dice = roll();

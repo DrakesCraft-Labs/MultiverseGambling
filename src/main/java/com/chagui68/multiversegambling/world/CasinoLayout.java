@@ -17,18 +17,30 @@ import java.util.Map;
  */
 public final class CasinoLayout {
 
-    /** Radius of the paved plaza around spawn, in blocks. */
+    /**
+     * Radius of the paved plaza around spawn, in blocks.
+     */
     public static final int PLAZA_RADIUS = 30;
-    /** Half width of one arena; the platform is {@code 2 * ARENA_RADIUS + 1} wide. */
+    /**
+     * Half width of one arena; the platform is {@code 2 * ARENA_RADIUS + 1} wide.
+     */
     public static final int ARENA_RADIUS = 12;
-    /** Distance between two neighbouring arena centres. */
+    /**
+     * Distance between two neighbouring arena centres.
+     */
     public static final int SPACING = 110;
-    /** Width of the roads linking the plaza with the arenas. */
+    /**
+     * Width of the roads linking the plaza with the arenas.
+     */
     public static final int ROAD_WIDTH = 3;
-    /** Grass left free between the outermost arena and the world border. */
+    /**
+     * Grass left free between the outermost arena and the world border.
+     */
     public static final int MARGIN = 8;
 
-    /** One game arena. */
+    /**
+     * One game arena.
+     */
     public record Arena(String gameId, int index, int centerX, int centerZ) {
 
         public int minX() {
@@ -47,13 +59,17 @@ public final class CasinoLayout {
             return centerZ + ARENA_RADIUS;
         }
 
-        /** True when the block at these coordinates belongs to the platform. */
+        /**
+         * True when the block at these coordinates belongs to the platform.
+         */
         public boolean contains(int x, int z) {
             return x >= minX() && x <= maxX() && z >= minZ() && z <= maxZ();
         }
     }
 
-    /** A straight piece of road along one axis. */
+    /**
+     * A straight piece of road along one axis.
+     */
     public record Road(int fromX, int fromZ, int toX, int toZ) {
 
         public boolean alongX() {
@@ -149,7 +165,9 @@ public final class CasinoLayout {
         return new CasinoLayout(size, columns, extent, arenas);
     }
 
-    /** How many arenas a grid of that many columns holds, plaza centre excluded. */
+    /**
+     * How many arenas a grid of that many columns holds, plaza centre excluded.
+     */
     public static int capacity(int columns) {
         int side = 2 * (Math.max(2, columns) / 2) + 1;
         return side * side - 1;
@@ -163,7 +181,9 @@ public final class CasinoLayout {
         return columns;
     }
 
-    /** Blocks between spawn and the outermost arena edge, margin included. */
+    /**
+     * Blocks between spawn and the outermost arena edge, margin included.
+     */
     public int extent() {
         return extent;
     }
@@ -187,7 +207,9 @@ public final class CasinoLayout {
         return arena.centerX() > 0 ? Edge.WEST : Edge.EAST;
     }
 
-    /** Roads, in two legs per arena: along the X axis and then along the Z axis. */
+    /**
+     * Roads, in two legs per arena: along the X axis and then along the Z axis.
+     */
     public List<Road> roads() {
         List<Road> roads = new ArrayList<>(arenas.size() * 2);
         for (Arena arena : arenas) {

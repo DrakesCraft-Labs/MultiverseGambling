@@ -33,7 +33,9 @@ public final class ColorWheel {
         this.houseEdge = houseEdge;
     }
 
-    /** 18 red, 18 black and 1 green: the European wheel. */
+    /**
+     * 18 red, 18 black and 1 green: the European wheel.
+     */
     public static ColorWheel european() {
         return new ColorWheel(18, 18, 1, 0.027);
     }
@@ -50,18 +52,24 @@ public final class ColorWheel {
         };
     }
 
-    /** Real probability of each colour. */
+    /**
+     * Real probability of each colour.
+     */
     public double chance(Outcome outcome) {
         return (double) pockets(outcome) / pockets();
     }
 
-    /** Payment of each colour, rounded down to 2 decimals. */
+    /**
+     * Payment of each colour, rounded down to 2 decimals.
+     */
     public double payout(Outcome outcome) {
         double fair = (1.0 - houseEdge) / chance(outcome);
         return Math.floor(fair * 100.0) / 100.0;
     }
 
-    /** The return is the same backing any colour. */
+    /**
+     * The return is the same backing any colour.
+     */
     public double rtp(Outcome outcome) {
         return chance(outcome) * payout(outcome);
     }

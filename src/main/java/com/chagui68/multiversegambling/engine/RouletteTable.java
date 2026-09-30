@@ -35,13 +35,17 @@ public final class RouletteTable {
             this.payout = payout;
         }
 
-        /** Multiplier over the stake, already including the return of the capital. */
+        /**
+         * Multiplier over the stake, already including the return of the capital.
+         */
         public double payout() {
             return payout;
         }
     }
 
-    /** Represents "00" on the American wheel. */
+    /**
+     * Represents "00" on the American wheel.
+     */
     public static final int DOUBLE_ZERO = 37;
 
     private static final Set<Integer> RED = Set.of(
@@ -78,7 +82,9 @@ public final class RouletteTable {
         return pockets.size();
     }
 
-    /** Number of pockets that make each bet type win. */
+    /**
+     * Number of pockets that make each bet type win.
+     */
     private static int winningPockets(Bet bet) {
         return switch (bet) {
             case NUMBER -> 1;

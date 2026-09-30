@@ -4,6 +4,7 @@ import com.chagui68.multiversegambling.MultiverseGamblingPlugin;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
@@ -18,7 +19,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-/** Record of everything that happens in the casino, stored in {@code stats.json}. */
+/**
+ * Record of everything that happens in the casino, stored in {@code stats.json}.
+ */
 public final class StatsStore {
 
     private static final Type MAP_TYPE = new TypeToken<Map<String, PlayerStats>>() {
@@ -65,7 +68,9 @@ public final class StatsStore {
         entry.biggestLoss = Math.max(entry.biggestLoss, bet - payout);
     }
 
-    /** Ranking by net profit. */
+    /**
+     * Ranking by net profit.
+     */
     public List<TopEntry> topByProfit(int limit) {
         return ranking(Comparator.comparingDouble((TopEntry entry) -> entry.stats().profit()).reversed(), limit);
     }
@@ -96,7 +101,9 @@ public final class StatsStore {
         return name == null ? playerId.toString().substring(0, 8) : name;
     }
 
-    /** Total money the house has won. */
+    /**
+     * Total money the house has won.
+     */
     public double houseProfit() {
         double profit = 0;
         for (PlayerStats entry : stats.values()) {

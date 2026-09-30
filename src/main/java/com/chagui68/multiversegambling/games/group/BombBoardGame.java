@@ -8,11 +8,13 @@ import com.chagui68.multiversegambling.game.GameCategory;
 import com.chagui68.multiversegambling.game.GameMeta;
 import com.chagui68.multiversegambling.gui.Gui;
 import com.chagui68.multiversegambling.util.Items;
+
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
@@ -167,7 +169,9 @@ public final class BombBoardGame extends AbstractGroupGame {
         soundAll(Sound.BLOCK_ANVIL_LAND, 0.6f, 1.2f);
     }
 
-    /** A player reveals a tile. */
+    /**
+     * A player reveals a tile.
+     */
     public void reveal(UUID playerId, int cell) {
         if (cell < 0 || cell >= size() || revealed.contains(cell)) {
             return;
@@ -290,7 +294,9 @@ public final class BombBoardGame extends AbstractGroupGame {
         counting = false;
     }
 
-    /** Shared board that only the player holding the turn can click. */
+    /**
+     * Shared board that only the player holding the turn can click.
+     */
     private final class BombBoardGui extends Gui {
 
         private static final ItemStack FILLER = Items.of(Material.BLACK_STAINED_GLASS_PANE).name(" ").build();

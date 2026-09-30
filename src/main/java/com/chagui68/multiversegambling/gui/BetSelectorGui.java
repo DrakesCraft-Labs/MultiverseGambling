@@ -4,7 +4,9 @@ import com.chagui68.multiversegambling.MultiverseGamblingPlugin;
 import com.chagui68.multiversegambling.config.Messages;
 import com.chagui68.multiversegambling.game.Game;
 import com.chagui68.multiversegambling.util.Items;
+
 import java.util.function.DoubleConsumer;
+
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -124,7 +126,9 @@ public final class BetSelectorGui extends Gui {
         });
     }
 
-    /** Places a labelled button that runs the given action when clicked. */
+    /**
+     * Places a labelled button that runs the given action when clicked.
+     */
     private void button(int slot, Material material, String nameKey, String loreKey,
                         java.util.function.Consumer<InventoryClickEvent> action) {
         Player viewer = player();

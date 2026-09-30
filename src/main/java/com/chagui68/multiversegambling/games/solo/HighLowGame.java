@@ -9,7 +9,9 @@ import com.chagui68.multiversegambling.game.GameMeta;
 import com.chagui68.multiversegambling.gui.Gui;
 import com.chagui68.multiversegambling.util.Items;
 import com.chagui68.multiversegambling.util.Text;
+
 import java.util.concurrent.ThreadLocalRandom;
+
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
@@ -48,7 +50,9 @@ public final class HighLowGame extends AbstractSoloGame {
         return count;
     }
 
-    /** Multiplier of one step, according to how many favourable ranks are left. */
+    /**
+     * Multiplier of one step, according to how many favourable ranks are left.
+     */
     double stepMultiplier(int rank, boolean higher, double houseEdge) {
         int favourable = rankCount(rank, higher);
         if (favourable <= 0) {
@@ -120,7 +124,7 @@ public final class HighLowGame extends AbstractSoloGame {
                                     "steps", steps, "max", plugin.config().highLowMaxChain()),
                             steps > 0
                                     ? label(player(), "panel.high-low.cash-pays", "prize",
-                                            plugin.economy().format(wager.amount() * chain))
+                                    plugin.economy().format(wager.amount() * chain))
                                     : label(player(), "panel.high-low.no-hits"))
                     .glow(true)
                     .build());
@@ -150,7 +154,7 @@ public final class HighLowGame extends AbstractSoloGame {
                             : label(player(), "panel.high-low.nothing"))
                     .lore(steps > 0
                             ? label(player(), "panel.high-low.cash-lore", "prize",
-                                    plugin.economy().format(wager.amount() * chain))
+                            plugin.economy().format(wager.amount() * chain))
                             : label(player(), "panel.high-low.cash-first"))
                     .glow(steps > 0 && !resolved)
                     .build(), e -> cashOut());

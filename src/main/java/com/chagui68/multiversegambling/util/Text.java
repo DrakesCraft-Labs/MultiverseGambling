@@ -2,12 +2,15 @@ package com.chagui68.multiversegambling.util;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
-/** All plugin text goes through here: colours, placeholders and number formatting. */
+/**
+ * All plugin text goes through here: colours, placeholders and number formatting.
+ */
 public final class Text {
 
     private static final LegacyComponentSerializer LEGACY =
@@ -16,7 +19,9 @@ public final class Text {
     private Text() {
     }
 
-    /** Turns "&aHello" into a Component. */
+    /**
+     * Turns "&aHello" into a Component.
+     */
     public static Component c(String legacy) {
         return LEGACY.deserialize(legacy == null ? "" : legacy);
     }
@@ -33,7 +38,9 @@ public final class Text {
         return lines(List.of(raw));
     }
 
-    /** Replaces {key} with its value: {@code fill("Hi {player}", "player", name)}. */
+    /**
+     * Replaces {key} with its value: {@code fill("Hi {player}", "player", name)}.
+     */
     public static String fill(String template, Object... replacements) {
         if (template == null) {
             return "";
@@ -48,7 +55,9 @@ public final class Text {
         return out;
     }
 
-    /** Same as {@link #fill(String, Object...)} for a whole block of lines. */
+    /**
+     * Same as {@link #fill(String, Object...)} for a whole block of lines.
+     */
     public static List<String> fillAll(List<String> templates, Object... replacements) {
         List<String> out = new ArrayList<>(templates.size());
         for (String template : templates) {
@@ -57,7 +66,9 @@ public final class Text {
         return out;
     }
 
-    /** Number with thousand separators and no decimals when they are not needed. */
+    /**
+     * Number with thousand separators and no decimals when they are not needed.
+     */
     public static String number(double value) {
         if (Math.abs(value - Math.rint(value)) < 1e-9) {
             return String.format("%,.0f", value);
@@ -73,7 +84,9 @@ public final class Text {
         return String.format("%.1f%%", ratio * 100.0);
     }
 
-    /** Chat progress bar, handy for the betting windows. */
+    /**
+     * Chat progress bar, handy for the betting windows.
+     */
     public static String bar(double ratio, int length, String filled, String empty) {
         int done = (int) Math.round(Math.max(0, Math.min(1, ratio)) * length);
         return filled.repeat(done) + empty.repeat(length - done);
@@ -91,7 +104,9 @@ public final class Text {
         return component;
     }
 
-    /** Strips colour codes so text can be measured or logged in plain form. */
+    /**
+     * Strips colour codes so text can be measured or logged in plain form.
+     */
     public static String strip(String legacy) {
         return legacy == null ? "" : legacy.replaceAll("(?i)&[0-9a-fk-or]", "");
     }

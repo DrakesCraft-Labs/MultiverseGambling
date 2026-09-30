@@ -58,7 +58,9 @@ public final class TowersGame extends AbstractSoloGame {
 
         private final TowersGame game;
         private final Wager wager;
-        /** Bomb of each cleared floor, so it can be drawn at the end. */
+        /**
+         * Bomb of each cleared floor, so it can be drawn at the end.
+         */
         private final java.util.Map<Integer, Integer> bombs = new java.util.HashMap<>();
         private int level;
         private int currentBomb = -1;
@@ -95,7 +97,7 @@ public final class TowersGame extends AbstractSoloGame {
                                     "multiplier", Text.multiplier(current)),
                             finished ? label(player(), "panel.towers.top")
                                     : label(player(), "panel.towers.next",
-                                            "multiplier", Text.multiplier(next)),
+                                    "multiplier", Text.multiplier(next)),
                             label(player(), "panel.towers.bombs", "count", game.bombs()),
                             "",
                             level == 0 ? label(player(), "panel.towers.first")
@@ -141,11 +143,11 @@ public final class TowersGame extends AbstractSoloGame {
                         .name(level == 0
                                 ? label(player(), "panel.towers.start")
                                 : label(player(), "panel.towers.cash-out",
-                                        "multiplier", Text.multiplier(current)))
+                                "multiplier", Text.multiplier(current)))
                         .lore(level == 0
                                 ? label(player(), "panel.towers.start-lore")
                                 : label(player(), "panel.towers.cash-out-lore",
-                                        "prize", plugin.economy().format(wager.amount() * current)))
+                                "prize", plugin.economy().format(wager.amount() * current)))
                         .glow(level > 0)
                         .build(), e -> cashOut());
             }

@@ -23,7 +23,9 @@ public final class WeightedTable<T> {
         return new WeightedTable<>();
     }
 
-    /** Adds a value with its weight. Weights <= 0 are ignored. */
+    /**
+     * Adds a value with its weight. Weights <= 0 are ignored.
+     */
     public WeightedTable<T> add(T value, double weight) {
         if (weight <= 0 || Double.isNaN(weight)) {
             return this;
@@ -62,7 +64,9 @@ public final class WeightedTable<T> {
         return 0;
     }
 
-    /** Exact chance (0..1) of {@code value} coming up. */
+    /**
+     * Exact chance (0..1) of {@code value} coming up.
+     */
     public double probability(T value) {
         return total <= 0 ? 0 : weightOf(value) / total;
     }

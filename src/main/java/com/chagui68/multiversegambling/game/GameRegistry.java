@@ -2,15 +2,19 @@ package com.chagui68.multiversegambling.game;
 
 import com.chagui68.multiversegambling.MultiverseGamblingPlugin;
 import com.chagui68.multiversegambling.util.Text;
+
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+
 import org.bukkit.entity.Player;
 
-/** Game catalogue and the single place that ticks, closes and announces. */
+/**
+ * Game catalogue and the single place that ticks, closes and announces.
+ */
 public final class GameRegistry {
 
     private final MultiverseGamblingPlugin plugin;
@@ -69,7 +73,9 @@ public final class GameRegistry {
         return games.values().stream().filter(Game::enabled).toList();
     }
 
-    /** The game a player is currently inside, if any. */
+    /**
+     * The game a player is currently inside, if any.
+     */
     public Optional<Game> activeGameOf(UUID playerId) {
         for (Game game : games.values()) {
             if (game.ownsPlayer(playerId)) {
@@ -79,7 +85,9 @@ public final class GameRegistry {
         return Optional.empty();
     }
 
-    /** Announces big wins so the whole server sees them. */
+    /**
+     * Announces big wins so the whole server sees them.
+     */
     public void announceWin(Player player, double bet, double payout) {
         double profit = payout - bet;
         if (!plugin.config().announceWins() || profit < plugin.config().announceThreshold()) {
@@ -91,7 +99,9 @@ public final class GameRegistry {
                 "profit", plugin.economy().format(profit))));
     }
 
-    /** Refunds unfinished games and stops every clock. */
+    /**
+     * Refunds unfinished games and stops every clock.
+     */
     public void shutdownAll() {
         for (Game game : games.values()) {
             try {

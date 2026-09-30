@@ -3,14 +3,18 @@ package com.chagui68.multiversegambling.listener;
 import com.chagui68.multiversegambling.MultiverseGamblingPlugin;
 import com.chagui68.multiversegambling.game.AbstractGroupGame;
 import com.chagui68.multiversegambling.game.Game;
+
 import java.util.UUID;
+
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
-/** Closes games and rooms when a player joins or leaves the server. */
+/**
+ * Closes games and rooms when a player joins or leaves the server.
+ */
 public final class PlayerListener implements Listener {
 
     private final MultiverseGamblingPlugin plugin;

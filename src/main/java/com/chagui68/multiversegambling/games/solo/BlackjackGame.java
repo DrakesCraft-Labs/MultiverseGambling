@@ -10,9 +10,11 @@ import com.chagui68.multiversegambling.game.GameMeta;
 import com.chagui68.multiversegambling.gui.Gui;
 import com.chagui68.multiversegambling.session.TimedSession;
 import com.chagui68.multiversegambling.util.Items;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
@@ -90,7 +92,9 @@ public final class BlackjackGame extends AbstractSoloGame {
         animation.run();
     }
 
-    /** Hits for the player. */
+    /**
+     * Hits for the player.
+     */
     void hit(Player player, Table table) {
         if (table.settled) {
             return;
@@ -105,7 +109,9 @@ public final class BlackjackGame extends AbstractSoloGame {
         table.gui().ifPresent(Gui::refresh);
     }
 
-    /** Stands: the dealer plays. */
+    /**
+     * Stands: the dealer plays.
+     */
     void stand(Player player, Table table) {
         if (table.settled) {
             return;
@@ -113,7 +119,9 @@ public final class BlackjackGame extends AbstractSoloGame {
         finish(player, table);
     }
 
-    /** Doubles down: takes another equal stake and deals one more card. */
+    /**
+     * Doubles down: takes another equal stake and deals one more card.
+     */
     void doubleDown(Player player, Table table) {
         if (table.settled || table.hits > 0 || table.playerCards.size() != 2) {
             return;
@@ -129,7 +137,9 @@ public final class BlackjackGame extends AbstractSoloGame {
         finish(player, table);
     }
 
-    /** Plays the dealer and settles the hand. */
+    /**
+     * Plays the dealer and settles the hand.
+     */
     private void finish(Player player, Table table) {
         if (table.settled) {
             return;
@@ -165,7 +175,7 @@ public final class BlackjackGame extends AbstractSoloGame {
         boolean won = payout > table.wager.amount() * (table.doubled ? 2 : 1);
         announceResult(player, won, payout > 0
                 ? plugin.messages().forSender(player, "panel.blackjack.prize-subtitle",
-                        "prize", plugin.economy().format(payout))
+                "prize", plugin.economy().format(payout))
                 : plugin.messages().forSender(player, "panel.common.no-prize"));
         info(player, title(player));
         message(player, "panel.blackjack.your-hand",
@@ -186,7 +196,9 @@ public final class BlackjackGame extends AbstractSoloGame {
         offerReplay(player);
     }
 
-    /** State of one blackjack table. */
+    /**
+     * State of one blackjack table.
+     */
     final class Table {
 
         private final Card.Deck deck = new Card.Deck(BlackjackGame.this.plugin.config().blackjackDecks());
@@ -234,7 +246,9 @@ public final class BlackjackGame extends AbstractSoloGame {
         }
     }
 
-    /** Table: cards on top and actions below. */
+    /**
+     * Table: cards on top and actions below.
+     */
     private final class BlackjackGui extends Gui {
 
         private final BlackjackGame game;
@@ -325,7 +339,7 @@ public final class BlackjackGame extends AbstractSoloGame {
                         .lore(hole
                                 ? label(player(), "panel.blackjack.face-down")
                                 : label(player(), "panel.blackjack.worth",
-                                        "value", card.blackjackValue()))
+                                "value", card.blackjackValue()))
                         .build());
             }
         }

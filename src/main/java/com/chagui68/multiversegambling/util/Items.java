@@ -2,11 +2,14 @@ package com.chagui68.multiversegambling.util;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
-/** Item builder for the menus, with colour and optional glow. */
+/**
+ * Item builder for the menus, with colour and optional glow.
+ */
 public final class Items {
 
     private Items() {
@@ -16,7 +19,9 @@ public final class Items {
         return new Builder(material);
     }
 
-    /** Decorative item with no name or actions, used to fill borders. */
+    /**
+     * Decorative item with no name or actions, used to fill borders.
+     */
     public static ItemStack filler(Material material) {
         return new Builder(material).name(" ").build();
     }

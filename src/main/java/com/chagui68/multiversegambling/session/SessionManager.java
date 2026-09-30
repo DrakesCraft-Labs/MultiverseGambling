@@ -1,11 +1,13 @@
 package com.chagui68.multiversegambling.session;
 
 import com.chagui68.multiversegambling.MultiverseGamblingPlugin;
+
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+
 import org.bukkit.scheduler.BukkitTask;
 
 /**
@@ -21,7 +23,9 @@ public final class SessionManager {
     private final Map<String, AbstractGroupTicker> tickers = new LinkedHashMap<>();
     private BukkitTask task;
 
-    /** Lets the group games hook into the same clock. */
+    /**
+     * Lets the group games hook into the same clock.
+     */
     public interface AbstractGroupTicker {
         void tick();
     }
@@ -58,7 +62,9 @@ public final class SessionManager {
         return session != null && session.active();
     }
 
-    /** Closes the session of one player, for example when they disconnect. */
+    /**
+     * Closes the session of one player, for example when they disconnect.
+     */
     public void cancel(UUID playerId) {
         SoloSession session = sessions.remove(playerId);
         if (session != null) {

@@ -12,7 +12,9 @@ import java.util.Map;
  */
 public final class SlotsTable {
 
-    /** One reel symbol: look, frequency and what it pays. */
+    /**
+     * One reel symbol: look, frequency and what it pays.
+     */
     public record Symbol(String id, String glyph, double weight, double triple, double pair) {
 
         public static Symbol of(String id, String glyph, double weight, double triple) {
@@ -73,7 +75,9 @@ public final class SlotsTable {
         return reels;
     }
 
-    /** Multiplier paid for a combination of 3 reels. */
+    /**
+     * Multiplier paid for a combination of 3 reels.
+     */
     public double payout(List<Symbol> reels) {
         if (reels.size() != 3) {
             throw new IllegalArgumentException("3 reels are expected");
@@ -112,7 +116,9 @@ public final class SlotsTable {
         return expected;
     }
 
-    /** Chance of every symbol, to show in the menu. */
+    /**
+     * Chance of every symbol, to show in the menu.
+     */
     public double chanceOf(String id) {
         Symbol symbol = byId.get(id);
         return symbol == null ? 0 : table.probability(symbol);

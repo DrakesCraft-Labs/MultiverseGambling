@@ -1,12 +1,14 @@
 package com.chagui68.multiversegambling.economy;
 
 import com.chagui68.multiversegambling.MultiverseGamblingPlugin;
+
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Map;
 import java.util.UUID;
+
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.plugin.Plugin;
@@ -62,7 +64,7 @@ public final class SbankEconomy implements EconomyProvider {
 
     /**
      * @return the bridge, or {@code null} when sBank is missing, disabled or too different
-     *     from the version this bridge knows
+     * from the version this bridge knows
      */
     public static EconomyProvider tryHook(MultiverseGamblingPlugin plugin) {
         Plugin sbank = Bukkit.getPluginManager().getPlugin("sBank");
@@ -141,7 +143,9 @@ public final class SbankEconomy implements EconomyProvider {
         return false;
     }
 
-    /** Writes the new balance, persists it and records the movement in the bank audit log. */
+    /**
+     * Writes the new balance, persists it and records the movement in the bank audit log.
+     */
     private boolean move(UUID playerId, double delta, boolean absolute, String action, String note) {
         Object bank = account(playerId);
         if (bank == null) {
@@ -170,7 +174,9 @@ public final class SbankEconomy implements EconomyProvider {
         }
     }
 
-    /** Records the movement in the bank audit file, exactly like a bank command would. */
+    /**
+     * Records the movement in the bank audit file, exactly like a bank command would.
+     */
     private void audit(String action, Object bank, UUID playerId, double amount,
                        double before, double after, String note) {
         if (getAuditLogger == null || record == null) {
@@ -189,7 +195,9 @@ public final class SbankEconomy implements EconomyProvider {
         }
     }
 
-    /** The bank of a player: from memory when they are online, from the database when not. */
+    /**
+     * The bank of a player: from memory when they are online, from the database when not.
+     */
     private Object account(UUID playerId) {
         String username = name(playerId);
         if (username == null) {
@@ -217,7 +225,9 @@ public final class SbankEconomy implements EconomyProvider {
         return offline.getName();
     }
 
-    /** Same precision the bank stores: two decimals, half up. */
+    /**
+     * Same precision the bank stores: two decimals, half up.
+     */
     private static double normalise(double amount) {
         if (!Double.isFinite(amount)) {
             return 0.0;
@@ -232,7 +242,9 @@ public final class SbankEconomy implements EconomyProvider {
                 + cause.getClass().getSimpleName() + ": " + cause.getMessage());
     }
 
-    /** Members resolved once, so a partial sBank can be rejected before anything runs. */
+    /**
+     * Members resolved once, so a partial sBank can be rejected before anything runs.
+     */
     private record Members(Method getBanks, Method getBalance, Method setBalance, Method getUsername,
                            Method persistBank, Method getDatabase, Method getBank,
                            Method getAuditLogger, Method record) {

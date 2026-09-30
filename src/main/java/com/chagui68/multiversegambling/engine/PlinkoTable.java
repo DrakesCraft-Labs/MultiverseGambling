@@ -16,7 +16,9 @@ public final class PlinkoTable {
     private PlinkoTable() {
     }
 
-    /** Binomial chance of ending in {@code bucket} with {@code rows} rows. */
+    /**
+     * Binomial chance of ending in {@code bucket} with {@code rows} rows.
+     */
     public static double bucketChance(int rows, int bucket) {
         if (rows <= 0 || bucket < 0 || bucket > rows) {
             throw new IllegalArgumentException("bucket out of range");
@@ -58,7 +60,9 @@ public final class PlinkoTable {
         return bucket;
     }
 
-    /** Sequence of directions (false = left, true = right) to animate the fall. */
+    /**
+     * Sequence of directions (false = left, true = right) to animate the fall.
+     */
     public static List<Boolean> path(int rows) {
         List<Boolean> out = new ArrayList<>(rows);
         for (int i = 0; i < rows; i++) {
@@ -67,7 +71,9 @@ public final class PlinkoTable {
         return out;
     }
 
-    /** Theoretical return to the player of a given table. */
+    /**
+     * Theoretical return to the player of a given table.
+     */
     public static double rtp(double[] table, int rows, double cap) {
         double expected = 0;
         for (int bucket = 0; bucket < table.length; bucket++) {

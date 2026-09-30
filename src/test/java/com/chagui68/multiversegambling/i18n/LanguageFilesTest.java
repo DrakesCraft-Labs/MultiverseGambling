@@ -13,6 +13,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 import org.junit.jupiter.api.Test;
 import org.yaml.snakeyaml.Yaml;
 
@@ -25,7 +26,9 @@ import org.yaml.snakeyaml.Yaml;
  */
 class LanguageFilesTest {
 
-    /** Every game of the catalogue: each one must have its own translated section. */
+    /**
+     * Every game of the catalogue: each one must have its own translated section.
+     */
     private static final List<String> GAME_IDS = List.of(
             "roulette", "slots", "crash", "mines", "towers", "blackjack", "high-low", "dice",
             "plinko", "scratch", "lucky-wheel", "coin-flip", "color-roulette", "jackpot",
@@ -92,7 +95,9 @@ class LanguageFilesTest {
         assertTrue(missingInEnglish.isEmpty(), "lang/en.yml is missing: " + missingInEnglish);
     }
 
-    /** Keys that both files have to share, leaving the catalogue overrides aside. */
+    /**
+     * Keys that both files have to share, leaving the catalogue overrides aside.
+     */
     private static Set<String> comparable(Set<String> keys) {
         Set<String> out = new TreeSet<>();
         for (String key : keys) {

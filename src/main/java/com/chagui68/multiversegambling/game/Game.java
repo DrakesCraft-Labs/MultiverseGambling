@@ -2,6 +2,7 @@ package com.chagui68.multiversegambling.game;
 
 import java.util.List;
 import java.util.UUID;
+
 import org.bukkit.Material;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -37,10 +38,14 @@ public interface Game {
         return meta().description();
     }
 
-    /** Game name in the language of the viewer. */
+    /**
+     * Game name in the language of the viewer.
+     */
     String displayName(CommandSender viewer);
 
-    /** Description in the language of the viewer, line by line. */
+    /**
+     * Description in the language of the viewer, line by line.
+     */
     List<String> displayDescription(CommandSender viewer);
 
     default String permission() {
@@ -65,7 +70,9 @@ public interface Game {
 
     boolean enabled();
 
-    /** Enters the game: opens the bet selector or the waiting room. */
+    /**
+     * Enters the game: opens the bet selector or the waiting room.
+     */
     void open(Player player);
 
     /**
@@ -83,17 +90,23 @@ public interface Game {
         return false;
     }
 
-    /** Extra menu line with the current state, in the language of the viewer. */
+    /**
+     * Extra menu line with the current state, in the language of the viewer.
+     */
     default List<String> statusLore(CommandSender viewer) {
         return List.of();
     }
 
-    /** How many people are waiting or playing right now. */
+    /**
+     * How many people are waiting or playing right now.
+     */
     default int activePlayers() {
         return 0;
     }
 
-    /** Orderly shutdown: refunds the money of unfinished games. */
+    /**
+     * Orderly shutdown: refunds the money of unfinished games.
+     */
     default void shutdown() {
     }
 }

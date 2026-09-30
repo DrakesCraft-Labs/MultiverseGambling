@@ -1,7 +1,9 @@
 package com.chagui68.multiversegambling.session;
 
 import com.chagui68.multiversegambling.MultiverseGamblingPlugin;
+
 import java.util.UUID;
+
 import org.bukkit.entity.Player;
 
 /**
@@ -28,7 +30,9 @@ public abstract class TimedSession implements SoloSession {
         this.duration = Math.max(1, duration);
     }
 
-    /** Starts the animation, registering it on the central clock. */
+    /**
+     * Starts the animation, registering it on the central clock.
+     */
     public final void run() {
         plugin.sessions().track(this);
     }
@@ -79,21 +83,31 @@ public abstract class TimedSession implements SoloSession {
         return plugin.getServer().getPlayer(playerId);
     }
 
-    /** First tick: opening sound, title and so on. */
+    /**
+     * First tick: opening sound, title and so on.
+     */
     protected void onStart() {
     }
 
-    /** Called on every tick with the current index and the total duration. */
+    /**
+     * Called on every tick with the current index and the total duration.
+     */
     protected abstract void onFrame(int elapsed, int duration);
 
-    /** Last tick: the result is handed over here. */
+    /**
+     * Last tick: the result is handed over here.
+     */
     protected abstract void onFinish();
 
-    /** The player left or the plugin shut down before finishing. */
+    /**
+     * The player left or the plugin shut down before finishing.
+     */
     protected void onCancel() {
     }
 
-    /** Helper for animations that only want to know the progress. */
+    /**
+     * Helper for animations that only want to know the progress.
+     */
     protected double progress(int elapsed) {
         return (double) elapsed / duration;
     }

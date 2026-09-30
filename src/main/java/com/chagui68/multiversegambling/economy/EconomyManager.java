@@ -2,10 +2,14 @@ package com.chagui68.multiversegambling.economy;
 
 import com.chagui68.multiversegambling.MultiverseGamblingPlugin;
 import com.chagui68.multiversegambling.util.Text;
+
 import java.util.UUID;
+
 import org.bukkit.entity.Player;
 
-/** The single place where casino money comes in and goes out. */
+/**
+ * The single place where casino money comes in and goes out.
+ */
 public final class EconomyManager {
 
     private final MultiverseGamblingPlugin plugin;
@@ -73,7 +77,9 @@ public final class EconomyManager {
         return provider.set(playerId, amount);
     }
 
-    /** Grants the welcome account the first time a player comes in. */
+    /**
+     * Grants the welcome account the first time a player comes in.
+     */
     public void ensureAccount(Player player) {
         if (provider.createAccountIfMissing(player.getUniqueId(), startingBalance)) {
             plugin.messages().send(player, "economy.account-created", "balance", format(startingBalance));
@@ -95,7 +101,9 @@ public final class EconomyManager {
         return new Wager(this, player.getUniqueId(), amount);
     }
 
-    /** Creates an already charged bet (for internal payouts or tests). */
+    /**
+     * Creates an already charged bet (for internal payouts or tests).
+     */
     public Wager wager(UUID playerId, double amount) {
         return new Wager(this, playerId, amount);
     }
@@ -108,7 +116,9 @@ public final class EconomyManager {
         return formatted;
     }
 
-    /** Compact format for menu lore. */
+    /**
+     * Compact format for menu lore.
+     */
     public String shortFormat(double amount) {
         if (Math.abs(amount) >= 1_000_000_000) {
             return String.format("%,.1fMM", amount / 1_000_000_000);

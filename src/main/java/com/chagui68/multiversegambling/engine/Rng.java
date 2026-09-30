@@ -17,12 +17,16 @@ public final class Rng {
         return ThreadLocalRandom.current();
     }
 
-    /** Uniform in [0, 1). */
+    /**
+     * Uniform in [0, 1).
+     */
     public static double next() {
         return ThreadLocalRandom.current().nextDouble();
     }
 
-    /** Uniform integer in [min, max], both included. */
+    /**
+     * Uniform integer in [min, max], both included.
+     */
     public static int intBetween(int min, int max) {
         if (max < min) {
             throw new IllegalArgumentException("max (" + max + ") < min (" + min + ")");
@@ -30,7 +34,9 @@ public final class Rng {
         return min + ThreadLocalRandom.current().nextInt(max - min + 1);
     }
 
-    /** {@code true} with the given probability (0..1). */
+    /**
+     * {@code true} with the given probability (0..1).
+     */
     public static boolean chance(double probability) {
         if (probability <= 0) {
             return false;
@@ -52,7 +58,9 @@ public final class Rng {
         return values[ThreadLocalRandom.current().nextInt(values.length)];
     }
 
-    /** Shuffles in place with Fisher-Yates. */
+    /**
+     * Shuffles in place with Fisher-Yates.
+     */
     public static <T> void shuffle(List<T> values) {
         for (int i = values.size() - 1; i > 0; i--) {
             int j = ThreadLocalRandom.current().nextInt(i + 1);
@@ -62,7 +70,9 @@ public final class Rng {
         }
     }
 
-    /** Rolls {@code count} dice with {@code sides} faces. */
+    /**
+     * Rolls {@code count} dice with {@code sides} faces.
+     */
     public static int[] dice(int count, int sides) {
         int[] out = new int[count];
         for (int i = 0; i < count; i++) {

@@ -10,8 +10,10 @@ import com.chagui68.multiversegambling.game.GameMeta;
 import com.chagui68.multiversegambling.gui.Gui;
 import com.chagui68.multiversegambling.util.Items;
 import com.chagui68.multiversegambling.util.Text;
+
 import java.util.ArrayList;
 import java.util.List;
+
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
@@ -44,7 +46,9 @@ public final class ScratchCardGame extends AbstractSoloGame {
         new ScratchGui(plugin, player, this, wager, card).show();
     }
 
-    /** Pays the card according to the player's picks. */
+    /**
+     * Pays the card according to the player's picks.
+     */
     public double resolve(Player player, Wager wager, List<Face> picked) {
         return settle(player, wager, table.payout(picked));
     }
@@ -60,7 +64,9 @@ public final class ScratchCardGame extends AbstractSoloGame {
         };
     }
 
-    /** Name of a card face in the language of the reader. */
+    /**
+     * Name of a card face in the language of the reader.
+     */
     String faceName(Player viewer, Face face) {
         return plugin.messages().forSenderOr(viewer, "panel.scratch.face." + face.id(), face.id());
     }

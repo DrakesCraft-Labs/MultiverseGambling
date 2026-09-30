@@ -13,7 +13,9 @@ public final class HorseOdds {
     private HorseOdds() {
     }
 
-    /** A horse with its strength (chance of winning) and the associated payout. */
+    /**
+     * A horse with its strength (chance of winning) and the associated payout.
+     */
     public record Runner(int index, double strength, double odds) {
     }
 
@@ -38,7 +40,9 @@ public final class HorseOdds {
         return field;
     }
 
-    /** Picks the winner respecting the strength of every horse. */
+    /**
+     * Picks the winner respecting the strength of every horse.
+     */
     public static Runner winner(List<Runner> field) {
         WeightedTable<Runner> table = WeightedTable.of();
         for (Runner runner : field) {

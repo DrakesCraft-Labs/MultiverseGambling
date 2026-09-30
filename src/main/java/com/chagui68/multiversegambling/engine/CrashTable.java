@@ -15,8 +15,8 @@ public final class CrashTable {
     }
 
     /**
-     * @param u          uniform in [0,1), ideally from a provably fair roll
-     * @param houseEdge  house edge, for example 0.01
+     * @param u         uniform in [0,1), ideally from a provably fair roll
+     * @param houseEdge house edge, for example 0.01
      * @return crash point truncated to 2 decimals, never below 1.00
      */
     public static double crashPoint(double u, double houseEdge) {
@@ -30,7 +30,9 @@ public final class CrashTable {
         return Math.max(1.00, Math.floor(raw * 100.0) / 100.0);
     }
 
-    /** Multiplier visible after {@code seconds} played. */
+    /**
+     * Multiplier visible after {@code seconds} played.
+     */
     public static double multiplierAt(double seconds, double growthPerSecond) {
         if (seconds <= 0) {
             return 1.0;
@@ -38,7 +40,9 @@ public final class CrashTable {
         return Math.pow(growthPerSecond, seconds);
     }
 
-    /** Seconds the curve takes to reach {@code target}. */
+    /**
+     * Seconds the curve takes to reach {@code target}.
+     */
     public static double secondsToReach(double target, double growthPerSecond) {
         if (target <= 1.0) {
             return 0;
@@ -57,7 +61,9 @@ public final class CrashTable {
         return (1.0 - houseEdge) / target;
     }
 
-    /** Growth rate so the curve doubles every {@code doubleEverySeconds}. */
+    /**
+     * Growth rate so the curve doubles every {@code doubleEverySeconds}.
+     */
     public static double growthRate(double doubleEverySeconds) {
         return Math.pow(2.0, 1.0 / doubleEverySeconds);
     }

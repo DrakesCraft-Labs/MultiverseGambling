@@ -15,13 +15,21 @@ import java.util.Locale;
  */
 public final class EconomyProviders {
 
-    /** Try every engine, in the configured order. */
+    /**
+     * Try every engine, in the configured order.
+     */
     public static final String AUTO = "auto";
-    /** The economy the server registers through Vault. */
+    /**
+     * The economy the server registers through Vault.
+     */
     public static final String VAULT = "vault";
-    /** The bank accounts of the sBank plugin. */
+    /**
+     * The bank accounts of the sBank plugin.
+     */
     public static final String SBANK = "sbank";
-    /** The wallet that ships with the casino. */
+    /**
+     * The wallet that ships with the casino.
+     */
     public static final String INTERNAL = "internal";
 
     /**
@@ -40,7 +48,7 @@ public final class EconomyProviders {
      * @param mode      value of {@code economy.provider}
      * @param autoOrder value of {@code economy.auto-order}, may be null or empty
      * @return at least one engine, always ending with {@link #INTERNAL} so the plugin
-     *     always has a wallet to fall back to
+     * always has a wallet to fall back to
      */
     public static List<String> candidates(String mode, List<String> autoOrder) {
         String wanted = mode == null || mode.isBlank() ? AUTO : normalise(mode);
@@ -85,7 +93,9 @@ public final class EconomyProviders {
         };
     }
 
-    /** True when the input names one of the engines this plugin knows. */
+    /**
+     * True when the input names one of the engines this plugin knows.
+     */
     public static boolean isKnown(String value) {
         return normalise(value) != null;
     }

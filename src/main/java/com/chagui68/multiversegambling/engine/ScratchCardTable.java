@@ -14,7 +14,9 @@ import java.util.function.DoubleSupplier;
  */
 public final class ScratchCardTable {
 
-    /** Faces of the card and how often they come up. */
+    /**
+     * Faces of the card and how often they come up.
+     */
     public enum Face {
         CHERRY("cherry", 40, 3.0),
         LEMON("lemon", 30, 2.0),
@@ -41,17 +43,25 @@ public final class ScratchCardTable {
             return weight;
         }
 
-        /** Payout for hitting three of a kind. */
+        /**
+         * Payout for hitting three of a kind.
+         */
         public double triple() {
             return triple;
         }
     }
 
-    /** Tiles on the card. */
+    /**
+     * Tiles on the card.
+     */
     public static final int CELLS = 9;
-    /** Reveals the player makes. */
+    /**
+     * Reveals the player makes.
+     */
     public static final int PICKS = 3;
-    /** Payout for hitting exactly two of a kind. */
+    /**
+     * Payout for hitting exactly two of a kind.
+     */
     public static final double PAIR_PAYOUT = 1.15;
 
     private final WeightedTable<Face> table = build();
@@ -80,7 +90,9 @@ public final class ScratchCardTable {
         return table.probability(face);
     }
 
-    /** Payout according to the three tiles the player revealed. */
+    /**
+     * Payout according to the three tiles the player revealed.
+     */
     public double payout(List<Face> picked) {
         if (picked.size() != PICKS) {
             throw new IllegalArgumentException("Exactly " + PICKS + " tiles are revealed");
@@ -106,7 +118,9 @@ public final class ScratchCardTable {
         return 0;
     }
 
-    /** Exact theoretical return to the player. */
+    /**
+     * Exact theoretical return to the player.
+     */
     public double rtp() {
         double expected = 0;
         for (Face face : Face.values()) {
@@ -120,7 +134,9 @@ public final class ScratchCardTable {
         return expected;
     }
 
-    /** Chance of scratching something, even if it is only a partial refund. */
+    /**
+     * Chance of scratching something, even if it is only a partial refund.
+     */
     public double hitChance() {
         double anyWin = 0;
         for (Face face : Face.values()) {

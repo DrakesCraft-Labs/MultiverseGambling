@@ -4,13 +4,17 @@ import com.chagui68.multiversegambling.MultiverseGamblingPlugin;
 import com.chagui68.multiversegambling.game.Game;
 import com.chagui68.multiversegambling.game.GameCategory;
 import com.chagui68.multiversegambling.util.Text;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.DoubleConsumer;
+
 import org.bukkit.entity.Player;
 
-/** Menu facade: the rest of the plugin only asks "open this". */
+/**
+ * Menu facade: the rest of the plugin only asks "open this".
+ */
 public final class GuiManager {
 
     private final MultiverseGamblingPlugin plugin;
@@ -41,7 +45,9 @@ public final class GuiManager {
         new StatsGui(plugin, player).show();
     }
 
-    /** Opens the bet selector, remembering how much the player staked last time. */
+    /**
+     * Opens the bet selector, remembering how much the player staked last time.
+     */
     public void openBetSelector(Player player, Game game, DoubleConsumer onConfirm) {
         if (!player.isOnline()) {
             return;
@@ -56,7 +62,9 @@ public final class GuiManager {
         }).show();
     }
 
-    /** Sends the provably fair audit block. */
+    /**
+     * Sends the provably fair audit block.
+     */
     public void sendVerify(Player player) {
         if (!player.isOnline()) {
             return;
@@ -71,7 +79,9 @@ public final class GuiManager {
                 plugin.fair().clientSeed(player.getUniqueId()));
     }
 
-    /** Reusable red warning. */
+    /**
+     * Reusable red warning.
+     */
     public void error(Player player, String key, Object... replacements) {
         player.sendMessage(Text.c(plugin.messages().prefixedFor(player, key, replacements)));
     }

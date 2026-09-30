@@ -4,6 +4,7 @@ import com.chagui68.multiversegambling.MultiverseGamblingPlugin;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
@@ -38,12 +39,16 @@ public final class LanguageStore {
         load();
     }
 
-    /** Chosen code, or {@code null} when the player never picked one. */
+    /**
+     * Chosen code, or {@code null} when the player never picked one.
+     */
     public String codeOf(UUID playerId) {
         return chosen.get(playerId);
     }
 
-    /** Stores the choice and writes it in the background. */
+    /**
+     * Stores the choice and writes it in the background.
+     */
     public void set(UUID playerId, String code) {
         if (code == null) {
             chosen.remove(playerId);
@@ -53,7 +58,9 @@ public final class LanguageStore {
         saveAsync();
     }
 
-    /** Forgets the choice, so the player falls back to their client language. */
+    /**
+     * Forgets the choice, so the player falls back to their client language.
+     */
     public void clear(UUID playerId) {
         if (chosen.remove(playerId) != null) {
             saveAsync();

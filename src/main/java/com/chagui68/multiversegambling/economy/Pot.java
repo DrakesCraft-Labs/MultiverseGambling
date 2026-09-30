@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.BiConsumer;
+
 import org.bukkit.entity.Player;
 
 /**
@@ -24,7 +25,9 @@ public final class Pot {
         this.economy = economy;
     }
 
-    /** Charges the bet and puts it in the pot. */
+    /**
+     * Charges the bet and puts it in the pot.
+     */
     public boolean add(Player player, double amount) {
         Wager wager = economy.stake(player, amount);
         if (wager == null) {
@@ -37,12 +40,16 @@ public final class Pot {
         return true;
     }
 
-    /** Adds an already created bet (for example, the one of a player who disconnected). */
+    /**
+     * Adds an already created bet (for example, the one of a player who disconnected).
+     */
     public void addRaw(UUID playerId, Wager wager) {
         wagers.put(playerId, wager);
     }
 
-    /** Takes the bet out of the pot and refunds the money if it was not settled yet. */
+    /**
+     * Takes the bet out of the pot and refunds the money if it was not settled yet.
+     */
     public void remove(UUID playerId) {
         Wager wager = wagers.remove(playerId);
         if (wager != null && !wager.isSettled()) {
@@ -91,17 +98,23 @@ public final class Pot {
         return out;
     }
 
-    /** Refunds all the money and empties the pot. */
+    /**
+     * Refunds all the money and empties the pot.
+     */
     public void refundAll() {
         settle((id, wager) -> wager.refund());
     }
 
-    /** The whole pot for one winner. */
+    /**
+     * The whole pot for one winner.
+     */
     public void payAllTo(UUID winner) {
         payAllTo(winner, 0);
     }
 
-    /** The whole pot for one winner, with a commission for the house. */
+    /**
+     * The whole pot for one winner, with a commission for the house.
+     */
     public void payAllTo(UUID winner, double houseCut) {
         double total = total();
         double prize = total * (1.0 - Math.max(0, Math.min(0.5, houseCut)));
@@ -114,7 +127,9 @@ public final class Pot {
         });
     }
 
-    /** Splits the pot evenly between several winners. */
+    /**
+     * Splits the pot evenly between several winners.
+     */
     public void shareAmong(Set<UUID> winners) {
         if (winners.isEmpty()) {
             refundAll();
@@ -147,13 +162,17 @@ public final class Pot {
         });
     }
 
-    /** Applies a result to every bet and empties the pot. */
+    /**
+     * Applies a result to every bet and empties the pot.
+     */
     public void settle(BiConsumer<UUID, Wager> settlement) {
         wagers.forEach(settlement);
         wagers.clear();
     }
 
-    /** Marks every bet as lost without paying anybody. */
+    /**
+     * Marks every bet as lost without paying anybody.
+     */
     public void burn() {
         settle((id, wager) -> wager.lose());
     }

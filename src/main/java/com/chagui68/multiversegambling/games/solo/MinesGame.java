@@ -9,10 +9,12 @@ import com.chagui68.multiversegambling.game.GameMeta;
 import com.chagui68.multiversegambling.gui.Gui;
 import com.chagui68.multiversegambling.util.Items;
 import com.chagui68.multiversegambling.util.Text;
+
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
@@ -85,7 +87,9 @@ public final class MinesGame extends AbstractSoloGame {
             return MinesTable.multiplier(tiles(), minesCount, revealed.size(), game.houseEdge());
         }
 
-        /** Places the mines with the provably fair shuffle of the casino. */
+        /**
+         * Places the mines with the provably fair shuffle of the casino.
+         */
         private void placeMines() {
             if (placed) {
                 return;
@@ -103,7 +107,9 @@ public final class MinesGame extends AbstractSoloGame {
             }
         }
 
-        /** 5x5 grid inside the six rows of the menu. */
+        /**
+         * 5x5 grid inside the six rows of the menu.
+         */
         private int slotOf(int index) {
             return 10 + (index / 5) * 9 + (index % 5);
         }
@@ -128,7 +134,7 @@ public final class MinesGame extends AbstractSoloGame {
                             label(player(), "panel.mines.revealed", "count", revealed.size()),
                             current > 0
                                     ? label(player(), "panel.mines.current",
-                                            "multiplier", Text.multiplier(current))
+                                    "multiplier", Text.multiplier(current))
                                     : label(player(), "panel.mines.nothing-revealed"),
                             label(player(), "panel.mines.next",
                                     "multiplier", Text.multiplier(next)),
@@ -190,11 +196,11 @@ public final class MinesGame extends AbstractSoloGame {
                         .name(revealed.isEmpty()
                                 ? label(player(), "panel.mines.start")
                                 : label(player(), "panel.mines.cash-out",
-                                        "multiplier", Text.multiplier(current)))
+                                "multiplier", Text.multiplier(current)))
                         .lore(revealed.isEmpty()
                                 ? label(player(), "panel.mines.start-lore")
                                 : label(player(), "panel.mines.cash-out-lore",
-                                        "prize", plugin.economy().format(wager.amount() * current)))
+                                "prize", plugin.economy().format(wager.amount() * current)))
                         .glow(!revealed.isEmpty())
                         .build(), e -> cashOut());
             }

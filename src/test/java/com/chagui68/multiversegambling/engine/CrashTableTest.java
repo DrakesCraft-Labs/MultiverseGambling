@@ -3,6 +3,7 @@ package com.chagui68.multiversegambling.engine;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import org.junit.jupiter.api.Test;
 
 class CrashTableTest {
@@ -31,7 +32,7 @@ class CrashTableTest {
     @Test
     void cashingOutAtAnyTargetHasTheSameExpectedValue() {
         // This is the key property of the game: if it fails, there is a winning strategy.
-        for (double target : new double[] {1.5, 2.0, 3.0, 10.0, 50.0}) {
+        for (double target : new double[]{1.5, 2.0, 3.0, 10.0, 50.0}) {
             double chance = CrashTable.reachChance(target, EDGE);
             assertEquals(1.0 - EDGE, chance * target, 1e-12, "objetivo " + target);
         }

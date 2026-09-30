@@ -26,7 +26,9 @@ public enum GameCategory {
         this.tabIcon = tabIcon;
     }
 
-    /** Message key fragment: {@code gui.category.<key>.*}. */
+    /**
+     * Message key fragment: {@code gui.category.<key>.*}.
+     */
     public String key() {
         return key;
     }

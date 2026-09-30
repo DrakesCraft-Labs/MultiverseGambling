@@ -8,11 +8,13 @@ import com.chagui68.multiversegambling.game.GameMeta;
 import com.chagui68.multiversegambling.gui.Gui;
 import com.chagui68.multiversegambling.util.Items;
 import com.chagui68.multiversegambling.util.Text;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
 import net.kyori.adventure.title.Title;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -30,7 +32,9 @@ public final class DuelGame extends AbstractGame {
 
     private final Map<UUID, Challenge> pending = new HashMap<>();
 
-    /** A challenge waiting for an answer. */
+    /**
+     * A challenge waiting for an answer.
+     */
     private static final class Challenge {
         final UUID challenger;
         final UUID target;
@@ -72,13 +76,17 @@ public final class DuelGame extends AbstractGame {
         return List.of(label(viewer, "panel.status.pending-challenges", "amount", pending.size()));
     }
 
-    /** Opens the menu to pick a rival. */
+    /**
+     * Opens the menu to pick a rival.
+     */
     @Override
     public void open(Player player) {
         new RivalGui(plugin, player, this).show();
     }
 
-    /** Challenges another player. */
+    /**
+     * Challenges another player.
+     */
     public void challenge(Player challenger, Player target, double amount) {
         if (challenger.getUniqueId().equals(target.getUniqueId())) {
             message(challenger, "duel.self-duel");
@@ -218,7 +226,9 @@ public final class DuelGame extends AbstractGame {
         }
     }
 
-    /** The duel keeps its own clock: unanswered challenges expire. */
+    /**
+     * The duel keeps its own clock: unanswered challenges expire.
+     */
     private void tick() {
         if (pending.isEmpty()) {
             return;

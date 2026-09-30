@@ -3,9 +3,11 @@ package com.chagui68.multiversegambling.engine;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import org.junit.jupiter.api.Test;
 
 import com.chagui68.multiversegambling.engine.SlotsTable.Symbol;
+
 import java.util.List;
 
 class SlotsTableTest {

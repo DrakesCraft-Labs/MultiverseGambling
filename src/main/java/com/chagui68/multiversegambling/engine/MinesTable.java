@@ -28,7 +28,9 @@ public final class MinesTable {
         return chance;
     }
 
-    /** Cash out multiplier after revealing {@code revealed} safe tiles. */
+    /**
+     * Cash out multiplier after revealing {@code revealed} safe tiles.
+     */
     public static double multiplier(int tiles, int mines, int revealed, double houseEdge) {
         if (revealed <= 0) {
             return 1.0;
@@ -56,7 +58,9 @@ public final class MinesTable {
         return (1.0 - houseEdge) / chance;
     }
 
-    /** Effective house edge when the rounding down is taken into account. */
+    /**
+     * Effective house edge when the rounding down is taken into account.
+     */
     public static double truncate(double multiplier) {
         return Math.floor(multiplier * 100.0) / 100.0;
     }

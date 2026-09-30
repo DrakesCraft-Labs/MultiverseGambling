@@ -5,13 +5,17 @@ import com.chagui68.multiversegambling.config.Messages;
 import com.chagui68.multiversegambling.game.Game;
 import com.chagui68.multiversegambling.game.GameCategory;
 import com.chagui68.multiversegambling.util.Items;
+
 import java.util.ArrayList;
 import java.util.List;
+
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
-/** Main menu: two tabs, solo and group. Every label follows the player's language. */
+/**
+ * Main menu: two tabs, solo and group. Every label follows the player's language.
+ */
 public final class HubGui extends Gui {
 
     private static final int[] GAME_SLOTS = {

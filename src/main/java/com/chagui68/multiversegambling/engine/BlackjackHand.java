@@ -2,17 +2,23 @@ package com.chagui68.multiversegambling.engine;
 
 import java.util.List;
 
-/** Blackjack rules and hand evaluation. */
+/**
+ * Blackjack rules and hand evaluation.
+ */
 public final class BlackjackHand {
 
-    /** The dealer hits until reaching this total. */
+    /**
+     * The dealer hits until reaching this total.
+     */
     public static final int DEALER_STAND = 17;
     public static final int TARGET = 21;
 
     private BlackjackHand() {
     }
 
-    /** Adds the values, counting aces as 11 as long as that does not bust. */
+    /**
+     * Adds the values, counting aces as 11 as long as that does not bust.
+     */
     public static int value(List<Card> hand) {
         int total = 0;
         int aces = 0;
@@ -29,7 +35,9 @@ public final class BlackjackHand {
         return total;
     }
 
-    /** An ace counts as 11: the hand is "soft" and hitting cannot bust it. */
+    /**
+     * An ace counts as 11: the hand is "soft" and hitting cannot bust it.
+     */
     public static boolean isSoft(List<Card> hand) {
         int total = 0;
         int aces = 0;
@@ -46,12 +54,16 @@ public final class BlackjackHand {
         return value(hand) > TARGET;
     }
 
-    /** Natural blackjack: 21 with the first two cards. Pays 3:2. */
+    /**
+     * Natural blackjack: 21 with the first two cards. Pays 3:2.
+     */
     public static boolean isBlackjack(List<Card> hand) {
         return hand.size() == 2 && value(hand) == TARGET;
     }
 
-    /** The dealer hits below 17, but stands on a soft 17 when configured that way. */
+    /**
+     * The dealer hits below 17, but stands on a soft 17 when configured that way.
+     */
     public static boolean dealerMustHit(List<Card> hand, boolean hitSoft17) {
         int total = value(hand);
         if (total < DEALER_STAND) {

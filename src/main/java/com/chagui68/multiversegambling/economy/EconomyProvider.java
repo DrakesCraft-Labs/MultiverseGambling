@@ -8,15 +8,21 @@ import java.util.UUID;
  */
 public interface EconomyProvider {
 
-    /** Human readable name of the active provider, for /mvgam info. */
+    /**
+     * Human readable name of the active provider, for /mvgam info.
+     */
     String name();
 
     double balance(UUID playerId);
 
-    /** @return true when the change was applied. */
+    /**
+     * @return true when the change was applied.
+     */
     boolean set(UUID playerId, double amount);
 
-    /** @return true when there was enough balance and it was withdrawn. */
+    /**
+     * @return true when there was enough balance and it was withdrawn.
+     */
     boolean withdraw(UUID playerId, double amount);
 
     boolean deposit(UUID playerId, double amount);
@@ -25,7 +31,9 @@ public interface EconomyProvider {
         return balance(playerId) >= amount;
     }
 
-    /** Grants a welcome balance when the player never had an account. */
+    /**
+     * Grants a welcome balance when the player never had an account.
+     */
     default boolean createAccountIfMissing(UUID playerId, double startingBalance) {
         return false;
     }

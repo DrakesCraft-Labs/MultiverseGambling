@@ -2,13 +2,14 @@ package com.chagui68.multiversegambling.engine;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import org.junit.jupiter.api.Test;
 
 class PlinkoTableTest {
 
     @Test
     void theBucketProbabilitiesAddUpToOne() {
-        for (int rows : new int[] {8, 12, 16}) {
+        for (int rows : new int[]{8, 12, 16}) {
             double sum = 0;
             for (int bucket = 0; bucket <= rows; bucket++) {
                 sum += PlinkoTable.bucketChance(rows, bucket);
@@ -28,7 +29,7 @@ class PlinkoTableTest {
 
     @Test
     void theTableNeverFavoursThePlayer() {
-        for (int rows : new int[] {8, 12, 16}) {
+        for (int rows : new int[]{8, 12, 16}) {
             double[] table = PlinkoTable.multipliers(rows, 0.01, 10_000);
             double rtp = PlinkoTable.rtp(table, rows, 10_000);
             assertTrue(rtp <= 1.0, "rows=" + rows + " devolvia " + rtp);

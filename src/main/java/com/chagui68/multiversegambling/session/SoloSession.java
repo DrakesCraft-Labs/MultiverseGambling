@@ -10,15 +10,23 @@ public interface SoloSession {
 
     UUID playerId();
 
-    /** Game identifier, to know whether something is running. */
+    /**
+     * Game identifier, to know whether something is running.
+     */
     String sessionId();
 
-    /** One server tick. */
+    /**
+     * One server tick.
+     */
     void tick();
 
-    /** @return false when the session should stop receiving ticks. */
+    /**
+     * @return false when the session should stop receiving ticks.
+     */
     boolean active();
 
-    /** Orderly shutdown: it must refund money and close inventories when needed. */
+    /**
+     * Orderly shutdown: it must refund money and close inventories when needed.
+     */
     void cancel();
 }

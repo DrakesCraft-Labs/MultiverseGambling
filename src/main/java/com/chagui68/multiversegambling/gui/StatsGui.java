@@ -6,13 +6,17 @@ import com.chagui68.multiversegambling.stats.PlayerStats;
 import com.chagui68.multiversegambling.stats.StatsStore;
 import com.chagui68.multiversegambling.util.Items;
 import com.chagui68.multiversegambling.util.Text;
+
 import java.util.List;
 import java.util.UUID;
 import java.util.function.ToDoubleFunction;
+
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 
-/** Personal summary plus the server ranking, in the player's language. */
+/**
+ * Personal summary plus the server ranking, in the player's language.
+ */
 public final class StatsGui extends Gui {
 
     private static final int TOP_SIZE = 7;

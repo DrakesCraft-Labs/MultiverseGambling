@@ -34,7 +34,9 @@ public final class Wager {
         return settled;
     }
 
-    /** Pays {@code amount * multiplier}. Returns the money taken when it wins. */
+    /**
+     * Pays {@code amount * multiplier}. Returns the money taken when it wins.
+     */
     public boolean pay(double multiplier) {
         if (multiplier <= 0) {
             lose();
@@ -43,12 +45,16 @@ public final class Wager {
         return payAbsolute(amount * multiplier);
     }
 
-    /** Returns the capital (push or voided round). */
+    /**
+     * Returns the capital (push or voided round).
+     */
     public boolean refund() {
         return payAbsolute(amount);
     }
 
-    /** Pays an exact amount, ignoring the original bet. */
+    /**
+     * Pays an exact amount, ignoring the original bet.
+     */
     public boolean payAbsolute(double payout) {
         if (settled) {
             return false;
@@ -57,12 +63,16 @@ public final class Wager {
         return economy.provider().deposit(playerId, Math.max(0, payout));
     }
 
-    /** Marks the bet as lost: the money already left the wallet. */
+    /**
+     * Marks the bet as lost: the money already left the wallet.
+     */
     public void lose() {
         settled = true;
     }
 
-    /** Net profit of this bet, or 0 when it has not been settled yet. */
+    /**
+     * Net profit of this bet, or 0 when it has not been settled yet.
+     */
     public double profit() {
         return settled ? -amount : 0;
     }
