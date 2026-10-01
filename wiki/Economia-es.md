@@ -88,6 +88,7 @@ cantidades escritas en los comandos aceptan coma o punto, así que funcionan `10
 | `stats.json` | Partidas, victorias, apostado, mayor premio y los rankings | Sí, los jugadores pierden sus estadísticas |
 | `fairness.json` | Secreto actual, secreto anterior y semillas de cliente por jugador | Sí, pero cambia la semilla de todos |
 | `languages.json` | El idioma que eligió cada jugador | Sí, todos caen a `language.default` |
+| `pending-items.yml` | Premios en ítems de quien salió a mitad de ronda (ver [Apuestas con ítems](Apuestas-Items-es)) | No: esos jugadores pierden sus ítems |
 
 ## Cómo protege el dinero el plugin
 

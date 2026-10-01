@@ -5,7 +5,7 @@
 ## Compilar y testear
 
 ```bash
-mvn package      # compila, ejecuta los 107 tests y escribe target/MultiverseGambling-1.0.0.jar
+mvn package      # compila, ejecuta los 197 tests y escribe target/MultiverseGambling-1.0.4.jar
 mvn test         # solo los tests
 mvn -q compile   # solo el compilador
 ```
@@ -78,7 +78,7 @@ los archivos de idioma.
 
 ## Qué garantizan los tests
 
-107 tests: invariantes de retorno de cada tabla, valor esperado del crash por fórmula y con
+197 tests: invariantes de retorno de cada tabla, valor esperado del crash por fórmula y con
 400.000 simulaciones, comprobaciones de "nada paga de más" (incluida una rueda que regala dinero
 a propósito y que el detector debe cazar), uniformidad y determinismo de las tiradas
 verificables, reglas del blackjack y del póker de dados, distribuciones simuladas, geometría del

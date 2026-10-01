@@ -1,17 +1,45 @@
-# MultiverseGambling
+<p align="center">
+  <img src="assets/banner.svg" alt="MultiverseGambling - casino world, 21 games, item bets, provably fair" width="100%"/>
+</p>
 
-**English** · [Español](README.es.md) · [Wiki](wiki/Home.md)
+<p align="center">
+  <a href="https://papermc.io"><img src="https://img.shields.io/badge/Paper-1.21.11-1E293B?style=for-the-badge&labelColor=8B5CF6" alt="Paper 1.21.11"/></a>
+  <a href="https://adoptium.net"><img src="https://img.shields.io/badge/Java-21-1E293B?style=for-the-badge&labelColor=8B5CF6" alt="Java 21"/></a>
+  <img src="https://img.shields.io/badge/Version-1.0.4-1E293B?style=for-the-badge&labelColor=8B5CF6" alt="Version 1.0.4"/>
+  <img src="https://img.shields.io/badge/Games-21-1E293B?style=for-the-badge&labelColor=C084FC" alt="21 games"/>
+  <img src="https://img.shields.io/badge/Provably-fair-1E293B?style=for-the-badge&labelColor=16A34A" alt="Provably fair"/>
+</p>
 
-Chance and betting engine for **Paper 1.21.11** with **21 minigames**: 12 solo games
-against the house and 9 group games with automatic rounds, all of them inside a
-dedicated **casino world** and playable in **English or Spanish**.
+<p align="center">
+  <b>English</b> · <a href="README.es.md">Español</a> · <a href="wiki/Home.md">Wiki</a>
+  <br/>
+  <sub>A <b>Drakes Labs</b> project · created and maintained by <b>Chagui68</b></sub>
+</p>
+
+---
+
+**MultiverseGambling** is a chance and betting engine for **Paper 1.21.11** with
+**21 minigames**: 12 solo games against the house and 9 group games with automatic rounds
+(every one of them also playable **against the house** when nobody else is around). They all
+live inside a dedicated **casino world** where the rounds are staged with display entities,
+and every message reads in **English or Spanish**.
 
 This is not a loose pile of commands: it is an engine where every coin goes through the
 same path, every money roll comes from **provably fair** randomness and every prize table
 is **pinned by tests**.
 
+| | |
+|---|---|
+| 🎰 **21 games** | Roulette, slots, crash, mines, towers, blackjack, plinko, horse race, jackpot... |
+| 🏛️ **Casino world** | A 500 × 500 world built on its own: plaza, boulevards and one pavilion per game |
+| ✨ **Live shows** | Spinning wheels, falling balls, rockets and cards built with block and item displays |
+| 🔘 **Hologram buttons** | Cash out, hit, stand or pick a side by clicking floating buttons in the arena |
+| 💎 **Item bets** | Stake diamonds or any custom item and win copies of the very same item |
+| 🔐 **Provably fair** | HMAC-SHA256 rolls anybody can recompute with `/mvgam verify` |
+| 🌍 **Two languages** | Every player picks English or Spanish for themselves |
+
 ```
-mvn package      →  target/MultiverseGambling-1.0.0.jar
+mvn package      →  target/MultiverseGambling-1.0.4.jar
 ```
 
 ---
@@ -21,6 +49,7 @@ mvn package      →  target/MultiverseGambling-1.0.0.jar
 - [Why this design](#why-this-design)
 - [Installation](#installation)
 - [The casino world](#the-casino-world)
+- [Item bets](#item-bets)
 - [Languages](#languages)
 - [The catalogue](#the-catalogue)
 - [Real returns](#real-returns)
@@ -70,7 +99,7 @@ internal modules, only the public API.
 
 ```bash
 mvn package
-cp target/MultiverseGambling-1.0.0.jar ~/server/plugins/
+cp target/MultiverseGambling-1.0.4.jar ~/server/plugins/
 ```
 
 Without Vault the plugin starts its own wallet in
@@ -93,6 +122,7 @@ Data files it creates:
 | `stats.json` | Per player statistics and rankings |
 | `fairness.json` | Client seeds and the server secret for the audit |
 | `languages.json` | The language each player picked |
+| `pending-items.yml` | Item winnings waiting for a player that left mid round |
 
 ---
 
@@ -103,19 +133,25 @@ nothing has to be pasted by hand and the playable world stays clean.
 
 ```
 /mvgam world          → teleports you to the casino
-/mvgam world build    → rebuilds the plaza, the roads and every arena (admin)
+/mvgam world build    → rebuilds the plaza, the boulevards and every pavilion (admin)
+/mvgam world info     → reports what the casino world is missing (admin)
 ```
 
 By default it creates a **flat 500 × 500 block world** named `mvgam_casino` with a
-centred world border, and lays out, on first use:
+centred world border, frozen at dusk, and lays out:
 
-- a **central plaza** (radius 30) as a paved disc with a kerb, a gold monument, four
-  lamps and a welcome sign, holding the spawn point;
-- **one arena per game** (radius 12), on a square grid filled from the middle outwards,
-  so the most played games sit closest to the plaza and the newest ones extend outwards;
-- **three block wide roads** linking the plaza with every arena;
-- each arena gets its own colour palette, a fence with a single entrance opening that
-  always faces the plaza, four corner lamps and a sign with the game name.
+- a **marble plaza** (radius 36) with a lit fountain, gold rings, grand lamps and flower
+  planters, a giant golden coin spinning over the fountain and a welcome board at spawn;
+- **one walled pavilion per game** (41 × 41 blocks) on a square grid filled from the middle
+  outwards: a dark stage with a gold ring, a marble floor, stained glass walls in the colour
+  of the game, a quartz gate on every side, corner towers, bleachers and invisible lights,
+  with the name of the game floating over it and its icon turning underneath;
+- **seven block wide boulevards** along every row and column of the grid and a ring road
+  round the casino, with lamp posts and avenues of trees; unused cells become gardens.
+
+The 21 games fill 408 × 408 blocks, so the default world keeps a green belt round the edge.
+The build runs **in the background, a few chunks per tick**, and the casino is rebuilt on its
+own whenever its design changes (an update, a new game, a bigger board).
 
 Everything is driven by `world:` in [config.yml](src/main/resources/config.yml):
 
@@ -124,38 +160,40 @@ world:
   enabled: true            # create/load the world on start
   name: 'mvgam_casino'
   size: 500                # side of the square, in blocks (200-2000)
-  build-structures: true   # plaza, arenas and roads on first use
+  build-structures: true   # plaza, pavilions and boulevards, rebuilt when out of date
   teleport-on-join: false  # send every player here when they join
+  time: 13000              # frozen hour (13000 dusk); -1 keeps the day cycle
 ```
 
 ### In-world shows
 
-Results are not only text. When the casino world is ready, the games paint the round on
-their own arena instead of just counting numbers in the action bar:
+Results are not only text. When the casino world is ready, every game **stages the round on
+its pavilion with display entities**, smoothly interpolated and fully lit:
 
-| Game | Painted in the arena |
+| Game | Staged on the pavilion |
 |---|---|
-| **Roulette** | A round table of coloured pockets with a ball that settles on the winning number |
-| **Lucky wheel** | The same table, one sector per tile |
-| **Colour roulette** (group) | The real wheel of 18 red, 18 black and one green pocket |
-| **Jackpot** and **Raffle** (group) | A wheel of tickets, one colour per player, landing on the ticket that won |
-| **Slots** | A three reel cabinet that stops reel by reel on the payline |
-| **Plinko** | A peg pyramid with the ball taking the real bounces into its bucket |
-| **Crash** | A tower that climbs with the multiplier and bursts where the curve crashed |
-| **Dice** | A number line from 0 to 100 with the target marked and a marker that stops on the roll |
-| **Dice poker** (group) | The winning hand as five dice with their pips |
-| **Race** (group) | A lane per horse and runners creeping towards the golden finish line |
-| **Russian roulette** (group) | The revolver cylinder, loaded chambers in red, turning on every trigger |
-| **Hot bomb** (group) | A block of TNT with a fuse that shortens until it goes off |
-| **Coin flip** | A gold coin tossed over the arena, paving the winning side underneath |
+| **Roulette** | A leaning roulette wheel with its numbers, chasing bulbs and a ball that spirals into the winning pocket |
+| **Lucky wheel** | A standing wheel of fortune with its multipliers, stopping under a golden pointer |
+| **Colour roulette** (group) | The real wheel of 18 red, 18 black and one green pocket, with its ball |
+| **Jackpot** and **Raffle** (group) | A wheel of fortune with one named slice per player, sized by the stake or the tickets |
+| **Slots** | A lit slot machine: the lever is pulled and three drums roll and stop on the payline |
+| **Plinko** | A wall of pegs with the multipliers under the buckets and a ball hopping along the real bounces |
+| **Crash** | A rocket climbing a chart along the multiplier curve, flying off in gold or blowing apart |
+| **Dice** | A scoreboard with the winning zone, a tumbling die and a counter spinning to the roll |
+| **Dice poker** (group) | Five dice thrown on a felt table, settling one by one |
+| **Race** (group) | Real horses in dyed armour galloping on a stepped track |
+| **Russian roulette** (group) | A giant revolver whose cylinder spins and stops under the hammer before firing or clicking |
+| **Hot bomb** (group) | A throbbing TNT with a burning fuse and a small TNT over the head of whoever holds it |
+| **Coin flip** and **Duel** | A coin tossed from a pedestal, landing on its edge; the duel hangs the heads of both players beside it |
+| **Blackjack** and **High low** | A card table where the cards fly in from the shoe and turn over |
 
 Every one of them is **only paint**: the result is drawn by the provably fair generator
-before the show starts, so what the arena shows and what the wallet pays always match.
+before the show starts, so what the pavilion shows and what the wallet pays always match.
 
 ### Playing on the blocks
 
 Four games do not show a result but a **sequence of picks**, so they are played on the
-blocks of their arena instead: click any block of their arenas to open the game, and from
+blocks of their stage instead: click the stage of their pavilion to open the game, and from
 then on the tiles themselves are the input.
 
 | Game | Board | Playing it |
@@ -165,42 +203,77 @@ then on the tiles themselves are the input.
 | **Scratch card** | A 3x3 card | Three clicks scratch three tiles |
 | **Bomb board** (group) | The shared 9x4 board | The turn passes player to player and the current one stands on the board |
 
-The boards are part of the world build: run `/mvgam world build` once after updating so
-every arena shows its resting board. Every round puts its tiles back as they were, and
+The boards are part of the world build. Every round puts its tiles back as they were, and
 the same `world.animations` switches drive them: with `enabled: false` the four games go
-back to their menus. Blackjack and high low stay in
-their card menus for the same reason: their round is not a board.
+back to their menus.
 
-The scenery of the shows is temporary: it appears when the round starts, stays a second
-after the result so there is time to see it, and is taken down afterwards, so an arena
-always goes back to its plain platform even if the player disconnects or the server is
+The scenery of the shows is temporary: it appears when the round starts, stays a moment
+after the result so there is time to see it, and is taken down afterwards, so a pavilion
+always goes back to its plain stage even if the player disconnects or the server is
 stopped mid spin. Menus are still there for what is not a result or a pick (betting,
 choosing a spot), and anyone playing with the world disabled keeps the classic action bar.
 
 ```yaml
 world:
   animations:
-    enabled: true           # paint results on the arena
-    teleport-players: true  # move the player to their arena to watch
-    view-distance: 11       # blocks between the arena centre and the watcher
+    enabled: true           # stage the rounds on the pavilions
+    teleport-players: true  # move the player to their pavilion to watch
+    view-distance: 14       # blocks between the stage centre and the watcher
 ```
 
 Notes worth knowing:
 
-- The **geometry is a pure class** (`CasinoLayout`) with no Bukkit, so it is unit tested:
-  the suite checks that 21 games fit in 500 blocks, that no two arenas overlap, that
-  nothing covers spawn and that the entrance of every arena faces the plaza. The boards
+- The **geometry is pure classes** (`CasinoLayout`, `StageFrame`, `CrashCurve`, `WheelMath`)
+  with no Bukkit, so it is unit tested: the suite checks that 21 games fit in 500 blocks,
+  that no two pavilions overlap, that nothing covers spawn, that every pavilion sits on the
+  boulevard network and that shows turn to the main gate without being mirrored. The boards
   use the same idea: `BoardGrid` maps a click on a block to the cell of a round.
 - If `world.size` is too small for the grid, the plugin **grows the world** in steps of 50
   blocks (up to 2000) instead of failing to build.
-- Point `world.name` at an existing world to reuse it, or set `enabled: false` and build
-  the casino manually: `/mvgam world` then simply tells you the world is disabled.
+- Point `world.name` at an existing world to reuse it (its surface is cleared), or set
+  `enabled: false` and build the casino manually: `/mvgam world` then simply tells you the
+  world is disabled.
 - The plugin refuses to build the structures in the server's main world, so it never
   overwrites the spawn of a survival map.
-- Sign text uses the catalogue of the default language, so a Spanish server gets Spanish
-  arena signs.
+- The floating names use the catalogue of the default language, so a Spanish server gets
+  Spanish pavilion names.
 
 The full reference is in the [World](wiki/Casino-World.md) wiki page.
+
+---
+
+## Item bets
+
+Money is not the only stake. Six solo games accept **items** as the bet: **Classic Roulette,
+Slots, Dice, Plinko, Lucky Wheel and Coin Flip**. Pick **❖ Bet items** in the bet menu and a
+special chest opens:
+
+1. Drop the items you want to stake in the middle of the chest: **one kind of item, any
+   amount** (up to `item-bets.max-items`, 1,728 by default).
+2. The panel on the right lists **every possible result and exactly how many of that item
+   you get back** for it, for example, staking 100 diamonds on Coin Flip: *Guess the side » 1.96x = 196 × Diamond*.
+3. Press **Play with these items**. Closing or cancelling gives everything back.
+
+Vanilla and **custom items** work the same: the payout is made of copies of the staked
+item, so its name, lore, enchantments, custom model data or plugin tags are kept. A
+custom id from another plugin keeps being that item.
+
+| Rule | Why |
+|---|---|
+| A fraction of an item is paid **by chance** (19.6 items → 19, plus a 60% chance of the 20th) | The average payout is exactly the money payout: no hidden rounding cut |
+| Shulker boxes and bundles are blocked by default | Nobody multiplies the contents of a box; add more in `item-bets.blocked` |
+| Winnings that do not fit are dropped at your feet | Nothing is lost on a full inventory |
+| A player that leaves mid round gets the items on the next join | Kept in `pending-items.yml` |
+| Item rounds stay out of the money statistics and rankings | The leaderboard only compares coins |
+
+```yaml
+item-bets:
+  enabled: true
+  max-items: 1728        # most items one bet can stake
+  blocked:               # exact names, *SUFFIX or PREFIX*
+    - '*SHULKER_BOX'
+    - '*BUNDLE'
+```
 
 ---
 
@@ -260,9 +333,9 @@ Details, including how to add a third language, are in the [Languages](wiki/Lang
 | **Slots** | `slots` | Three reels, seven weighted symbols. Three of a kind pay the table; cherries pay something with two. | up to 600x |
 | **Crash** | `crash` | The curve climbs on its own and you have to cash out before it bursts. The crash point comes from a single provably fair roll. | 1.00x and up |
 | **Mines** | `mines` | 25 tiles with 1 to 24 mines. Every safe pick raises the multiplier; you cash out whenever you want. | grows with difficulty |
-| **Towers** | `towers` | 9 floors, 4 tiles and 1 bomb per floor. Pick a safe tile to climb, cash out before you fall. | grows per floor |
-| **Blackjack** | `blackjack` | Six deck shoe. Natural pays 3:2, a push returns the bet, doubling allowed. The dealer can hit a soft 17 (configurable). | up to 2.5x |
-| **High-Low** | `high-low` | Guess whether the next card is higher or lower and chain correct calls. Each step is priced from the ranks that really remain. | chainable |
+| **Towers** | `towers` | 9 floors and five difficulties, from easy (4 doors, 1 bomb) to master (4 doors, 3 bombs). Pick a safe door to climb, cash out before you fall. | grows per floor |
+| **Blackjack** | `blackjack` | Six deck shoe. After the first card you **continue** or **give up and get half back**. Natural pays 3:2, a push returns the bet, doubling allowed. | up to 2.5x |
+| **High-Low** | `high-low` | Two floating buttons, higher or lower, each showing what it pays. Chain correct calls; each step is priced from the ranks that really remain. | chainable |
 | **Dice** | `dice` | Target from 0.01 to 99.99, betting over or under. Fair payout, trimmed. | up to ~99x |
 | **Plinko** | `plinko` | The ball falls through the pyramid. The buckets come from the real binomial distribution, not from an invented table. | up to hundreds of x |
 | **Scratch** | `scratch` | Scratch 3 of 9 tiles. Three of a kind pay the symbol prize, two give part of the stake back. | up to 50x |
@@ -272,7 +345,10 @@ Details, including how to add a third language, are in the [Languages](wiki/Lang
 ### Group (9)
 
 All of them run in automatic rounds: whoever wants joins, bets during the window, the
-round plays itself and the next one starts without anybody typing a command.
+round plays itself and the next one starts without anybody typing a command. When you
+are alone, the bet menu offers **play against the house**: the casino takes the other
+seat with the same house edge as the solo games, so a quiet server never leaves a table
+empty.
 
 | Game | Id | Rules | Players |
 |---|---|---|---|
@@ -349,7 +425,7 @@ bomb round or a horse race can be audited from start to finish.
 | `/mvgam stats [player]` | Statistics: games, real return, favourite game |
 | `/mvgam top [profit\|wagered\|prize]` | Server ranking |
 | `/mvgam verify [seed]` | Fairness audit and client seed change |
-| `/mvgam world [build]` | Teleports to the casino world, or rebuilds it |
+| `/mvgam world [build\|info]` | Teleports to the casino world, rebuilds it, or reports what it is missing |
 | `/mvgam language [code\|reset]` | Switches the language this player reads |
 | `/mvgam info` | Active economy, games and current secret |
 | `/mvgam give \| take \| set` | Balance administration |
@@ -474,9 +550,11 @@ exploited**:
 - **Simulated distributions.** The Plinko ball follows the binomial, each horse wins as
   often as its strength, each wheel colour comes up as often as its pockets and the jackpot
   winner is drawn with the probability they deserve.
-- **Casino world geometry.** 21 games fit in 500 blocks, arenas never overlap or cover
-  spawn, entrances face the plaza, every arena has a road, too small a world is rejected and
-  a single game still gets a ring arena.
+- **Casino world geometry.** 21 games fit in 500 blocks, pavilions never overlap or cover
+  spawn, entrances face the plaza, every pavilion sits on two boulevards tied to the plaza,
+  unused cells become gardens, too small a world is rejected and a single game still gets a
+  ring pavilion. Shows turn to the main gate without mirroring and the crash rocket never
+  leaves its chart.
 - **Language resolution.** `es`, `ES`, `es_es`, `es-AR`, `spanish` and `español` all resolve
   to Spanish, unknown codes fall back to English and the shipped codes are stable.
 
@@ -486,4 +564,6 @@ mvn test
 
 ---
 
-Built by **Chagui68** — [MultiverseGambling](https://github.com/DrakesCraft-Labs/MultiverseGambling).
+<p align="center">
+  <sub>MultiverseGambling · created by <b>Chagui68</b> for <b>Drakes Labs</b> · <a href="https://github.com/DrakesCraft-Labs/MultiverseGambling">DrakesCraft-Labs/MultiverseGambling</a></sub>
+</p>

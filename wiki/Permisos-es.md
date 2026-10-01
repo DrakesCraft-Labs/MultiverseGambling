@@ -8,7 +8,7 @@ Tres permisos y nada más.
 |---|---|---|
 | `mvgam_play` | `true` (todos) | Abrir `/mvgam`, jugar a los juegos públicos, usar los menús, `/mvgam balance`, `/mvgam stats`, `/mvgam verify` y elegir idioma |
 | `mvgam_top` | `true` (todos) | `/mvgam top` |
-| `mvgam_admin` | `op` | `/mvgam info`, `/mvgam reload`, `/mvgam world build`, `/mvgam give`, `/mvgam take`, `/mvgam set` y `/mvgam cancel` |
+| `mvgam_admin` | `op` | `/mvgam info`, `/mvgam reload`, `/mvgam world build`, `/mvgam world info`, `/mvgam give`, `/mvgam take`, `/mvgam set` y `/mvgam cancel` |
 
 ## Notas
 

@@ -51,6 +51,16 @@ the catalogue and the casino world is built without its arena.
 
 See [Languages](Languages).
 
+## `item-bets`
+
+| Key | Default | Meaning |
+|---|---|---|
+| `enabled` | `true` | Lets the six item capable games take items as the stake |
+| `max-items` | `1728` | Most items a single bet can hold |
+| `blocked` | `*SHULKER_BOX`, `*BUNDLE` | Items that can never be staked: exact names, `*SUFFIX` or `PREFIX*` |
+
+See [Item Bets](Item-Bets).
+
 ## `world`
 
 | Key | Default | Meaning |

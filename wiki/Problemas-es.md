@@ -8,7 +8,8 @@
 /mvgam world      → "El mundo casino no está listo todavía; revisa la consola del servidor."
 ```
 
-Mira la consola. Las causas habituales:
+Ejecuta `/mvgam world info` para ver qué existe, qué está construido y qué falta; también
+funciona en consola. Las causas habituales:
 
 | Mensaje en consola | Solución |
 |---|---|
@@ -16,6 +17,7 @@ Mira la consola. Las causas habituales:
 | `too small` | Sube `world.size`; el plugin también lo agranda solo en pasos de 50 |
 | `refuses to build in the main world` | `world.name` apunta a tu mundo de supervivencia: cámbialo |
 | `could not be created` | La carpeta no tiene permisos de escritura, o ya hay un mundo con ese nombre cargado con otros ajustes |
+| `The casino world could not be prepared` | El plugin ha arrancado sin él a propósito. Lee el error de arriba, arréglalo y ejecuta `/mvgam world build` |
 
 Si solo querías los juegos, desactiva el mundo (`world.enabled: false`): `/mvgam play <id>`
 sigue funcionando desde cualquier sitio.
@@ -38,6 +40,19 @@ Cierra su partida y devuelve la apuesta. Necesita `mvgam_admin`.
 Comprueba el proveedor activo con `/mvgam info`. Si dice `Vault`, todos los saldos vienen de tu
 plugin de economía y el plugin nunca escribe en él directamente. Si dice `Internal`, el plugin
 usa `balances.json`; cambia `economy.provider` a `vault` para devolver el dinero a tu economía.
+
+## Ha aparecido un archivo `algo.json.corrupt`
+
+Un archivo de datos (`balances.json`, `stats.json`, `fairness.json`, `languages.json`) no era
+JSON válido: normalmente el servidor murió mientras se escribía, o se editó a mano hasta
+dejar de ser JSON. El plugin nunca se niega a arrancar por eso: aparta el archivo, empieza con
+uno vacío y sigue funcionando. Mira la copia `.corrupt` si quieres recuperar entradas,
+mézclalas en el archivo bueno y ejecuta `/mvgam reload` (o reinicia).
+
+La misma regla cubre todo el arranque: un mundo casino que no se puede preparar, un juego que
+no se puede construir o un archivo de datos ilegible se avisa en consola y se salta, y el
+resto sigue funcionando. Si nunca quisiste el mundo casino, `world.enabled: false` evita el
+intento por completo.
 
 ## No se anuncian los premios
 

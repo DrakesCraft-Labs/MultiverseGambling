@@ -48,6 +48,7 @@ See [Fairness](Fairness) for the full explanation.
 |---|---|
 | `/mvgam world` | Teleports you to the casino world (fails gracefully when it is not ready) |
 | `/mvgam world build` | Rebuilds the plaza, the roads and every arena (**`mvgam_admin`**) |
+| `/mvgam world info` | Reports the state of the world: exists, terrain, size, ground, arenas built and what is missing (**`mvgam_admin`**) |
 
 ## Languages
 
@@ -87,6 +88,8 @@ only one way to write each command:
 | `/mvgam verify <text>` | Sets your client seed to that text |
 | `/mvgam language es` / `<code>` / `reset` | Picks a language, or goes back to automatic |
 | `/mvgam world build` | Rebuilds the casino world (admin) |
+| `/mvgam action house` | Takes on the house when you are alone in a group room |
+| `/mvgam world info` | Reports what the casino world is missing (admin) |
 
 ## Examples
 
@@ -97,6 +100,7 @@ only one way to write each command:
 /mvgam top prize             → ranking of biggest wins
 /mvgam language es           → everything you read is now Spanish
 /mvgam world build           → rebuild the casino world from scratch
+/mvgam world info            → check what the casino world is missing (console friendly)
 ```
 
 `play` only accepts the exact ids listed by `/mvgam games`: the horse race id is `race`, not

@@ -9,6 +9,12 @@ siguiente ventana de apuestas se abre por su cuenta para quien quiera entrar otr
 
 El ciclo compartido es: **esperando jugadores → ventana de apuestas → en juego → reparto**.
 
+Cuando una ronda necesita una elección — apostar a un color o a un caballo — la puedes hacer
+en el menú **o** con los botones que el lobby manda al chat, así nadie tiene que dejar un menú
+abierto mientras mira el espectáculo. La ruleta de colores también acepta
+`/mvgam action color red`, `black` y `green`, y se puede cambiar la elección hasta que gire
+la ruleta.
+
 | Juego | Id | Reglas | Jugadores | Retorno |
 |---|---|---|---|---|
 | **Ruleta de Colores** | `color-roulette` | Cada uno apuesta a rojo, negro o verde; el verde es una casilla única, así que paga ~36x | 2-24 | 97.30% |
@@ -18,8 +24,40 @@ El ciclo compartido es: **esperando jugadores → ventana de apuestas → en jue
 | **Ruleta Rusa** | `russian-roulette` | Por turnos cada uno aprieta el gatillo con 1 bala en 6 recámaras; el superviviente se lleva el bote | 2-8 | 100% − comisión |
 | **Carrera de Caballos** | `race` | 8 caballos con probabilidades publicadas; el favorito paga poco y el tapado mucho | 2-24 | 98.00% por caballo |
 | **Duelo 1v1** | `duel` | Retas a alguien por una cantidad; los dos ponen lo mismo y una moneda decide | 2 | 100% − comisión |
-| **Rifa** | `raffle` | Boletas a precio fijo y sorteo de tres premios: 70%, 20% y 10% del bote | 2-24 | 100% − comisión |
+| **Rifa** | `raffle` | Boletas a precio fijo y sorteo de tres premios: 70%, 20% y 10% del bote (con dos jugadores los dos premios se reparten el bote entero). Solo se cobran boletos enteros | 2-24 | 100% − comisión |
 | **Póker de Dados** | `dice-poker` | Cinco dados cada uno; gana la mejor mano y los empates reparten el bote | 2-16 | 100% − comisión |
+
+## Jugar solo contra la casa
+
+Esperar a que se llene una sala es la peor parte de un casino, así que **todos los juegos de
+grupo se pueden jugar solo contra la casa**. Con la sala vacía, el selector de apuesta muestra un
+segundo botón, **Jugar contra la casa**; además el lobby manda una oferta con botón en el chat en
+cuanto estás solo (y otra vez si los demás se van), y `/mvgam action house` hace lo mismo. Cada
+duelo tiene el mismo margen de la casa que los juegos en solitario:
+
+- **Ruleta Rusa** — el crupier se sienta enfrente y tú disparas primero. El tambor gira una vez,
+  así que el duelo lo decide dónde están las balas: con 1 bala en 6 recámaras ganas la mitad de
+  las veces y la victoria paga **1.96x**, el mismo margen que cualquier otra apuesta de aquí. La
+  tabla tiene pruebas: ninguna combinación de `chambers` y `bullets` devuelve más que el margen
+  de la casa.
+- **Ruleta de Colores** — la ruleta paga tu color directamente (2x rojo o negro, 36x verde) en
+  vez de pagarte de un bote en el que solo estás tú. El duelo empieza en cuanto eliges color.
+- **Bote Común** y **Rifa** — la casa iguala tu apuesta (o compra tantos boletos como tú) y un
+  único sorteo decide: ganas la mitad de las veces y la victoria paga **1.96x**.
+- **Bomba Caliente** — la bomba pasa entre tú y el crupier; quien la tenga cuando explote pierde.
+  Un juego parejo, pagado **1.96x**.
+- **Tablero de Bombas** — tú y el crupier destapáis por turnos, tú primero; quien encuentre antes
+  una bomba pierde. Es el revólver de la ruleta rusa con casillas en vez de recámaras, así que lo
+  paga la misma tabla con pruebas.
+- **Póker de Dados** — el crupier también tira una mano: la mejor mano gana 1.96x y el empate
+  devuelve la apuesta.
+- **Carrera de Caballos** — la carrera ya paga cuotas fijas, así que solo corres contra la banca:
+  el caballo que elijas paga su propia cuota. Las cuotas se sortean al abrir la sala y se ven en
+  los botones, así que eliges sabiéndolas.
+- **Duelo 1v1** — el menú de rivales tiene un botón **Duelo contra la casa**: la misma moneda, tu
+  cabeza contra la casa, un lanzamiento parejo pagado 1.96x.
+
+Los demás pueden entrar a la ronda normal: el duelo solo se ofrece mientras estás solo.
 
 ## Jugador contra jugador significa sin ventaja de la casa
 

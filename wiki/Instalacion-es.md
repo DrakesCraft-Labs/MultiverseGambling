@@ -17,7 +17,7 @@ No usa NMS ni módulos internos, solo API pública.
 
 ```bash
 mvn package
-cp target/MultiverseGambling-1.0.0.jar ~/servidor/plugins/
+cp target/MultiverseGambling-1.0.4.jar ~/servidor/plugins/
 ```
 
 Reinicia el servidor y el plugin escribirá sus archivos por defecto:
@@ -31,7 +31,8 @@ plugins/MultiverseGambling/
 ├── balances.json     ← monedero interno (solo si no usas Vault)
 ├── stats.json        ← estadísticas y rankings
 ├── fairness.json     ← secreto del servidor y semillas de cliente
-└── languages.json    ← el idioma que eligió cada jugador
+├── languages.json    ← el idioma que eligió cada jugador
+└── pending-items.yml    ← premios en ítems de quien salió a mitad de ronda
 ```
 
 ## Economía

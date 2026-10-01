@@ -1,3 +1,5 @@
+<p align="center"><img src="https://raw.githubusercontent.com/DrakesCraft-Labs/MultiverseGambling/main/assets/banner.svg" alt="MultiverseGambling" width="100%"/></p>
+
 # MultiverseGambling wiki
 
 **English** · [Español](Home-es)
@@ -7,11 +9,12 @@ world** and **in-game translation** into English or Spanish.
 
 | | |
 |---|---|
-| Version | 1.0.0 |
+| Version | 1.0.4 |
 | Server | Paper 1.21.11 (also loads on any 1.21.x) |
 | Java | 21 |
 | Soft dependency | Vault (optional) |
-| Author | Chagui68 |
+| Author | **Chagui68** |
+| Organisation | **Drakes Labs** |
 | Repository | [DrakesCraft-Labs/MultiverseGambling](https://github.com/DrakesCraft-Labs/MultiverseGambling) |
 
 ## Start here
@@ -25,7 +28,8 @@ world** and **in-game translation** into English or Spanish.
 | [World](Casino-World) | The separate world, the plaza, the arenas and the roads |
 | [Languages](Languages) | Self translation, `/mvgam language` and adding a new language |
 | [Solo Games](Games-Solo) | The 12 games against the house |
-| [Group Games](Games-Group) | The 9 games with automatic rounds |
+| [Group Games](Games-Group) | The 9 games with automatic rounds, also against the house |
+| [Item Bets](Item-Bets) | Staking vanilla or custom items and how many come back |
 | [Fairness](Fairness) | Provably fair rolls and `/mvgam verify` |
 | [Economy](Economy) | sBank, Vault or the internal wallet, and the data files |
 | [Troubleshooting](Troubleshooting) | The usual suspects |
@@ -46,8 +50,10 @@ world** and **in-game translation** into English or Spanish.
 ```
 /mvgam                      → main menu (solo / group tabs)
 /mvgam play roulette        → play a game by its exact id
+/mvgam play plinko          → then "❖ Bet items" to stake items instead of money
 /mvgam world                → travel to the casino world
 /mvgam language es          → read everything in Spanish from now on
 /mvgam verify               → audit the fairness of every roll
 /mvgam world build          → rebuild the plaza, roads and arenas (admin)
+/mvgam world info           → what the casino world is missing (admin)
 ```

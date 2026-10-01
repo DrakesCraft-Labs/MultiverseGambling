@@ -5,7 +5,7 @@
 ## Build and test
 
 ```bash
-mvn package      # compiles, runs the 107 tests and writes target/MultiverseGambling-1.0.0.jar
+mvn package      # compiles, runs the 197 tests and writes target/MultiverseGambling-1.0.4.jar
 mvn test         # only the tests
 mvn -q compile   # only the compiler
 ```
@@ -78,10 +78,11 @@ You get for free: permissions, balance checks, the bet selector, statistics, ann
 
 ## What the tests guarantee
 
-107 tests: return invariants of every table, crash expected value by formula and by 400,000
+197 tests: return invariants of every table, crash expected value by formula and by 400,000
 simulations, "nothing overpays" checks (including a deliberately cheating wheel that the
 detector must catch), uniformity and determinism of the provably fair rolls, blackjack and dice
-poker rules, simulated distributions, casino world geometry and language resolution.
+poker rules, simulated distributions, casino world geometry, item payouts that average exactly the money payout and
+language resolution.
 
 When you change a table run `mvn test` before committing: an accidental return above 1 fails
 the build on purpose.

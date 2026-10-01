@@ -17,7 +17,7 @@ The plugin builds against `paper-api:1.21.11-R0.1-SNAPSHOT` and declares
 
 ```bash
 mvn package
-cp target/MultiverseGambling-1.0.0.jar ~/server/plugins/
+cp target/MultiverseGambling-1.0.4.jar ~/server/plugins/
 ```
 
 Restart the server (or use a plugin manager that loads jars at runtime) and the plugin
@@ -32,7 +32,8 @@ plugins/MultiverseGambling/
 ├── balances.json     ← internal wallet (only when Vault is not used)
 ├── stats.json        ← statistics and rankings
 ├── fairness.json     ← social secret and client seeds
-└── languages.json    ← the language each player picked
+├── languages.json    ← the language each player picked
+└── pending-items.yml    ← item winnings of players who left mid round
 ```
 
 ## Economy

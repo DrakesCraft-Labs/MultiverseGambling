@@ -9,6 +9,11 @@ next betting window opens on its own for whoever wants to join again.
 
 The shared round cycle is: **waiting for players → betting window → in game → payout**.
 
+Where a round needs a choice — betting on a colour or a horse — you can make it in the menu
+**or** with the buttons the lobby sends to the chat, so nobody has to keep a menu open while
+they watch the show. Colour roulette also accepts `/mvgam action color red`, `black` and
+`green`, and every choice can still be changed until the wheel starts.
+
 | Game | Id | Rules | Players | Return |
 |---|---|---|---|---|
 | **Color Roulette** | `color-roulette` | Everybody bets red, black or green; green is a single pocket, so it pays ~36x | 2-24 | 97.30% |
@@ -18,8 +23,40 @@ The shared round cycle is: **waiting for players → betting window → in game 
 | **Russian Roulette** | `russian-roulette` | In turns each player pulls the trigger with 1 bullet in 6 chambers; the survivor takes the pot | 2-8 | 100% − commission |
 | **Horse Race** | `race` | 8 horses with published odds; backing the favourite pays little, the outsider pays a lot | 2-24 | 98.00% per horse |
 | **Duel 1v1** | `duel` | Challenge somebody for a stake; both put the same in and a coin decides | 2 | 100% − commission |
-| **Raffle** | `raffle` | Tickets at a fixed price and a draw of three prizes: 70%, 20% and 10% of the pot | 2-24 | 100% − commission |
+| **Raffle** | `raffle` | Tickets at a fixed price and a draw of three prizes: 70%, 20% and 10% of the pot (with two players the two prizes share the whole pot). Only whole tickets are charged | 2-24 | 100% − commission |
 | **Dice Poker** | `dice-poker` | Five dice each; the best hand wins and ties split the pot | 2-16 | 100% − commission |
+
+## Playing alone against the house
+
+Waiting for a room to fill up is the worst part of a casino, so **every group game can be
+played alone against the house**. When the room is empty the bet selector shows a second
+button, **Play against the house**; the lobby also sends an offer with a chat button as soon
+as you are alone (and again when everybody else leaves), and `/mvgam action house` does the
+same. Every duel carries the same house edge as the solo games:
+
+- **Russian Roulette** — the dealer sits in the other chair and you pull first. The cylinder
+  is spun once, so the duel is decided by where the bullets sit: with 1 bullet in 6 chambers
+  you win half of the time and a win pays **1.96x**, the same edge as any other bet here. The
+  table is unit tested: no combination of `chambers` and `bullets` returns more than the house
+  edge.
+- **Color Roulette** — the wheel pays your colour directly (2x red or black, 36x green)
+  instead of paying you out of a pot of one. The duel starts as soon as you pick the colour.
+- **Jackpot** and **Raffle** — the house matches your stake (or buys as many tickets as you)
+  and a single draw decides: half of the time you win, and a win pays **1.96x**.
+- **Hot Bomb** — the bomb passes between you and the dealer; whoever holds it when it blows
+  loses. An even game, paid **1.96x**.
+- **Bomb Board** — you and the dealer reveal tiles in turns, you first; whoever finds a bomb
+  first loses. It is the revolver of the russian roulette with tiles for chambers, so the same
+  tested table prices it.
+- **Dice Poker** — the dealer rolls a hand too: the better hand wins 1.96x and a tie gives the
+  stake back.
+- **Horse Race** — the race already pays fixed odds, so alone you simply race against the
+  book: the horse you pick pays its own odds. The odds of every horse are drawn when the room
+  opens and shown on the buttons, so you pick knowing them.
+- **Duel 1v1** — the rival menu has a **Duel against the house** button: the same coin, your
+  head against the house, an even toss paid 1.96x.
+
+Everyone else can still join the normal round: the duel is only offered while you are alone.
 
 ## Player against player means no house edge
 

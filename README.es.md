@@ -1,17 +1,45 @@
-# MultiverseGambling
+<p align="center">
+  <img src="assets/banner-es.svg" alt="MultiverseGambling - mundo casino, 21 juegos, apuestas con ítems, azar verificable" width="100%"/>
+</p>
 
-[English](README.md) · **Español** · [Wiki](wiki/Home-es.md)
+<p align="center">
+  <a href="https://papermc.io"><img src="https://img.shields.io/badge/Paper-1.21.11-1E293B?style=for-the-badge&labelColor=8B5CF6" alt="Paper 1.21.11"/></a>
+  <a href="https://adoptium.net"><img src="https://img.shields.io/badge/Java-21-1E293B?style=for-the-badge&labelColor=8B5CF6" alt="Java 21"/></a>
+  <img src="https://img.shields.io/badge/Versi%C3%B3n-1.0.4-1E293B?style=for-the-badge&labelColor=8B5CF6" alt="Versión 1.0.4"/>
+  <img src="https://img.shields.io/badge/Juegos-21-1E293B?style=for-the-badge&labelColor=C084FC" alt="21 juegos"/>
+  <img src="https://img.shields.io/badge/Azar-verificable-1E293B?style=for-the-badge&labelColor=16A34A" alt="Azar verificable"/>
+</p>
 
-Motor de azar y apuestas para **Paper 1.21.11** con **21 minijuegos**: 12 en solitario
-contra la casa y 9 en grupo con rondas automáticas, todos dentro de un **mundo casino**
-propio y jugables en **inglés o español**.
+<p align="center">
+  <a href="README.md">English</a> · <b>Español</b> · <a href="wiki/Home-es.md">Wiki</a>
+  <br/>
+  <sub>Un proyecto de <b>Drakes Labs</b> · creado y mantenido por <b>Chagui68</b></sub>
+</p>
+
+---
+
+**MultiverseGambling** es un motor de azar y apuestas para **Paper 1.21.11** con
+**21 minijuegos**: 12 en solitario contra la casa y 9 en grupo con rondas automáticas (todos
+ellos jugables también **contra la casa** cuando no hay nadie más). Viven dentro de un
+**mundo casino** propio donde las rondas se representan con display entities, y cada mensaje
+se lee en **inglés o español**.
 
 No es una colección de comandos suelta: es un motor donde cada moneda pasa por el mismo
 sitio, cada tirada de dinero sale de un **azar verificable** y cada tabla de premios está
 **fijada por tests**.
 
+| | |
+|---|---|
+| 🎰 **21 juegos** | Ruleta, tragaperras, crash, minas, torres, blackjack, plinko, carreras, bote... |
+| 🏛️ **Mundo casino** | Un mundo de 500 × 500 que se construye solo: plaza, bulevares y un pabellón por juego |
+| ✨ **Espectáculos en vivo** | Ruletas que giran, bolas que caen, cohetes y cartas hechos con block e item displays |
+| 🔘 **Botones holográficos** | Retirarse, pedir carta, plantarse o elegir lado con botones flotantes en la arena |
+| 💎 **Apuestas con ítems** | Apuesta diamantes o cualquier ítem custom y gana copias de ese mismo ítem |
+| 🔐 **Azar verificable** | Tiradas HMAC-SHA256 que cualquiera recalcula con `/mvgam verify` |
+| 🌍 **Dos idiomas** | Cada jugador elige inglés o español para sí mismo |
+
 ```
-mvn package      →  target/MultiverseGambling-1.0.0.jar
+mvn package      →  target/MultiverseGambling-1.0.4.jar
 ```
 
 ---
@@ -21,6 +49,7 @@ mvn package      →  target/MultiverseGambling-1.0.0.jar
 - [Por qué este diseño](#por-qué-este-diseño)
 - [Instalación](#instalación)
 - [El mundo casino](#el-mundo-casino)
+- [Apuestas con ítems](#apuestas-con-ítems)
 - [Idiomas](#idiomas)
 - [El catálogo](#el-catálogo)
 - [Retornos reales](#retornos-reales)
@@ -71,7 +100,7 @@ ni de ningún módulo interno: solo API pública.
 
 ```bash
 mvn package
-cp target/MultiverseGambling-1.0.0.jar ~/servidor/plugins/
+cp target/MultiverseGambling-1.0.4.jar ~/servidor/plugins/
 ```
 
 Sin Vault el plugin arranca su propio monedero en
@@ -95,6 +124,7 @@ Archivos de datos que crea:
 | `stats.json` | Estadísticas y rankings por jugador |
 | `fairness.json` | Semillas de cliente y secreto del servidor para la auditoría |
 | `languages.json` | El idioma que eligió cada jugador |
+| `pending-items.yml` | Premios en ítems de jugadores que salieron a mitad de ronda |
 
 ---
 
@@ -105,21 +135,27 @@ no hay que pegar nada a mano y el mundo de juego queda limpio.
 
 ```
 /mvgam world          → te lleva al casino
-/mvgam world build    → reconstruye la plaza, las carreteras y todas las arenas (admin)
+/mvgam world build    → reconstruye la plaza, los bulevares y todos los pabellones (admin)
+/mvgam world info     → informa de qué le falta al mundo casino (admin)
 ```
 
-Por defecto crea un **mundo plano de 500 × 500 bloques** llamado `mvgam_casino` con
-borde centrado, y en el primer uso levanta:
+Por defecto crea un **mundo plano de 500 × 500 bloques** llamado `mvgam_casino` con borde
+centrado y la hora fijada al atardecer, y levanta:
 
-- una **plaza central** (radio 30) como disco pavimentado con bordillo, monumento de oro,
-  cuatro farolas y un cartel de bienvenida, donde está el punto de aparición;
-- **una arena por juego** (radio 12), en una rejilla cuadrada que se llena de dentro hacia
-  fuera: los juegos más jugados quedan cerca de la plaza y los nuevos se extienden hacia
-  fuera;
-- **carreteras de tres bloques de ancho** que unen la plaza con cada arena;
-- cada arena lleva su propia paleta de colores, una valla con una única abertura de entrada
-  que siempre mira a la plaza, cuatro farolas en las esquinas y un cartel con el nombre del
-  juego.
+- una **plaza de mármol** (radio 36) con una fuente iluminada, anillos de oro, farolas grandes
+  y jardineras, una moneda de oro gigante girando sobre la fuente y un cartel de bienvenida en
+  el spawn;
+- **un pabellón amurallado por juego** (41 × 41 bloques) en una rejilla cuadrada que se llena de
+  dentro hacia fuera: un escenario oscuro con un anillo de oro, suelo de mármol, muros con
+  vidrieras del color del juego, una puerta de cuarzo en cada lado, torres en las esquinas,
+  gradas y luces invisibles, con el nombre del juego flotando encima y su icono girando debajo;
+- **bulevares de siete bloques** por cada fila y columna de la rejilla y una ronda que rodea el
+  casino, con farolas y avenidas de árboles; las casillas sin juego se convierten en jardines.
+
+Los 21 juegos ocupan 408 × 408 bloques, así que el mundo por defecto deja un cinturón verde
+alrededor. La construcción va **en segundo plano, unos pocos chunks por tick**, y el casino se
+reconstruye solo cuando cambia su diseño (una actualización, un juego nuevo, un tablero más
+grande).
 
 Todo se controla desde `world:` en [config.yml](src/main/resources/config.yml):
 
@@ -128,40 +164,43 @@ world:
   enabled: true            # crear/cargar el mundo al arrancar
   name: 'mvgam_casino'
   size: 500                # lado del cuadrado, en bloques (200-2000)
-  build-structures: true   # plaza, arenas y carreteras en el primer uso
+  build-structures: true   # plaza, pabellones y bulevares, reconstruidos si cambian
   teleport-on-join: false  # mandar aquí a cada jugador al entrar
+  time: 13000              # hora fija (13000 atardecer); -1 mantiene el ciclo de día
 ```
 
 ### Animaciones en el mundo
 
-Los resultados no son solo texto. Cuando el mundo casino está listo, los juegos pintan la
-ronda en su propia arena en vez de limitarse a contar números en la barra de acción:
+Los resultados no son solo texto. Cuando el mundo casino está listo, cada juego **escenifica
+la ronda en su pabellón con display entities**, con movimiento interpolado y totalmente
+iluminadas:
 
-| Juego | Lo que se pinta en la arena |
+| Juego | Lo que se escenifica en el pabellón |
 |---|---|
-| **Ruleta** | Una mesa redonda de casillas con una bolita que se para en el número ganador |
-| **Ruleta de la suerte** | La misma mesa, con un sector por casilla |
-| **Ruleta de colores** (grupo) | La rueda real de 18 rojas, 18 negras y una verde |
-| **Bote** y **Rifa** (grupo) | Una rueda de boletos, un color por jugador, que se para en el boleto premiado |
-| **Tragaperras** | Un mueble de tres rodillos que se paran uno a uno en la línea de pago |
-| **Plinko** | Una pirámide de clavijas donde la bola da los rebotes reales hasta su cubo |
-| **Crash** | Una torre que sube con el multiplicador y estalla donde se rompió la curva |
-| **Dados** | Una recta de 0 a 100 con el objetivo marcado y un marcador que se para en la tirada |
-| **Póker de dados** (grupo) | La mano ganadora como cinco dados con sus puntos |
-| **Carrera** (grupo) | Una calle por caballo y corredores avanzando hacia la meta dorada |
-| **Ruleta rusa** (grupo) | El tambor del revólver, con las recámaras cargadas en rojo, girando en cada disparo |
-| **Bomba caliente** (grupo) | Un bloque de TNT con una mecha que se acorta hasta estallar |
-| **Cara o cruz** | Una moneda de oro lanzada sobre la arena que pavimenta debajo la cara que sale |
+| **Ruleta** | Una ruleta inclinada con sus números, bombillas en el aro y una bola que cae en espiral en la casilla ganadora |
+| **Ruleta de la suerte** | Una rueda de la fortuna de pie con sus multiplicadores, que se para bajo un puntero dorado |
+| **Ruleta de colores** (grupo) | La rueda real de 18 rojas, 18 negras y una verde, con su bola |
+| **Bote** y **Rifa** (grupo) | Una rueda de la fortuna con una porción con nombre por jugador, del tamaño de su apuesta o de sus boletos |
+| **Tragaperras** | Una máquina iluminada: se tira de la palanca y tres tambores giran y se paran en la línea de pago |
+| **Plinko** | Una pared de clavijas con los multiplicadores bajo los cubos y una bola que salta siguiendo los rebotes reales |
+| **Crash** | Un cohete que sube por la curva del multiplicador en una gráfica, y sale volando en dorado o estalla |
+| **Dados** | Un marcador con la zona ganadora, un dado que rueda y un contador que gira hasta la tirada |
+| **Póker de dados** (grupo) | Cinco dados lanzados sobre una mesa de fieltro que se asientan uno a uno |
+| **Carrera** (grupo) | Caballos de verdad con armadura teñida galopando en una pista escalonada |
+| **Ruleta rusa** (grupo) | Un revólver gigante cuyo tambor gira y se para bajo el percutor antes de disparar o hacer clic |
+| **Bomba caliente** (grupo) | Una TNT que late con la mecha ardiendo y una TNT pequeña sobre la cabeza de quien la tiene |
+| **Cara o cruz** y **Duelo** | Una moneda lanzada desde un pedestal que cae de canto; el duelo cuelga a los lados las cabezas de ambos jugadores |
+| **Blackjack** y **Alto-bajo** | Una mesa de cartas donde las cartas vuelan desde el sabot y se voltean |
 
 Todas son **solo pintura**: el resultado lo sortea el generador provablemente justo antes
-de que empiece la animación, así que lo que se ve en la arena y lo que paga la cartera
+de que empiece la animación, así que lo que se ve en el pabellón y lo que paga la cartera
 siempre coinciden.
 
 ### Jugar sobre los bloques
 
 Cuatro juegos no muestran un resultado sino una **secuencia de elecciones**, así que se
-juegan en los bloques de su arena: pulsa cualquier bloque de sus arenas para abrir el
-juego y, a partir de ahí, las casillas son la entrada.
+juegan en los bloques de su escenario: pulsa el escenario de su pabellón para abrir el juego
+y, a partir de ahí, las casillas son la entrada.
 
 | Juego | Tablero | Cómo se juega |
 |---|---|---|
@@ -170,43 +209,78 @@ juego y, a partir de ahí, las casillas son la entrada.
 | **Rasca y Gana** | Una tarjeta de 3x3 | Tres clics rascan tres casillas |
 | **Tablero de Bombas** (grupo) | El tablero compartido de 9x4 | El turno pasa de jugador en jugador y al que le toca se coloca sobre el tablero |
 
-Los tableros forman parte de la construcción del mundo: ejecuta `/mvgam world build` una
-vez tras actualizar para que cada arena muestre su tablero en reposo. Cada ronda devuelve
-sus casillas a como estaban, y los mismos interruptores de `world.animations` los
-gobiernan: con `enabled: false` los cuatro juegos vuelven a sus menús. El blackjack y el
-alto-bajo se quedan en sus menús de cartas por el mismo motivo: su ronda no es un tablero.
+Los tableros forman parte de la construcción del mundo. Cada ronda devuelve sus casillas a
+como estaban, y los mismos interruptores de `world.animations` los gobiernan: con
+`enabled: false` los cuatro juegos vuelven a sus menús.
 
-El decorado de las animaciones es temporal: aparece al empezar la ronda, se queda un
-segundo tras el resultado para que dé tiempo a verlo y luego se retira, así que la arena
-siempre vuelve a su plataforma limpia aunque el jugador se desconecte o el servidor se
-pare a mitad de giro. Los menús siguen ahí para lo que no es un resultado ni una elección
-(apostar, elegir casilla) y quien juegue con el mundo desactivado conserva la barra de
-acción de siempre.
+El decorado de las animaciones es temporal: aparece al empezar la ronda, se queda un momento
+tras el resultado para que dé tiempo a verlo y luego se retira, así que el pabellón siempre
+vuelve a su escenario limpio aunque el jugador se desconecte o el servidor se pare a mitad de
+giro. Los menús siguen ahí para lo que no es un resultado ni una elección (apostar, elegir
+casilla) y quien juegue con el mundo desactivado conserva la barra de acción de siempre.
 
 ```yaml
 world:
   animations:
-    enabled: true           # pintar los resultados en la arena
-    teleport-players: true  # llevar al jugador a su arena para verlo
-    view-distance: 11       # bloques entre el centro de la arena y el espectador
+    enabled: true           # escenificar las rondas en los pabellones
+    teleport-players: true  # llevar al jugador a su pabellón para verlo
+    view-distance: 14       # bloques entre el centro del escenario y el espectador
 ```
 
 Cosas que conviene saber:
 
-- La **geometría es una clase pura** (`CasinoLayout`) sin Bukkit, así que está testeada: la
-  suite comprueba que los 21 juegos caben en 500 bloques, que ninguna arena se solapa, que
-  nada tapa el spawn y que la entrada de cada arena mira a la plaza. Los tableros usan la
-  misma idea: `BoardGrid` traduce un clic en un bloque a la casilla de una ronda.
+- La **geometría son clases puras** (`CasinoLayout`, `StageFrame`, `CrashCurve`, `WheelMath`)
+  sin Bukkit, así que está testeada: la suite comprueba que los 21 juegos caben en 500
+  bloques, que ningún pabellón se solapa, que nada tapa el spawn, que cada pabellón está en la
+  red de bulevares y que los espectáculos miran a la puerta principal sin quedar en espejo. Los
+  tableros usan la misma idea: `BoardGrid` traduce un clic en un bloque a la casilla de una
+  ronda.
 - Si `world.size` es pequeño para la rejilla, el plugin **agranda el mundo** en pasos de 50
   bloques (hasta 2000) en vez de fallar.
-- Apunta `world.name` a un mundo existente para reutilizarlo, o pon `enabled: false` y
-  construye el casino a mano: `/mvgam world` te dirá entonces que el mundo está desactivado.
+- Apunta `world.name` a un mundo existente para reutilizarlo (se limpia su superficie), o pon
+  `enabled: false` y construye el casino a mano: `/mvgam world` te dirá entonces que el mundo
+  está desactivado.
 - El plugin se niega a construir las estructuras en el mundo principal del servidor, así que
   nunca pisa el spawn de un mapa de supervivencia.
-- El texto de los carteles usa el catálogo del idioma por defecto, así que un servidor en
-  español tiene las arenas rotuladas en español.
+- Los nombres flotantes usan el catálogo del idioma por defecto, así que un servidor en
+  español tiene los pabellones rotulados en español.
 
 La referencia completa está en la página [Mundo](wiki/Mundo-Casino-es.md) de la wiki.
+
+---
+
+## Apuestas con ítems
+
+El dinero no es lo único que se apuesta. Seis juegos en solitario aceptan **ítems** como
+apuesta: **Ruleta clásica, Tragaperras, Dados, Plinko, Ruleta de la suerte y Cara o cruz**.
+Elige **❖ Apostar items** en el menú de apuesta y se abre un cofre especial:
+
+1. Coloca los ítems que quieres apostar en el centro del cofre: **un solo tipo de ítem, la
+   cantidad que quieras** (hasta `item-bets.max-items`, 1.728 por defecto).
+2. El panel de la derecha muestra **cada resultado posible y cuántos de ese ítem recibes**
+   en cada uno, por ejemplo, apostando 100 diamantes a Cara o cruz: *Acertar la cara » 1.96x = 196 × Diamante*.
+3. Pulsa **Jugar con estos ítems**. Cerrar o cancelar te devuelve todo.
+
+Los ítems vanilla y los **ítems custom** funcionan igual: el premio son copias del ítem
+apostado, así que conserva su nombre, lore, encantamientos, custom model data o etiquetas
+de otros plugins. Un ID custom de otro plugin sigue siendo ese ítem.
+
+| Regla | Por qué |
+|---|---|
+| La fracción de un ítem se paga **por probabilidad** (19,6 ítems → 19, más un 60% de recibir el 20.º) | El pago medio es exactamente el pago en dinero: no hay recorte oculto por redondeo |
+| Las shulker boxes y los bundles están bloqueados por defecto | Nadie multiplica el contenido de una caja; añade más en `item-bets.blocked` |
+| Lo que no cabe en el inventario cae a tus pies | Nada se pierde con el inventario lleno |
+| Si te desconectas a mitad de ronda recibes los ítems al volver | Se guardan en `pending-items.yml` |
+| Las rondas con ítems no cuentan en las estadísticas ni en los rankings de dinero | La clasificación solo compara monedas |
+
+```yaml
+item-bets:
+  enabled: true
+  max-items: 1728        # máximo de ítems por apuesta
+  blocked:               # nombre exacto, *SUFIJO o PREFIJO*
+    - '*SHULKER_BOX'
+    - '*BUNDLE'
+```
 
 ---
 
@@ -268,9 +342,9 @@ Los detalles, incluido cómo añadir un tercer idioma, están en la página
 | **Tragamonedas** | `slots` | 3 rodillos, 7 símbolos ponderados. Tres iguales pagan la tabla; las cerezas pagan algo con dos. | hasta 600x |
 | **Crash** | `crash` | La curva sube sola y hay que retirarse antes de que estalle. El punto de explosión sale de una sola tirada verificable. | 1.00x en adelante |
 | **Minas** | `mines` | Rejilla de 25 casillas con 1 a 24 minas. Cada acierto sube el multiplicador; te retiras cuando quieras. | crece con la dificultad |
-| **La Torre** | `towers` | 9 pisos, 4 casillas y 1 bomba por piso. Elige casilla segura para subir, retírate antes de caer. | crece por piso |
-| **Blackjack** | `blackjack` | Baraja de 6 mazos. Natural 3:2, empate devuelve apuesta, se puede doblar. El crupier puede pedir con 17 blando (configurable). | hasta 2.5x |
-| **Mayor o Menor** | `high-low` | Adivina si la siguiente carta es mayor o menor y encadena aciertos. El pago de cada paso sale de los rangos que quedan de verdad. | encadenable |
+| **La Torre** | `towers` | 9 pisos y cinco dificultades, de fácil (4 puertas, 1 bomba) a maestro (4 puertas, 3 bombas). Elige una puerta segura para subir, retírate antes de caer. | crece por piso |
+| **Blackjack** | `blackjack` | Baraja de 6 mazos. Tras la primera carta **continúas** o **abandonas recuperando la mitad**. Natural 3:2, empate devuelve apuesta, se puede doblar. | hasta 2.5x |
+| **Mayor o Menor** | `high-low` | Dos botones flotantes, mayor o menor, cada uno con lo que paga. Encadena aciertos; cada paso se paga según los rangos que quedan de verdad. | encadenable |
 | **Dados** | `dice` | Objetivo del 0.01 al 99.99 con apuesta por encima o por debajo. Pago justo recortado. | hasta ~99x |
 | **Plinko** | `plinko` | La bolita cae por la pirámide. Los cubos salen de la distribución binomial real, no de una tabla inventada. | hasta cientos de x |
 | **Rasca y Gana** | `scratch` | Destapa 3 de 9 casillas. Tres iguales pagan el premio del símbolo, dos devuelven parte. | hasta 50x |
@@ -280,7 +354,9 @@ Los detalles, incluido cómo añadir un tercer idioma, están en la página
 ### En grupo (9)
 
 Todos funcionan por rondas automáticas: entra quien quiere, apuesta durante la ventana, la
-ronda se juega sola y la siguiente arranca sin que nadie lance comandos.
+ronda se juega sola y la siguiente arranca sin que nadie lance comandos. Si estás solo,
+el menú de apuesta ofrece **jugar contra la casa**: el casino ocupa el otro asiento con la
+misma ventaja de la casa que los juegos en solitario, así que una mesa nunca se queda vacía.
 
 | Juego | Id | Reglas | Jugadores |
 |---|---|---|---|
@@ -358,7 +434,7 @@ paso.
 | `/mvgam stats [jugador]` | Estadísticas: partidas, retorno real, juego favorito |
 | `/mvgam top [profit\|wagered\|prize]` | Ranking del servidor |
 | `/mvgam verify [semilla]` | Auditoría del azar y cambio de semilla |
-| `/mvgam world [build]` | Te lleva al mundo casino, o lo reconstruye |
+| `/mvgam world [build\|info]` | Te lleva al mundo casino, lo reconstruye, o informa de qué le falta |
 | `/mvgam language [codigo\|reset]` | Cambia el idioma que lee este jugador |
 | `/mvgam info` | Economía activa, juegos y secreto actual |
 | `/mvgam give \| take \| set` | Administración de saldo |
@@ -482,9 +558,11 @@ bloque `catalog.<id-juego>` en cada `lang/*.yml`.
 - **Distribuciones simuladas.** La bolita del Plinko sigue la binomial, cada caballo gana con
   la frecuencia de su fuerza, cada color de la rueda sale con sus casillas y el ganador del
   bote se elige con la probabilidad que le corresponde.
-- **Geometría del mundo casino.** Los 21 juegos caben en 500 bloques, las arenas nunca se
-  solapan ni tapan el spawn, las entradas miran a la plaza, cada arena tiene su carretera, un
-  mundo demasiado pequeño se rechaza y un solo juego recibe igualmente su arena.
+- **Geometría del mundo casino.** Los 21 juegos caben en 500 bloques, los pabellones nunca se
+  solapan ni tapan el spawn, las entradas miran a la plaza, cada pabellón está sobre dos
+  bulevares unidos a la plaza, las casillas libres son jardines, un mundo demasiado pequeño se
+  rechaza y un solo juego recibe igualmente su pabellón. Los espectáculos miran a la puerta
+  principal sin quedar en espejo y el cohete del crash nunca sale de su gráfica.
 - **Resolución de idiomas.** `es`, `ES`, `es_es`, `es-AR`, `spanish` y `español` resuelven
   todos a español, los códigos desconocidos caen a inglés y los códigos incluidos son
   estables.
@@ -495,4 +573,6 @@ mvn test
 
 ---
 
-Desarrollado por **Chagui68** — [MultiverseGambling](https://github.com/DrakesCraft-Labs/MultiverseGambling).
+<p align="center">
+  <sub>MultiverseGambling · creado por <b>Chagui68</b> para <b>Drakes Labs</b> · <a href="https://github.com/DrakesCraft-Labs/MultiverseGambling">DrakesCraft-Labs/MultiverseGambling</a></sub>
+</p>

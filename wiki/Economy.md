@@ -87,6 +87,7 @@ comma or a dot, so both `1000.50` and `1000,50` work.
 | `stats.json` | Games played, wins, wagered, biggest win and the rankings | Yes, players just lose their statistics |
 | `fairness.json` | Current server secret, previous secret and the per player client seeds | Yes, but every player's seed changes |
 | `languages.json` | The language each player chose | Yes, everyone falls back to `language.default` |
+| `pending-items.yml` | Item winnings waiting for players who left mid round (see [Item Bets](Item-Bets)) | No: those players lose their items |
 
 ## How the plugin protects money
 

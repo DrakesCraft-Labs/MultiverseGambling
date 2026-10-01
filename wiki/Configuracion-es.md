@@ -51,6 +51,16 @@ menús y del catálogo, y el mundo casino se construye sin su arena.
 
 Ver [Idiomas](Idiomas-es).
 
+## `item-bets`
+
+| Clave | Por defecto | Significado |
+|---|---|---|
+| `enabled` | `true` | Permite que los seis juegos compatibles acepten ítems como apuesta |
+| `max-items` | `1728` | Máximo de ítems en una sola apuesta |
+| `blocked` | `*SHULKER_BOX`, `*BUNDLE` | Ítems que nunca se pueden apostar: nombre exacto, `*SUFIJO` o `PREFIJO*` |
+
+Ver [Apuestas con ítems](Apuestas-Items-es).
+
 ## `world`
 
 | Clave | Por defecto | Significado |

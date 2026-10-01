@@ -47,6 +47,7 @@ La explicación completa está en [Azar verificable](Justicia-es).
 |---|---|
 | `/mvgam world` | Te lleva al mundo casino (avisa con claridad si no está listo) |
 | `/mvgam world build` | Reconstruye la plaza, las carreteras y todas las arenas (**`mvgam_admin`**) |
+| `/mvgam world info` | Informa del estado del mundo: si existe, terreno, tamaño, suelo, arenas construidas y qué falta (**`mvgam_admin`**) |
 
 ## Idiomas
 
@@ -86,6 +87,8 @@ cada comando se escribe de una sola forma:
 | `/mvgam verify <texto>` | Fija tu semilla de cliente a ese texto |
 | `/mvgam language es` / `<codigo>` / `reset` | Elige idioma, o vuelve a automático |
 | `/mvgam world build` | Reconstruye el mundo casino (admin) |
+| `/mvgam world info` | Informa de qué le falta al mundo casino (admin) |
+| `/mvgam action house` | Se enfrenta a la casa cuando estás solo en una sala de grupo |
 
 ## Ejemplos
 
@@ -96,6 +99,7 @@ cada comando se escribe de una sola forma:
 /mvgam top prize             → ranking de mayores premios
 /mvgam language es           → todo lo que leas pasa a español
 /mvgam world build           → reconstruir el mundo casino desde cero
+/mvgam world info            → revisar qué le falta al mundo casino (funciona en consola)
 ```
 
 `play` solo acepta los ids exactos que lista `/mvgam games`: el id de la carrera es `race`, no

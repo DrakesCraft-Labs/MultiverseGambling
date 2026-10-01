@@ -1,3 +1,5 @@
+<p align="center"><img src="https://raw.githubusercontent.com/DrakesCraft-Labs/MultiverseGambling/main/assets/banner-es.svg" alt="MultiverseGambling" width="100%"/></p>
+
 # Wiki de MultiverseGambling
 
 [English](Home) · **Español**
@@ -7,11 +9,12 @@ casino** y **traducción dentro del juego** al inglés o al español.
 
 | | |
 |---|---|
-| Versión | 1.0.0 |
+| Versión | 1.0.4 |
 | Servidor | Paper 1.21.11 (también carga en cualquier 1.21.x) |
 | Java | 21 |
 | Dependencia blanda | Vault (opcional) |
-| Autor | Chagui68 |
+| Autor | **Chagui68** |
+| Organización | **Drakes Labs** |
 | Repositorio | [DrakesCraft-Labs/MultiverseGambling](https://github.com/DrakesCraft-Labs/MultiverseGambling) |
 
 ## Empieza por aquí
@@ -25,7 +28,8 @@ casino** y **traducción dentro del juego** al inglés o al español.
 | [Mundo](Mundo-Casino-es) | El mundo aparte, la plaza, las arenas y las carreteras |
 | [Idiomas](Idiomas-es) | La autotraducción, `/mvgam language` y añadir un idioma |
 | [Juegos en solitario](Juegos-Solo-es) | Los 12 juegos contra la casa |
-| [Juegos en grupo](Juegos-Grupo-es) | Los 9 juegos con rondas automáticas |
+| [Juegos en grupo](Juegos-Grupo-es) | Los 9 juegos con rondas automáticas, también contra la casa |
+| [Apuestas con ítems](Apuestas-Items-es) | Apostar ítems vanilla o custom y cuántos vuelven |
 | [Azar verificable](Justicia-es) | Tiradas verificables y `/mvgam verify` |
 | [Economía](Economia-es) | sBank, Vault o el monedero interno, y los archivos de datos |
 | [Problemas](Problemas-es) | Los sospechosos habituales |
@@ -46,8 +50,10 @@ casino** y **traducción dentro del juego** al inglés o al español.
 ```
 /mvgam                      → menú principal (pestañas solo / grupo)
 /mvgam play roulette        → jugar por su id exacto
+/mvgam play plinko          → y luego "❖ Apostar items" para apostar ítems en vez de dinero
 /mvgam world                → viajar al mundo casino
 /mvgam language es          → leer todo en español desde ahora
 /mvgam verify               → auditar la justicia de cada tirada
 /mvgam world build          → reconstruir plaza, carreteras y arenas (admin)
+/mvgam world info           → qué le falta al mundo casino (admin)
 ```
