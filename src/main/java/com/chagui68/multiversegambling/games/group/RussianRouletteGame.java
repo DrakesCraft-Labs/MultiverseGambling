@@ -1,6 +1,7 @@
 package com.chagui68.multiversegambling.games.group;
 
 import com.chagui68.multiversegambling.MultiverseGamblingPlugin;
+import com.chagui68.multiversegambling.engine.HouseDuelTable;
 import com.chagui68.multiversegambling.fair.FairnessService;
 import com.chagui68.multiversegambling.game.AbstractGroupGame;
 import com.chagui68.multiversegambling.game.GameCategory;
@@ -26,16 +27,27 @@ import org.bukkit.entity.Player;
  * {@code bullets / chambers} on each pull, decided by the provably fair generator, so
  * the round is as auditable as any other casino bet. Whoever falls leaves their money
  * in the pot for the survivor.</p>
+ *
+ * <p>A player who is alone in the room does not have to wait: they can take on
+ * <b>the house</b> instead. That duel spins the cylinder once, the player pulls first
+ * and the dealer answers, and a win pays {@link HouseDuelTable}, which is the same game
+ * with the dealer as the only rival.</p>
  */
 public final class RussianRouletteGame extends AbstractGroupGame {
 
     private static final int FIRST_DELAY_TICKS = 40;
+    /** Ticks between two pulls of the duel, so the shot is watched and not skipped. */
+    private static final int DUEL_TURN_TICKS = 30;
 
     private final List<UUID> order = new ArrayList<>();
     private final Set<UUID> alive = new LinkedHashSet<>();
     private int turnIndex;
     private int turnTicks;
     private boolean started;
+    /** Pulls taken in the duel against the house. */
+    private int duelTurn;
+    /** Chamber that fires first in the duel, counted from 1. */
+    private int duelFirstLoaded;
     /** Cylinder painted on the arena, when there is one. */
     private BarrelShow show;
 
@@ -56,6 +68,16 @@ public final class RussianRouletteGame extends AbstractGroupGame {
         return Math.min(plugin.config().russianRouletteBullets(), chambers() - 1);
     }
 
+    @Override
+    protected boolean houseDuelAvailable() {
+        return true;
+    }
+
+    @Override
+    protected double houseDuelMultiplier(Player player) {
+        return HouseDuelTable.multiplier(chambers(), bullets(), plugin.config().houseEdge());
+    }
+
     private UUID current() {
         if (turnIndex >= order.size()) {
             turnIndex = 0;
@@ -73,6 +95,11 @@ public final class RussianRouletteGame extends AbstractGroupGame {
         turnTicks = 0;
         started = false;
         timer = 0;
+
+        if (houseDuelActive()) {
+            startDuel();
+            return;
+        }
 
         broadcastRoundHeader();
         broadcastPlain("panel.common.pot", "pot", plugin.economy().format(pot.total()));
@@ -92,9 +119,110 @@ public final class RussianRouletteGame extends AbstractGroupGame {
         }
     }
 
+    /**
+     * The duel against the house: one player, the dealer in the other chair and a
+     * cylinder spun once, so the chambers fire in a fixed order.
+     */
+    private void startDuel() {
+        UUID playerId = houseDuelPlayer();
+        order.add(playerId);
+        alive.add(playerId);
+        duelTurn = 0;
+        duelFirstLoaded = firstLoadedChamber();
+        broadcastPlain("group.russian-roulette.duel-intro",
+                "bullets", bullets(), "chambers", chambers(),
+                "multiplier", Text.multiplier(houseDuelMultiplier(online(playerId))));
+
+        ArenaStage stage = gatherArena();
+        if (stage != null) {
+            show = new BarrelShow(plugin, stage, chambers(), bullets(),
+                    Math.max(60, DUEL_TURN_TICKS * (chambers() + 2)));
+            show.start();
+        }
+    }
+
+    /**
+     * Where the first loaded chamber sits, drawn from the provably fair generator: the
+     * loaded chambers are the ones with the lowest rolls, which is a uniform choice of
+     * {@code bullets} chambers out of {@code chambers}. The dealer has no advantage in
+     * the draw, and the same draw is what the table pays on.
+     */
+    private int firstLoadedChamber() {
+        int count = chambers();
+        double[] rolls = plugin.fair().rolls(FairnessService.HOUSE, count);
+        int[] chambersByRoll = new int[count];
+        for (int index = 0; index < count; index++) {
+            chambersByRoll[index] = index;
+        }
+        // Small insertion sort: the cylinder is tiny and the order has to be exact.
+        for (int index = 1; index < count; index++) {
+            int value = chambersByRoll[index];
+            int slot = index - 1;
+            while (slot >= 0 && rolls[chambersByRoll[slot]] > rolls[value]) {
+                chambersByRoll[slot + 1] = chambersByRoll[slot];
+                slot--;
+            }
+            chambersByRoll[slot + 1] = value;
+        }
+        int first = count;
+        for (int index = 0; index < bullets(); index++) {
+            first = Math.min(first, chambersByRoll[index]);
+        }
+        return first + 1;
+    }
+
+    /**
+     * One pull of the duel per turn: the player first, then the dealer.
+     */
+    private void tickDuel() {
+        if (timer < FIRST_DELAY_TICKS || (timer - FIRST_DELAY_TICKS) % DUEL_TURN_TICKS != 0) {
+            return;
+        }
+        int turn = ++duelTurn;
+        boolean playerTurn = turn % 2 == 1;
+        boolean fires = turn == duelFirstLoaded;
+        if (show != null) {
+            show.pull(fires);
+        }
+        UUID playerId = houseDuelPlayer();
+        Player player = online(playerId);
+
+        if (!fires) {
+            broadcastPlain(playerTurn ? "group.russian-roulette.duel-empty-you"
+                    : "group.russian-roulette.duel-empty-house");
+            return;
+        }
+
+        showTitle(player, "group.russian-roulette.bang-title", "group.russian-roulette.bang-subtitle");
+        soundAll(Sound.ENTITY_GENERIC_EXPLODE, 1.0f, 0.8f);
+        if (playerTurn) {
+            // The player met the bullet: the stake stays with the house.
+            broadcastPlain("group.russian-roulette.duel-lost",
+                    "amount", plugin.economy().format(pot.amountOf(playerId)));
+            endRound();
+            return;
+        }
+
+        double multiplier = houseDuelMultiplier(player);
+        double prize = pot.amountOf(playerId) * multiplier;
+        pot.payoutByMultiplier(id -> id.equals(playerId) ? multiplier : 0);
+        broadcastPlain("group.russian-roulette.duel-won",
+                "prize", plugin.economy().format(prize),
+                "multiplier", Text.multiplier(multiplier));
+        soundAll(Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.1f);
+        showTitle(player, "group.russian-roulette.title",
+                "group.russian-roulette.title-subtitle",
+                "prize", plugin.economy().format(prize));
+        endRound();
+    }
+
     @Override
     protected void tickRound() {
         timer++;
+        if (houseDuelActive()) {
+            tickDuel();
+            return;
+        }
         if (timer < FIRST_DELAY_TICKS) {
             return;
         }
@@ -256,6 +384,7 @@ public final class RussianRouletteGame extends AbstractGroupGame {
         alive.clear();
         turnIndex = 0;
         turnTicks = 0;
+        duelTurn = 0;
         started = false;
     }
 }

@@ -20,6 +20,7 @@ import java.util.UUID;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 
 /**
  * Lucky wheel: twelve tiles with different multipliers.
@@ -51,6 +52,26 @@ public final class LuckyWheelGame extends AbstractSoloGame {
     }
 
     @Override
+    public boolean supportsItemBets() {
+        return true;
+    }
+
+    /** Every multiplier of the wheel, with how many tiles carry it. */
+    @Override
+    public List<com.chagui68.multiversegambling.game.ItemOutcome> itemOutcomes(Player viewer) {
+        PrizeWheel wheel = wheel();
+        java.util.Map<Double, Integer> counts = new java.util.TreeMap<>(java.util.Comparator.reverseOrder());
+        for (int i = 0; i < wheel.size(); i++) {
+            counts.merge(wheel.multiplier(i), 1, Integer::sum);
+        }
+        List<com.chagui68.multiversegambling.game.ItemOutcome> out = new ArrayList<>();
+        counts.forEach((multiplier, tiles) -> out.add(new com.chagui68.multiversegambling.game.ItemOutcome(
+                plugin.messages().forSender(viewer, "items.outcome.tiles", "count", tiles),
+                multiplier, tiles / (double) wheel.size())));
+        return out;
+    }
+
+    @Override
     protected void start(Player player, double bet) {
         Wager wager = stake(player, bet);
         if (wager == null) {
@@ -62,12 +83,14 @@ public final class LuckyWheelGame extends AbstractSoloGame {
     void spin(Player player, Wager wager) {
         PrizeWheel wheel = wheel();
         int winner = wheel.spin(() -> plugin.fair().roll(player.getUniqueId()));
-        int total = 60;
+        int total = 90;
         UUID playerId = player.getUniqueId();
 
         ArenaStage stage = arenaFor(player);
         if (stage != null) {
-            WheelShow show = new WheelShow(plugin, stage, sectors(wheel), winner, total);
+            WheelShow show = new WheelShow(plugin, stage, sectors(wheel), winner, total)
+                    .style(WheelShow.Style.FORTUNE)
+                    .labels(labels(wheel));
             new TimedSession(plugin, player, id(), total) {
 
                 @Override
@@ -89,7 +112,7 @@ public final class LuckyWheelGame extends AbstractSoloGame {
                 @Override
                 protected void onCancel() {
                     show.cancel();
-                    refund(wager);
+                    settleSpin(playerId, wager, winner);
                 }
             }.run();
             return;
@@ -123,7 +146,7 @@ public final class LuckyWheelGame extends AbstractSoloGame {
 
             @Override
             protected void onCancel() {
-                refund(wager);
+                settleSpin(playerId, wager, winner);
             }
         }.run();
     }
@@ -132,12 +155,14 @@ public final class LuckyWheelGame extends AbstractSoloGame {
      * Pays a spin whose winning tile was drawn when the round started.
      */
     private void settleSpin(UUID playerId, Wager wager, int winner) {
+        double multiplier = wheel().multiplier(winner);
         Player online = plugin.getServer().getPlayer(playerId);
         if (online == null) {
-            refund(wager);
+            // Gone before the end: the result was already drawn, so it is paid as drawn.
+            // Refunding here would let anybody cancel a round they saw coming out badly.
+            settleOffline(playerId, wager, multiplier);
             return;
         }
-        double multiplier = wheel().multiplier(winner);
         double payout = settle(online, wager, multiplier);
         announceResult(online, payout > wager.amount(),
                 multiplier > 0
@@ -147,10 +172,22 @@ public final class LuckyWheelGame extends AbstractSoloGame {
         info(online, title(online));
         message(online, "panel.lucky-wheel.result",
                 "tile", winner + 1, "multiplier", Text.multiplier(multiplier));
-        showResult(online, wager.amount(), payout);
+        showResult(online, wager, payout);
         sound(online, payout > wager.amount() ? Sound.ENTITY_PLAYER_LEVELUP : Sound.ENTITY_VILLAGER_NO,
                 0.9f, payout > wager.amount() ? 1.3f : 0.9f);
         offerReplay(online);
+    }
+
+    /**
+     * Multiplier written on each tile of the wheel.
+     */
+    static List<String> labels(PrizeWheel wheel) {
+        List<String> labels = new ArrayList<>(wheel.size());
+        for (int index = 0; index < wheel.size(); index++) {
+            double multiplier = wheel.multiplier(index);
+            labels.add(multiplier <= 0 ? "✖" : Text.multiplier(multiplier));
+        }
+        return labels;
     }
 
     /**
@@ -168,12 +205,19 @@ public final class LuckyWheelGame extends AbstractSoloGame {
 
     private final class WheelGui extends Gui {
 
+        /**
+         * The twelve tiles drawn as a ring, clockwise from the top left: five on top, one
+         * on the right, five underneath going back and one on the left, round the spin
+         * button in the middle.
+         */
+        private static final int[] RING = {11, 12, 13, 14, 15, 24, 33, 32, 31, 30, 29, 20};
+
         private final LuckyWheelGame game;
         private final Wager wager;
         private boolean armed;
 
         WheelGui(MultiverseGamblingPlugin plugin, Player player, LuckyWheelGame game, Wager wager) {
-            super(plugin, player, 5, plugin.messages().forSender(player,
+            super(plugin, player, 6, plugin.messages().forSender(player,
                     "panel.lucky-wheel.title", "game", displayName(player)));
             this.game = game;
             this.wager = wager;
@@ -183,46 +227,51 @@ public final class LuckyWheelGame extends AbstractSoloGame {
         protected void render() {
             clearActions();
             fill(Items.of(Material.BLACK_STAINED_GLASS_PANE).name(" ").build());
+            ItemStack frame = Items.of(Material.YELLOW_STAINED_GLASS_PANE).name(" ").build();
+            for (int slot : new int[]{0, 1, 2, 3, 5, 6, 7, 8, 45, 46, 47, 48, 50, 51, 52, 53}) {
+                set(slot, frame);
+            }
 
             PrizeWheel wheel = game.wheel();
             set(4, Items.of(Material.COMPASS)
                     .name(label(player(), "panel.common.bet",
-                            "bet", plugin.economy().format(wager.amount())))
+                            "bet", stakeText(wager, wager.amount())))
                     .lore(
                             label(player(), "panel.lucky-wheel.segments", "count", wheel.size()),
                             label(player(), "panel.lucky-wheel.top-prize",
                                     "multiplier", Text.multiplier(wheel.best())),
-                            label(player(), "panel.lucky-wheel.rtp",
-                                    "percent", Text.percent(wheel.rtp())),
                             label(player(), "panel.lucky-wheel.top-chance",
                                     "percent", Text.percent(wheel.bestChance())),
+                            label(player(), "panel.lucky-wheel.rtp",
+                                    "percent", Text.percent(wheel.rtp())),
                             "",
                             label(player(), "panel.lucky-wheel.equally-likely"))
                     .glow(true)
                     .build());
 
-            // The 12 tiles are drawn in two rows of six.
-            int[] slots = {19, 20, 21, 22, 23, 24, 28, 29, 30, 31, 32, 33};
-            for (int i = 0; i < Math.min(slots.length, wheel.size()); i++) {
+            int shown = Math.min(RING.length, wheel.size());
+            for (int i = 0; i < shown; i++) {
                 double multiplier = wheel.multiplier(i);
-                set(slots[i], Items.of(multiplier == 0 ? Material.GRAY_STAINED_GLASS_PANE
-                                : multiplier >= wheel.best() ? Material.GOLD_BLOCK : Material.LIME_STAINED_GLASS_PANE)
-                        .name(multiplier == 0
+                boolean best = multiplier >= wheel.best() && multiplier > 0;
+                Material material = multiplier <= 0 ? Material.GRAY_STAINED_GLASS_PANE
+                        : best ? Material.GOLD_BLOCK
+                        : multiplier >= 2 ? Material.LIME_CONCRETE
+                        : Material.LIME_STAINED_GLASS_PANE;
+                set(RING[i], Items.of(material)
+                        .name(multiplier <= 0
                                 ? label(player(), "panel.lucky-wheel.no-prize")
-                                : label(player(), "panel.lucky-wheel.tile",
-                                "multiplier", Text.multiplier(multiplier)))
-                        .lore(label(player(), "panel.lucky-wheel.chance",
-                                        "percent", Text.percent(1.0 / wheel.size())),
+                                : label(player(), "panel.lucky-wheel.tile", "multiplier", Text.multiplier(multiplier)))
+                        .lore(label(player(), "panel.lucky-wheel.chance", "percent", Text.percent(1.0 / wheel.size())),
                                 label(player(), "panel.lucky-wheel.pays",
-                                        "prize", plugin.economy().format(wager.amount() * multiplier)))
-                        .glow(multiplier >= wheel.best())
+                                        "prize", stakeText(wager, wager.amount() * multiplier)))
+                        .glow(best)
                         .build());
             }
-
-            set(40, Items.of(Material.EMERALD_BLOCK)
+            // The pointer of the wheel, over the first tile.
+            set(22, Items.of(Material.EMERALD_BLOCK)
                     .name(label(player(), "panel.lucky-wheel.spin"))
                     .lore(label(player(), "panel.lucky-wheel.will-stake",
-                                    "bet", plugin.economy().format(wager.amount())),
+                                    "bet", stakeText(wager, wager.amount())),
                             label(player(), "panel.lucky-wheel.all-in"), "",
                             label(player(), "panel.common.click-to-spin"))
                     .glow(true)
@@ -231,8 +280,36 @@ public final class LuckyWheelGame extends AbstractSoloGame {
                 close();
                 game.spin(player(), wager);
             });
+            set(21, Items.of(Material.ARROW).name(label(player(), "panel.lucky-wheel.spin")).build(), e -> {
+                armed = true;
+                close();
+                game.spin(player(), wager);
+            });
+            set(23, Items.of(Material.ARROW).name(label(player(), "panel.lucky-wheel.spin")).build(), e -> {
+                armed = true;
+                close();
+                game.spin(player(), wager);
+            });
 
-            set(36, Items.of(Material.BARRIER)
+            // A summary of the table: how many tiles pay each multiplier.
+            java.util.Map<Double, Integer> counts = new java.util.TreeMap<>();
+            for (int i = 0; i < wheel.size(); i++) {
+                counts.merge(wheel.multiplier(i), 1, Integer::sum);
+            }
+            List<String> lines = new ArrayList<>();
+            for (java.util.Map.Entry<Double, Integer> entry : counts.entrySet()) {
+                lines.add(label(player(), "panel.lucky-wheel.summary-line",
+                        "count", entry.getValue(),
+                        "multiplier", entry.getKey() <= 0
+                                ? label(player(), "panel.lucky-wheel.no-prize")
+                                : Text.multiplier(entry.getKey())));
+            }
+            set(40, Items.of(Material.PAPER)
+                    .name(label(player(), "panel.lucky-wheel.summary"))
+                    .lore(lines)
+                    .build());
+
+            set(49, Items.of(Material.BARRIER)
                     .name(label(player(), "panel.common.cancel"))
                     .lore(label(player(), "panel.common.refund-lore"))
                     .build(), e -> close());

@@ -147,7 +147,9 @@ public final class MinesGame extends AbstractSoloGame implements BoardGame {
          * 5x5 grid inside the six rows of the menu.
          */
         private int slotOf(int index) {
-            return 10 + (index / 5) * 9 + (index % 5);
+            // Five columns in the middle of the menu, rows 0 to 4: the bottom row is left to
+            // the buttons, so no control ever covers a tile.
+            return (index / 5) * 9 + 2 + (index % 5);
         }
 
         @Override
@@ -157,7 +159,10 @@ public final class MinesGame extends AbstractSoloGame implements BoardGame {
                 return;
             }
             clearActions();
-            fill(Items.of(Material.GRAY_STAINED_GLASS_PANE).name(" ").build());
+            fill(Items.of(Material.BLACK_STAINED_GLASS_PANE).name(" ").build());
+            for (int slot : new int[]{0, 8, 9, 17, 18, 26, 27, 35, 36, 44, 45, 46, 47, 48, 50, 51, 52}) {
+                set(slot, Items.of(Material.GRAY_STAINED_GLASS_PANE).name(" ").build());
+            }
 
             boolean canRevealMore = revealed.size() < tiles() - minesCount;
             double next = canRevealMore
@@ -165,7 +170,7 @@ public final class MinesGame extends AbstractSoloGame implements BoardGame {
                     : 0;
             double current = revealed.isEmpty() ? 0 : multiplier();
 
-            set(4, Items.of(Material.GOLD_INGOT)
+            set(9, Items.of(Material.GOLD_INGOT)
                     .name(label(player(), "panel.common.bet",
                             "bet", plugin.economy().format(wager.amount())))
                     .lore(
@@ -221,11 +226,15 @@ public final class MinesGame extends AbstractSoloGame implements BoardGame {
 
             // Mine controls, only before the round starts.
             if (!placed && !resolved) {
-                set(45, Items.of(Material.RED_DYE)
+                set(17, Items.of(Material.RED_DYE)
                         .name(label(player(), "panel.mines.remove"))
                         .lore(label(player(), "panel.mines.count", "count", minesCount))
                         .build(), e -> adjustMines(-1));
-                set(47, Items.of(Material.LIME_DYE)
+                set(26, Items.of(Material.TNT)
+                        .name(label(player(), "panel.mines.count", "count", minesCount))
+                        .amount(Math.max(1, Math.min(64, minesCount)))
+                        .build());
+                set(35, Items.of(Material.LIME_DYE)
                         .name(label(player(), "panel.mines.add"))
                         .lore(label(player(), "panel.mines.count", "count", minesCount))
                         .build(), e -> adjustMines(1));
@@ -372,11 +381,13 @@ public final class MinesGame extends AbstractSoloGame implements BoardGame {
                 game.refund(wager);
                 return;
             }
-            // With tiles already revealed, leaving consumes the stake: otherwise a
-            // player could peek at the board and come back in.
-            game.settle(player(), wager, 0);
-            game.message(player(), "games.abandoned", "bet",
-                    plugin.economy().format(wager.amount()));
+            // With tiles already revealed the mines are placed and every revealed tile was
+            // a real risk taken: leaving cashes out what was won, never a free peek.
+            double multiplier = multiplier();
+            double payout = game.settle(player(), wager, multiplier);
+            game.message(player(), "games.closed-cashed",
+                    "multiplier", Text.multiplier(multiplier),
+                    "prize", plugin.economy().format(payout));
         }
 
         @Override
@@ -476,6 +487,18 @@ public final class MinesGame extends AbstractSoloGame implements BoardGame {
             paintAt(0, 0, collectDz, collectMaterial());
             paintAt(-MARKER, 0, collectDz, choosing ? Material.RED_CONCRETE : Material.POLISHED_BLACKSTONE);
             paintAt(MARKER, 0, collectDz, choosing ? Material.LIME_CONCRETE : Material.POLISHED_BLACKSTONE);
+            Player viewer = gui.owner();
+            boolean canRevealMore = gui.revealed.size() < tiles() - gui.minesCount;
+            double next = canRevealMore
+                    ? MinesTable.multiplier(tiles(), gui.minesCount, gui.revealed.size() + 1, houseEdge())
+                    : 0;
+            double current = gui.revealed.isEmpty() ? 0 : gui.multiplier();
+            status(Text.c(plugin.messages().forSender(viewer, choosing
+                            ? "board.mines-status-choosing" : "board.mines-status",
+                    "count", gui.minesCount, "tiles", tiles(),
+                    "next", Text.multiplier(next),
+                    "current", Text.multiplier(current),
+                    "prize", plugin.economy().format(gui.wager.amount() * current))));
         }
 
         private Material cellMaterial(int cell) {

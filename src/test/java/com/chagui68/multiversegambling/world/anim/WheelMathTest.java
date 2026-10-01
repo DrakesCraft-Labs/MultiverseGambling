@@ -79,4 +79,38 @@ class WheelMathTest {
         assertEquals(0.0, WheelMath.z(WheelMath.TAU / 4, 8.0), 1.0e-9);
         assertEquals(8.0, Math.hypot(WheelMath.x(1.1, 8.0), WheelMath.z(1.1, 8.0)), 1.0e-9);
     }
+
+    @Test
+    void equalSectorsGetTheSameNumberOfTiles() {
+        int[] tiles = WheelMath.allocate(null, 8, 36);
+        assertEquals(8, tiles.length);
+        for (int count : tiles) {
+            assertEquals(5, count, "eight sectors need five tiles each to reach 36");
+        }
+        int[] roulette = WheelMath.allocate(null, 37, 36);
+        for (int count : roulette) {
+            assertEquals(1, count, "a roulette already has enough pockets");
+        }
+    }
+
+    @Test
+    void weightedSectorsShareTheWheelByWeight() {
+        double[] stakes = {100, 300, 0.5};
+        int[] tiles = WheelMath.allocate(stakes, stakes.length, 48);
+        int total = 0;
+        for (int count : tiles) {
+            assertTrue(count >= 1, "every stake must be visible");
+            total += count;
+        }
+        assertEquals(48, total, "the wheel keeps its number of tiles");
+        assertTrue(tiles[1] > tiles[0] && tiles[0] > tiles[2], "bigger stakes get bigger slices");
+        assertEquals(0, WheelMath.allocate(new double[0], 0, 36).length);
+    }
+
+    @Test
+    void theQuadraticEaseStartsGentlerThanTheCubic() {
+        assertEquals(0.0, WheelMath.easeQuad(0), EPSILON);
+        assertEquals(1.0, WheelMath.easeQuad(1), EPSILON);
+        assertTrue(WheelMath.easeQuad(0.05) < WheelMath.ease(0.05));
+    }
 }

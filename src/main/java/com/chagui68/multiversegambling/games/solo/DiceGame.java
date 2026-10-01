@@ -13,6 +13,8 @@ import com.chagui68.multiversegambling.util.Items;
 import com.chagui68.multiversegambling.util.Text;
 import com.chagui68.multiversegambling.world.anim.ArenaStage;
 import com.chagui68.multiversegambling.world.anim.DiceTrackShow;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -29,6 +31,23 @@ public final class DiceGame extends AbstractSoloGame {
                         "&7bet on roll over or roll under.",
                         "&7The harder the target, the more it pays.")
                 .build());
+    }
+
+    @Override
+    public boolean supportsItemBets() {
+        return true;
+    }
+
+    /** A few targets, from the easy to the very hard one: the target is chosen next. */
+    @Override
+    public List<com.chagui68.multiversegambling.game.ItemOutcome> itemOutcomes(Player viewer) {
+        List<com.chagui68.multiversegambling.game.ItemOutcome> out = new ArrayList<>();
+        for (double chance : new double[]{75.0, 50.0, 25.0, 10.0, 1.0}) {
+            out.add(new com.chagui68.multiversegambling.game.ItemOutcome(
+                    plugin.messages().forSender(viewer, "items.outcome.dice", "chance", Text.number(chance) + "%"),
+                    DiceTable.payout(chance, houseEdge()), chance / 100.0));
+        }
+        return out;
     }
 
     @Override
@@ -52,16 +71,17 @@ public final class DiceGame extends AbstractSoloGame {
     }
 
     void roll(Player player, Wager wager, double target, boolean over) {
-        int total = 25;
+        int total = 45;
         UUID playerId = player.getUniqueId();
         // The real roll comes from the provably fair generator, and the marker on the
         // track in the arena stops exactly on it.
-        double result = DiceTable.round2(plugin.fair().roll(playerId) * 100.0);
+        // One of the 10 000 values from 0.00 to 99.99, all equally likely.
+        double result = Math.floor(plugin.fair().roll(playerId) * 10000.0) / 100.0;
         boolean won = DiceTable.wins(result, target, over);
 
         ArenaStage stage = arenaFor(player);
         if (stage != null) {
-            DiceTrackShow show = new DiceTrackShow(plugin, stage, target, result, won, total);
+            DiceTrackShow show = new DiceTrackShow(plugin, stage, target, result, won, over, total);
             new TimedSession(plugin, player, id(), total) {
 
                 @Override
@@ -83,7 +103,7 @@ public final class DiceGame extends AbstractSoloGame {
                 @Override
                 protected void onCancel() {
                     show.cancel();
-                    refund(wager);
+                    settleRoll(playerId, wager, target, over, result, won);
                 }
             }.run();
             return;
@@ -113,7 +133,7 @@ public final class DiceGame extends AbstractSoloGame {
 
             @Override
             protected void onCancel() {
-                refund(wager);
+                settleRoll(playerId, wager, target, over, result, won);
             }
         }.run();
     }
@@ -121,13 +141,15 @@ public final class DiceGame extends AbstractSoloGame {
     /** Pays a roll that was drawn when the marker set off. */
     private void settleRoll(UUID playerId, Wager wager, double target, boolean over,
                             double result, boolean won) {
-        Player online = plugin.getServer().getPlayer(playerId);
-        if (online == null) {
-            refund(wager);
-            return;
-        }
         double chance = over ? DiceTable.winChanceOver(target) : DiceTable.winChanceUnder(target);
         double multiplier = won ? DiceTable.payout(chance, houseEdge()) : 0;
+        Player online = plugin.getServer().getPlayer(playerId);
+        if (online == null) {
+            // Gone before the end: the result was already drawn, so it is paid as drawn.
+            // Refunding here would let anybody cancel a round they saw coming out badly.
+            settleOffline(playerId, wager, multiplier);
+            return;
+        }
         double payout = settle(online, wager, multiplier);
 
         announceResult(online, won, "&f" + Text.number(result));
@@ -135,7 +157,7 @@ public final class DiceGame extends AbstractSoloGame {
         message(online, "panel.dice.info",
                 "direction", direction(online, over),
                 "target", Text.number(target), "result", Text.number(result));
-        showResult(online, wager.amount(), payout);
+        showResult(online, wager, payout);
         sound(online, won ? Sound.ENTITY_PLAYER_LEVELUP : Sound.ENTITY_VILLAGER_NO,
                 0.9f, won ? 1.3f : 0.9f);
         offerReplay(online);
@@ -171,7 +193,7 @@ public final class DiceGame extends AbstractSoloGame {
         @Override
         protected void render() {
             clearActions();
-            fill(Items.of(Material.BLACK_STAINED_GLASS_PANE).name(" ").build());
+            frame(Material.CYAN_STAINED_GLASS_PANE);
 
             double chance = chance();
             double payout = DiceTable.payout(chance, game.houseEdge());
@@ -186,9 +208,9 @@ public final class DiceGame extends AbstractSoloGame {
                             label(player(), "panel.dice.pays",
                                     "multiplier", Text.multiplier(payout)),
                             label(player(), "panel.dice.would-win",
-                                    "prize", plugin.economy().format(wager.amount() * payout)),
+                                    "prize", stakeText(wager, wager.amount() * payout)),
                             label(player(), "panel.dice.expected",
-                                    "value", plugin.economy().format(expected)),
+                                    "value", stakeText(wager, expected)),
                             "",
                             label(player(), "panel.dice.house",
                                     "edge", Text.percent(game.houseEdge())))
@@ -215,11 +237,22 @@ public final class DiceGame extends AbstractSoloGame {
                 refresh();
             });
 
+            // The roll from 0 to 100 as a bar of seven panes: green where it wins.
+            for (int i = 0; i < 7; i++) {
+                double from = i * 100.0 / 7;
+                double to = (i + 1) * 100.0 / 7;
+                double middle = (from + to) / 2;
+                boolean wins = over ? middle >= target : middle < target;
+                set(28 + i, Items.of(wins ? Material.LIME_STAINED_GLASS_PANE : Material.RED_STAINED_GLASS_PANE)
+                        .name((wins ? "&a" : "&c") + Text.number(from) + " - " + Text.number(to))
+                        .build());
+            }
+
             set(40, Items.of(Material.EMERALD_BLOCK)
                     .name(label(player(), "panel.dice.roll"))
                     .lore(
                             label(player(), "panel.dice.staking",
-                                    "bet", plugin.economy().format(wager.amount())),
+                                    "bet", stakeText(wager, wager.amount())),
                             label(player(), "panel.dice.need-roll",
                                     "direction", game.direction(player(), over),
                                     "target", Text.number(target)),

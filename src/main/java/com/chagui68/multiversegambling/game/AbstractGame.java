@@ -3,6 +3,7 @@ package com.chagui68.multiversegambling.game;
 import com.chagui68.multiversegambling.MultiverseGamblingPlugin;
 import com.chagui68.multiversegambling.economy.Wager;
 import com.chagui68.multiversegambling.util.Text;
+import com.chagui68.multiversegambling.world.anim.ArenaShow;
 import com.chagui68.multiversegambling.world.anim.ArenaStage;
 import java.time.Duration;
 import java.util.List;
@@ -96,8 +97,54 @@ public abstract class AbstractGame implements Game {
         } else {
             wager.payAbsolute(payout);
         }
-        plugin.stats().record(player.getUniqueId(), id(), wager.amount(), payout);
-        plugin.games().announceWin(player, wager.amount(), payout);
+        // Statistics and win announcements are in money; a bet in items is neither.
+        if (!(wager instanceof com.chagui68.multiversegambling.economy.ItemWager)) {
+            plugin.stats().record(player.getUniqueId(), id(), wager.amount(), payout);
+            plugin.games().announceWin(player, wager.amount(), payout);
+        }
+        return payout;
+    }
+
+    /**
+     * What {@code units} of a stake are, in words: money for an ordinary bet, a number of
+     * copies of the item for a bet staked with items (with the chance of one more when it
+     * is not a whole number).
+     */
+    public String stakeText(Wager wager, double units) {
+        if (wager instanceof com.chagui68.multiversegambling.economy.ItemWager items) {
+            return itemsText(items.item(), units);
+        }
+        return plugin.economy().format(units);
+    }
+
+    /**
+     * {@code units} copies of an item, in words.
+     */
+    public String itemsText(org.bukkit.inventory.ItemStack item, double units) {
+        String name = com.chagui68.multiversegambling.economy.ItemBank.nameOf(item);
+        int whole = (int) Math.floor(Math.max(0, units) + 1e-9);
+        double extra = com.chagui68.multiversegambling.economy.ItemMath.extraChance(units);
+        if (extra <= 0) {
+            return plugin.messages().get("items.amount", "count", whole, "item", name);
+        }
+        return plugin.messages().get("items.amount-chance", "count", whole, "item", name,
+                "chance", Text.percent(extra));
+    }
+
+    /**
+     * Settles the bet of a player who is no longer online (a round closed by a logout
+     * or a server stop): pays and records it, without any message.
+     */
+    public double settleOffline(java.util.UUID playerId, Wager wager, double multiplier) {
+        double payout = wager.amount() * Math.max(0, multiplier);
+        if (payout <= 0) {
+            wager.lose();
+        } else {
+            wager.payAbsolute(payout);
+        }
+        if (!(wager instanceof com.chagui68.multiversegambling.economy.ItemWager)) {
+            plugin.stats().record(playerId, id(), wager.amount(), payout);
+        }
         return payout;
     }
 
@@ -168,7 +215,9 @@ public abstract class AbstractGame implements Game {
             return null;
         }
         ArenaStage stage = plugin.world().stage(id());
-        if (stage == null) {
+        if (stage == null || ArenaShow.busy(id())) {
+            // Somebody else's round is on the pavilion right now: this one keeps its text
+            // animation rather than painting over theirs.
             return null;
         }
         if (plugin.config().worldAnimationsTeleport()) {

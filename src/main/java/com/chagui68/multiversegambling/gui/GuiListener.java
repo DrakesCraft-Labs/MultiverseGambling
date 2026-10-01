@@ -5,10 +5,12 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.inventory.InventoryType;
+import org.bukkit.inventory.Inventory;
 
 /**
  * Blocks anything that is not clicking a button inside a casino menu.
@@ -24,6 +26,12 @@ public final class GuiListener implements Listener {
     @EventHandler(priority = EventPriority.HIGH)
     public void onClick(InventoryClickEvent event) {
         if (!(event.getView().getTopInventory().getHolder() instanceof Gui gui)) {
+            return;
+        }
+        if (gui.acceptsItems() && allowItemMove(event, gui)) {
+            // The click only moved items through the chest: let it happen and refresh
+            // what the menu says about them once the move is done.
+            plugin.getServer().getScheduler().runTask(plugin, gui::contentsChanged);
             return;
         }
         event.setCancelled(true);
@@ -50,9 +58,46 @@ public final class GuiListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGH)
     public void onDrag(InventoryDragEvent event) {
-        if (event.getView().getTopInventory().getHolder() instanceof Gui) {
-            event.setCancelled(true);
+        if (!(event.getView().getTopInventory().getHolder() instanceof Gui gui)) {
+            return;
         }
+        int top = event.getView().getTopInventory().getSize();
+        boolean allowed = gui.acceptsItems() && event.getWhoClicked().getUniqueId().equals(gui.playerId());
+        for (int raw : event.getRawSlots()) {
+            if (raw < top && !gui.editable(raw)) {
+                allowed = false;
+            }
+        }
+        if (!allowed) {
+            event.setCancelled(true);
+            return;
+        }
+        plugin.getServer().getScheduler().runTask(plugin, gui::contentsChanged);
+    }
+
+    /**
+     * True when a click in a menu with an item chest only moves items between the
+     * player's inventory and the chest. Collecting to the cursor is always refused: it
+     * would sweep matching items out of any slot, locked ones included.
+     */
+    private static boolean allowItemMove(InventoryClickEvent event, Gui gui) {
+        if (!event.getWhoClicked().getUniqueId().equals(gui.playerId())) {
+            return false;
+        }
+        if (event.getAction() == InventoryAction.COLLECT_TO_CURSOR) {
+            return false;
+        }
+        Inventory clicked = event.getClickedInventory();
+        if (clicked == null) {
+            // Outside the window: dropping what is on the cursor.
+            return true;
+        }
+        if (clicked.getType() == InventoryType.PLAYER) {
+            // A shift click sends items up into the first free slots, and in such a menu
+            // the only free slots are the chest.
+            return true;
+        }
+        return clicked.getHolder() == gui && gui.editable(event.getSlot());
     }
 
     @EventHandler

@@ -26,6 +26,14 @@ public final class PlayerListener implements Listener {
     @EventHandler(priority = EventPriority.MONITOR)
     public void onJoin(PlayerJoinEvent event) {
         plugin.economy().ensureAccount(event.getPlayer());
+        // Winnings in items settled while the player was away are handed over once the
+        // inventory is ready.
+        org.bukkit.entity.Player joined = event.getPlayer();
+        plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+            if (joined.isOnline()) {
+                plugin.items().deliverPending(joined);
+            }
+        }, 20L);
         if (plugin.world() != null) {
             plugin.world().handleJoin(event.getPlayer());
         }

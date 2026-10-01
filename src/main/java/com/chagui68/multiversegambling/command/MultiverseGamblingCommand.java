@@ -8,6 +8,8 @@ import com.chagui68.multiversegambling.i18n.Language;
 import com.chagui68.multiversegambling.stats.PlayerStats;
 import com.chagui68.multiversegambling.stats.StatsStore;
 import com.chagui68.multiversegambling.util.Text;
+import com.chagui68.multiversegambling.world.CasinoWorldManager;
+import com.chagui68.multiversegambling.world.WorldReport;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -300,6 +302,15 @@ public final class MultiverseGamblingCommand implements CommandExecutor, TabComp
      * Teleports to the casino world; {@code /mvgam world build} rebuilds the structures.
      */
     private boolean world(CommandSender sender, String[] args) {
+        // The report answers administrators and the console, so it is served before the
+        // player-only checks of the teleport.
+        if (args.length > 1 && args[1].equalsIgnoreCase("info")) {
+            if (!sender.hasPermission("mvgam_admin")) {
+                plugin.messages().send(sender, "general.no-permission");
+                return true;
+            }
+            return worldInfo(sender);
+        }
         if (!(sender instanceof Player player)) {
             plugin.messages().send(sender, "command.players-only");
             return true;
@@ -317,9 +328,20 @@ public final class MultiverseGamblingCommand implements CommandExecutor, TabComp
                 plugin.messages().send(sender, "general.no-permission");
                 return true;
             }
-            boolean ok = plugin.world().rebuild();
-            plugin.messages().send(player, ok ? "world.built" : "world.build-failed",
-                    "world", plugin.config().worldName());
+            String worldName = plugin.config().worldName();
+            java.util.UUID requester = player.getUniqueId();
+            CasinoWorldManager.BuildStart start = plugin.world().rebuild(ok -> {
+                Player online = plugin.getServer().getPlayer(requester);
+                if (online != null) {
+                    plugin.messages().send(online, ok ? "world.built" : "world.build-failed", "world", worldName);
+                }
+            });
+            switch (start) {
+                case STARTED -> plugin.messages().send(player, "world.building", "world", worldName);
+                case BUSY -> plugin.messages().send(player, "world.build-busy",
+                        "progress", Text.percent(plugin.world().buildProgress()));
+                case FAILED -> plugin.messages().send(player, "world.build-failed", "world", worldName);
+            }
             return true;
         }
         if (plugin.world().teleport(player)) {
@@ -378,6 +400,44 @@ public final class MultiverseGamblingCommand implements CommandExecutor, TabComp
             }
         }
         return false;
+    }
+
+    /**
+     * {@code /mvgam world info}: what exists, what is built and what has to be fixed.
+     */
+    private boolean worldInfo(CommandSender sender) {
+        WorldReport report = plugin.world().report();
+        plugin.messages().sendRaw(sender, plugin.messages().forSender(sender, "world.info.header"));
+        plugin.messages().sendRaw(sender, plugin.messages().forSender(sender, "world.info.line-world",
+                "world", report.name(), "source", infoSource(sender, report.source())));
+        if (report.source() != WorldReport.Source.ABSENT) {
+            plugin.messages().sendRaw(sender, plugin.messages().forSender(sender, "world.info.line-terrain",
+                    "terrain", plugin.messages().forSender(sender, report.flat()
+                            ? "world.info.terrain-flat" : "world.info.terrain-existing")));
+        }
+        if (report.measured()) {
+            plugin.messages().sendRaw(sender, plugin.messages().forSender(sender, "world.info.line-size",
+                    "size", report.size(), "ground", report.groundY()));
+            plugin.messages().sendRaw(sender, plugin.messages().forSender(sender, "world.info.line-arenas",
+                    "built", report.arenasBuilt(), "planned", report.arenasPlanned(),
+                    "games", report.games()));
+            plugin.messages().sendRaw(sender, plugin.messages().forSender(sender, "world.info.line-boards",
+                    "boards", report.boards()));
+        }
+        for (String hintKey : report.hintKeys()) {
+            plugin.messages().sendRaw(sender, plugin.messages().forSender(sender, "world.info.hint",
+                    "hint", plugin.messages().forSender(sender, hintKey,
+                            "games", String.join(", ", report.boardsTooBig()))));
+        }
+        return true;
+    }
+
+    private String infoSource(CommandSender sender, WorldReport.Source source) {
+        return plugin.messages().forSender(sender, switch (source) {
+            case CREATED_HERE -> "world.info.source-created";
+            case LOADED -> "world.info.source-loaded";
+            case ABSENT -> "world.info.source-absent";
+        });
     }
 
     private boolean info(CommandSender sender) {
@@ -461,7 +521,7 @@ public final class MultiverseGamblingCommand implements CommandExecutor, TabComp
                 case "games" -> filter(List.of("solo", "group"), args[1]);
                 case "top" -> filter(List.of("profit", "wagered", "prize"), args[1]);
                 case "verify" -> filter(List.of("<seed>"), args[1]);
-                case "world" -> filter(List.of("build"), args[1]);
+                case "world" -> filter(List.of("build", "info"), args[1]);
                 case "language" -> filter(plugin.messages().locales(), args[1]);
                 case "give", "take", "set", "cancel", "balance", "stats" -> filter(onlineNames(), args[1]);
                 default -> List.of();

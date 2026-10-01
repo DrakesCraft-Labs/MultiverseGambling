@@ -9,6 +9,7 @@ import com.chagui68.multiversegambling.game.GameCategory;
 import com.chagui68.multiversegambling.game.GameMeta;
 import com.chagui68.multiversegambling.gui.Gui;
 import com.chagui68.multiversegambling.util.Items;
+import com.chagui68.multiversegambling.util.Text;
 import com.chagui68.multiversegambling.world.anim.ArenaStage;
 import com.chagui68.multiversegambling.world.board.ArenaBoard;
 import com.chagui68.multiversegambling.world.board.BoardGrid;
@@ -89,11 +90,32 @@ public final class BombBoardGame extends AbstractGroupGame implements BoardGame 
     }
 
     @Override
+    protected boolean houseDuelAvailable() {
+        return true;
+    }
+
+    /**
+     * Against the house, the dealer takes turns with the player, the player first, and
+     * whoever meets a bomb first loses. That is the revolver of the russian roulette with
+     * tiles for chambers, so the same exact table pays it.
+     */
+    @Override
+    protected double houseDuelMultiplier(Player player) {
+        return com.chagui68.multiversegambling.engine.HouseDuelTable.multiplier(size(), bombCount(),
+                plugin.config().houseEdge());
+    }
+
+    @Override
     protected void onRoundStart() {
         bombs.clear();
         revealed.clear();
         order.clear();
         order.addAll(pot.participants());
+        if (houseDuelActive()) {
+            order.add(FairnessService.HOUSE);
+            broadcastPlain("group.bomb-board.duel-intro",
+                    "multiplier", Text.multiplier(houseDuelMultiplier(null)));
+        }
         alive.clear();
         alive.addAll(order);
         turnIndex = 0;
@@ -170,6 +192,21 @@ public final class BombBoardGame extends AbstractGroupGame implements BoardGame 
             return;
         }
         turnTicks++;
+        if (isHouse(currentId)) {
+            // The dealer thinks for a second and a half, then opens a tile at random.
+            if (turnTicks == 1) {
+                actionBarAllKey("board.other-turn", "player", houseName());
+            }
+            if (turnTicks >= 30) {
+                List<Integer> free = freeCells();
+                if (free.isEmpty()) {
+                    settle();
+                    return;
+                }
+                reveal(currentId, free.get(plugin.fair().rollInt(FairnessService.HOUSE, free.size())));
+            }
+            return;
+        }
         int limit = plugin.config().bombBoardTurnSeconds() * 20;
         Player player = online(currentId);
         if (player != null) {
@@ -202,6 +239,12 @@ public final class BombBoardGame extends AbstractGroupGame implements BoardGame 
     private void openBoard() {
         UUID currentId = current();
         if (currentId == null) {
+            return;
+        }
+        if (isHouse(currentId)) {
+            if (arena != null) {
+                arena.paint();
+            }
             return;
         }
         Player player = online(currentId);
@@ -289,6 +332,11 @@ public final class BombBoardGame extends AbstractGroupGame implements BoardGame 
             // Last frame: the bombs are shown and the board is left standing a moment.
             arena.finish();
             arena = null;
+        }
+        if (houseDuelActive()) {
+            UUID survivor = alive.isEmpty() ? FairnessService.HOUSE : alive.iterator().next();
+            settleHouseDuel(isHouse(survivor) ? -1 : 1, houseDuelMultiplier(null));
+            return;
         }
         if (alive.isEmpty()) {
             broadcastPlain("group.bomb-board.no-survivors");
@@ -379,7 +427,7 @@ public final class BombBoardGame extends AbstractGroupGame implements BoardGame 
         @Override
         protected void render() {
             clearActions();
-            fill(FILLER);
+            frame(Material.RED_STAINED_GLASS_PANE);
 
             set(4, Items.of(Material.GUNPOWDER)
                     .name(label(player(), "panel.bomb-board.info"))

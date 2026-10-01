@@ -49,6 +49,13 @@ public final class GuiManager {
      * Opens the bet selector, remembering how much the player staked last time.
      */
     public void openBetSelector(Player player, Game game, DoubleConsumer onConfirm) {
+        openBetSelector(player, game, onConfirm, null);
+    }
+
+    /**
+     * Same selector with a second confirm button that bets against the house.
+     */
+    public void openBetSelector(Player player, Game game, DoubleConsumer onConfirm, DoubleConsumer onHouse) {
         if (!player.isOnline()) {
             return;
         }
@@ -59,6 +66,9 @@ public final class GuiManager {
         new BetSelectorGui(plugin, player, game, initial, bet -> {
             lastBets.put(player.getUniqueId(), bet);
             onConfirm.accept(bet);
+        }, onHouse == null ? null : bet -> {
+            lastBets.put(player.getUniqueId(), bet);
+            onHouse.accept(bet);
         }).show();
     }
 

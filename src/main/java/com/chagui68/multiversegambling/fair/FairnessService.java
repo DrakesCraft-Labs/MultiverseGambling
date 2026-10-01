@@ -2,17 +2,13 @@ package com.chagui68.multiversegambling.fair;
 
 import com.chagui68.multiversegambling.MultiverseGamblingPlugin;
 import com.chagui68.multiversegambling.engine.ProvablyFair;
+import com.chagui68.multiversegambling.util.JsonStore;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.Reader;
-import java.io.Writer;
 import java.lang.reflect.Type;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -137,40 +133,26 @@ public final class FairnessService {
     }
 
     private void load() {
-        if (!file.exists()) {
+        Map<String, String> raw = JsonStore.read(plugin.getLogger(), file, gson, MAP_TYPE);
+        if (raw == null) {
             return;
         }
-        try (Reader reader = Files.newBufferedReader(file.toPath(), StandardCharsets.UTF_8)) {
-            Map<String, String> raw = gson.fromJson(reader, MAP_TYPE);
-            if (raw == null) {
+        raw.forEach((key, value) -> {
+            if (value == null) {
                 return;
             }
-            raw.forEach((key, value) -> {
-                try {
-                    clientSeeds.put(UUID.fromString(key), value);
-                } catch (IllegalArgumentException ignored) {
-                    // Corrupt entry: ignored without breaking the load.
-                }
-            });
-        } catch (IOException e) {
-            plugin.getLogger().warning("Could not read fairness.json: " + e.getMessage());
-        }
+            try {
+                clientSeeds.put(UUID.fromString(key), value);
+            } catch (IllegalArgumentException ignored) {
+                // Corrupt entry: ignored without breaking the load.
+            }
+        });
     }
 
     public void save() {
         Map<String, String> raw = new HashMap<>();
         clientSeeds.forEach((id, seed) -> raw.put(id.toString(), seed));
-        try {
-            File parent = file.getParentFile();
-            if (parent != null && !parent.exists() && !parent.mkdirs()) {
-                plugin.getLogger().warning("Could not create the plugin data folder");
-            }
-            try (Writer writer = Files.newBufferedWriter(file.toPath(), StandardCharsets.UTF_8)) {
-                gson.toJson(raw, MAP_TYPE, writer);
-            }
-        } catch (IOException e) {
-            plugin.getLogger().warning("Could not save fairness.json: " + e.getMessage());
-        }
+        JsonStore.write(plugin.getLogger(), file, gson, MAP_TYPE, raw);
     }
 
     public void saveAsync() {

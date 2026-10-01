@@ -143,7 +143,7 @@ public final class ScratchCardGame extends AbstractSoloGame implements BoardGame
                 return;
             }
             clearActions();
-            fill(Items.of(Material.BLACK_STAINED_GLASS_PANE).name(" ").build());
+            frame(Material.MAGENTA_STAINED_GLASS_PANE);
 
             set(4, Items.of(Material.MAP)
                     .name(label(player(), "panel.scratch.card"))
@@ -274,8 +274,34 @@ public final class ScratchCardGame extends AbstractSoloGame implements BoardGame
             if (board != null) {
                 board.close();
             }
-            if (!resolved) {
+            if (resolved) {
+                return;
+            }
+            if (picked.isEmpty()) {
+                // Nothing was scratched yet: the card was never seen, the stake comes back.
                 game.refund(wager);
+                return;
+            }
+            // Something was already scratched: leaving finishes the card with random
+            // tiles instead of refunding it, or a bad start could simply be walked away from.
+            resolved = true;
+            List<Integer> hidden = new java.util.ArrayList<>();
+            for (int cell = 0; cell < ScratchCardTable.CELLS; cell++) {
+                if (!picked.contains(cell)) {
+                    hidden.add(cell);
+                }
+            }
+            while (picked.size() < ScratchCardTable.PICKS && !hidden.isEmpty()) {
+                int index = plugin.fair().rollInt(player().getUniqueId(), hidden.size());
+                picked.add(hidden.remove(index));
+            }
+            List<Face> chosen = picked.stream().map(card::get).toList();
+            double payout = game.resolve(player(), wager, chosen);
+            if (player().isOnline()) {
+                game.message(player(), "panel.scratch.scratched",
+                        "faces", chosen.stream().map(face -> game.faceName(player(), face))
+                                .reduce((a, b) -> a + "&7, " + b).orElse("-"));
+                game.showResult(player(), wager.amount(), payout);
             }
         }
 

@@ -14,6 +14,8 @@ import com.chagui68.multiversegambling.util.Text;
 import com.chagui68.multiversegambling.world.anim.ArenaStage;
 import com.chagui68.multiversegambling.world.anim.CoinFlipShow;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import org.bukkit.Material;
@@ -36,6 +38,19 @@ public final class CoinFlipGame extends AbstractSoloGame {
     }
 
     @Override
+    public boolean supportsItemBets() {
+        return true;
+    }
+
+    /** Guessing the side pays the trimmed fair payout; missing it loses the stake. */
+    @Override
+    public List<com.chagui68.multiversegambling.game.ItemOutcome> itemOutcomes(Player viewer) {
+        return List.of(new com.chagui68.multiversegambling.game.ItemOutcome(
+                plugin.messages().forSender(viewer, "items.outcome.coin"),
+                DiceTable.payout(50.0, plugin.config().houseEdge()), 0.5));
+    }
+
+    @Override
     protected void start(Player player, double bet) {
         Wager wager = stake(player, bet);
         if (wager == null) {
@@ -45,7 +60,7 @@ public final class CoinFlipGame extends AbstractSoloGame {
     }
 
     void flip(Player player, Wager wager, String side) {
-        int total = 40;
+        int total = 60;
         UUID playerId = player.getUniqueId();
         // The coin is tossed once, here, from the provably fair generator: the show
         // only paints the side that came up.
@@ -53,7 +68,9 @@ public final class CoinFlipGame extends AbstractSoloGame {
 
         ArenaStage stage = arenaFor(player);
         if (stage != null) {
-            CoinFlipShow show = new CoinFlipShow(plugin, stage, heads, total);
+            CoinFlipShow show = new CoinFlipShow(plugin, stage, heads, total)
+                    .captions(Text.strip(plugin.messages().forSender(player, "panel.coin-flip.heads")),
+                            Text.strip(plugin.messages().forSender(player, "panel.coin-flip.tails")));
             new TimedSession(plugin, player, id(), total) {
 
                 @Override
@@ -75,7 +92,7 @@ public final class CoinFlipGame extends AbstractSoloGame {
                 @Override
                 protected void onCancel() {
                     show.cancel();
-                    refund(wager);
+                    settleFlip(playerId, wager, side, heads);
                 }
             }.run();
             return;
@@ -108,7 +125,7 @@ public final class CoinFlipGame extends AbstractSoloGame {
 
             @Override
             protected void onCancel() {
-                refund(wager);
+                settleFlip(playerId, wager, side, heads);
             }
         }.run();
     }
@@ -117,16 +134,18 @@ public final class CoinFlipGame extends AbstractSoloGame {
      * Pays a toss whose coin was decided when the round started.
      */
     private void settleFlip(UUID playerId, Wager wager, String side, boolean heads) {
-        Player online = plugin.getServer().getPlayer(playerId);
-        if (online == null) {
-            refund(wager);
-            return;
-        }
         String result = heads ? HEADS : TAILS;
         boolean won = result.equals(side);
+        double multiplier = DiceTable.payout(50.0, plugin.config().houseEdge());
+        Player online = plugin.getServer().getPlayer(playerId);
+        if (online == null) {
+            // Gone before the end: the result was already drawn, so it is paid as drawn.
+            // Refunding here would let anybody cancel a round they saw coming out badly.
+            settleOffline(playerId, wager, multiplier);
+            return;
+        }
         // Careful: paying 2.0 with a fair coin would give the house a zero edge.
         // The trimmed fair payout is used, exactly like in the dice game.
-        double multiplier = DiceTable.payout(50.0, plugin.config().houseEdge());
         double payout = settle(online, wager, won ? multiplier : 0);
 
         announceResult(online, won, sideName(online, result));
@@ -136,7 +155,7 @@ public final class CoinFlipGame extends AbstractSoloGame {
         message(online, "panel.coin-flip.odds",
                 "multiplier", Text.multiplier(multiplier),
                 "edge", Text.percent(plugin.config().houseEdge()));
-        showResult(online, wager.amount(), payout);
+        showResult(online, wager, payout);
         sound(online, won ? Sound.ENTITY_PLAYER_LEVELUP : Sound.ENTITY_VILLAGER_NO,
                 0.9f, won ? 1.3f : 0.9f);
         offerReplay(online);
@@ -165,15 +184,15 @@ public final class CoinFlipGame extends AbstractSoloGame {
         @Override
         protected void render() {
             clearActions();
-            fill(Items.of(Material.BLACK_STAINED_GLASS_PANE).name(" ").build());
+            frame(Material.YELLOW_STAINED_GLASS_PANE);
 
             double multiplier = DiceTable.payout(50.0, plugin.config().houseEdge());
             set(4, Items.of(Material.GOLD_INGOT)
                     .name(label(player(), "panel.common.bet",
-                            "bet", plugin.economy().format(wager.amount())))
+                            "bet", stakeText(wager, wager.amount())))
                     .lore(label(player(), "panel.coin-flip.info",
                             "multiplier", Text.multiplier(multiplier),
-                            "prize", plugin.economy().format(wager.amount() * multiplier)))
+                            "prize", stakeText(wager, wager.amount() * multiplier)))
                     .glow(true)
                     .build());
 

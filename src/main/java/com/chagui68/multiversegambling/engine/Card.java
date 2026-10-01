@@ -96,6 +96,37 @@ public record Card(Suit suit, int rank) {
             }
         }
 
+        /**
+         * A shoe shuffled with uniform rolls in {@code [0,1)}, one per swap of the
+         * Fisher-Yates shuffle, so a provably fair source can decide the order of the
+         * cards. Missing rolls count as 0.
+         */
+        public static Deck shuffled(int decks, double[] rolls) {
+            int[] index = {0};
+            return new Deck(decks, new RandomGenerator() {
+                @Override
+                public long nextLong() {
+                    return Double.doubleToLongBits(next());
+                }
+
+                @Override
+                public int nextInt(int bound) {
+                    return Math.min(bound - 1, (int) Math.floor(next() * bound));
+                }
+
+                private double next() {
+                    return index[0] < rolls.length ? rolls[index[0]++] : 0.0;
+                }
+            });
+        }
+
+        /**
+         * Rolls a shoe of that many decks needs to be shuffled.
+         */
+        public static int rollsFor(int decks) {
+            return Math.max(1, decks) * 52 - 1;
+        }
+
         public Card draw() {
             if (cursor >= cards.size()) {
                 cursor = 0;

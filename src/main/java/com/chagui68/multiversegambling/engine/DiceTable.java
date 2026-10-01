@@ -43,8 +43,13 @@ public final class DiceTable {
         return (1.0 - houseEdge) * 100.0 / winChancePercent;
     }
 
+    /**
+     * Rolls go from 0.00 to 99.99 in steps of 0.01. "Over" wins from the target up and
+     * "under" below it, so both chances are exactly the ones {@link #winChanceOver} and
+     * {@link #winChanceUnder} pay for.
+     */
     public static boolean wins(double roll, double target, boolean over) {
-        return over ? roll > target : roll < target;
+        return over ? roll >= target - 1e-9 : roll < target - 1e-9;
     }
 
     public static double round2(double value) {

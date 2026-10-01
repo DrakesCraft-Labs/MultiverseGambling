@@ -99,6 +99,16 @@ public abstract class Gui implements InventoryHolder, SoloSession {
     }
 
     /**
+     * The look shared by the casino menus: a dark background inside a frame of panes in
+     * the colour of the game. Buttons placed afterwards sit on top of it.
+     */
+    protected final void frame(org.bukkit.Material accent) {
+        fill(com.chagui68.multiversegambling.util.Items.of(org.bukkit.Material.BLACK_STAINED_GLASS_PANE)
+                .name(" ").build());
+        border(com.chagui68.multiversegambling.util.Items.of(accent).name(" ").build());
+    }
+
+    /**
      * Wraps the border of the menu with an item, leaving the inside empty.
      */
     protected final void border(ItemStack item) {
@@ -133,7 +143,11 @@ public abstract class Gui implements InventoryHolder, SoloSession {
         headless = onArena;
         render();
         opened = true;
-        plugin.sessions().track(this);
+        // Only the menus of a round are a session: a plain menu opened on top of a
+        // running round (the main menu, the statistics) must never cancel it.
+        if (holdsRound()) {
+            plugin.sessions().track(this);
+        }
         if (!onArena) {
             player.openInventory(inventory);
         }
@@ -186,6 +200,40 @@ public abstract class Gui implements InventoryHolder, SoloSession {
     }
 
     protected void onClose() {
+    }
+
+    /**
+     * True when this menu is the round itself (a bet is riding on it), so it takes the
+     * player's session slot. Menus that only show or pick things answer false.
+     */
+    protected boolean holdsRound() {
+        return true;
+    }
+
+    /**
+     * True for a slot the player may put items into and take them out of (the chest of
+     * the item bet menu). Every other slot of every menu is locked.
+     */
+    public boolean editable(int slot) {
+        return false;
+    }
+
+    /**
+     * True when this menu has editable slots at all.
+     */
+    public boolean acceptsItems() {
+        for (int slot = 0; slot < inventory.getSize(); slot++) {
+            if (editable(slot)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Called one tick after the player moved items in or out of the editable slots.
+     */
+    public void contentsChanged() {
     }
 
     // --------------------------------------------------------------- SoloSession

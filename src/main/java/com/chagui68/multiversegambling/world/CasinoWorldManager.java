@@ -3,69 +3,94 @@ package com.chagui68.multiversegambling.world;
 import com.chagui68.multiversegambling.MultiverseGamblingPlugin;
 import com.chagui68.multiversegambling.game.BoardGame;
 import com.chagui68.multiversegambling.game.Game;
-import com.chagui68.multiversegambling.util.Text;
 import com.chagui68.multiversegambling.world.anim.ArenaStage;
 import com.chagui68.multiversegambling.world.board.BoardGrid;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Consumer;
 
 import org.bukkit.Bukkit;
+import org.bukkit.GameRules;
 import org.bukkit.Location;
-import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.World;
 import org.bukkit.WorldCreator;
 import org.bukkit.WorldType;
-import org.bukkit.block.Block;
-import org.bukkit.block.BlockFace;
-import org.bukkit.block.BlockState;
-import org.bukkit.block.Sign;
-import org.bukkit.block.data.BlockData;
-import org.bukkit.block.data.Rotatable;
-import org.bukkit.block.sign.Side;
 import org.bukkit.entity.Player;
+import org.bukkit.persistence.PersistentDataContainer;
+import org.bukkit.persistence.PersistentDataType;
 
 /**
  * The dedicated casino world: a flat stage of {@code world.size} x {@code world.size}
- * blocks with a plaza at spawn, a grid of roads and one arena per registered game.
+ * blocks with a plaza at spawn, a grid of boulevards and one pavilion per registered
+ * game.
  *
- * <p>The world is created as a flat world the first time the plugin runs, so the
- * build only has to place the structures on top of the ground. Nothing is ever
- * built in the server's main world: pointing {@code world.name} at it is refused
- * with a warning instead of paving over somebody's lobby.</p>
+ * <p>The world is created as a flat world the first time the plugin runs. The design is
+ * stamped into the world data with a signature of the layout (version, size, games and
+ * boards): when the signature changes, because the plugin was updated or a game was
+ * added, the casino is rebuilt on its own, a few chunks per tick, wiping whatever the
+ * previous version left on the surface. Nothing is ever built in the server's main
+ * world: pointing {@code world.name} at it is refused with a warning instead of paving
+ * over somebody's lobby.</p>
  */
 public final class CasinoWorldManager {
 
-    private static final String FLAT_SETTINGS =
-            "3;minecraft:bedrock,2*minecraft:dirt,minecraft:grass_block;1;minecraft:plains";
+    /**
+     * Version of the casino design: bump it whenever the blueprint changes, so existing
+     * worlds are rebuilt with the new look.
+     */
+    static final int DESIGN_VERSION = 2;
 
     /**
-     * One colour per arena, cycled when more games than colours are registered.
+     * Flat terrain for the casino: one bedrock layer, two of dirt and a grass
+     * surface. Modern servers expect these settings as JSON with a valid biome
+     * (the old {@code 3;bedrock,...;1;plains} string is rejected as malformed
+     * JSON and aborts world creation), so the layer list is written out here.
      */
-    private static final Material[] PALETTE = {
-            Material.RED_CONCRETE, Material.ORANGE_CONCRETE, Material.YELLOW_CONCRETE,
-            Material.LIME_CONCRETE, Material.GREEN_CONCRETE, Material.CYAN_CONCRETE,
-            Material.LIGHT_BLUE_CONCRETE, Material.BLUE_CONCRETE, Material.PURPLE_CONCRETE,
-            Material.MAGENTA_CONCRETE, Material.PINK_CONCRETE, Material.WHITE_CONCRETE,
-            Material.LIGHT_GRAY_CONCRETE, Material.GRAY_CONCRETE, Material.BLACK_CONCRETE,
-            Material.BROWN_CONCRETE, Material.RED_TERRACOTTA, Material.ORANGE_TERRACOTTA,
-            Material.CYAN_TERRACOTTA, Material.BLUE_TERRACOTTA, Material.PURPLE_TERRACOTTA
-    };
+    static final String FLAT_SETTINGS =
+            "{\"layers\":[{\"block\":\"minecraft:bedrock\",\"height\":1},"
+            + "{\"block\":\"minecraft:dirt\",\"height\":2},"
+            + "{\"block\":\"minecraft:grass_block\",\"height\":1}],"
+            + "\"biome\":\"minecraft:plains\"}";
+
+    /**
+     * Outcome of a request to build the casino.
+     */
+    public enum BuildStart {
+        /** The build is running; a message follows when it is done. */
+        STARTED,
+        /** Another build is still running. */
+        BUSY,
+        /** The world could not be prepared. */
+        FAILED
+    }
 
     private final MultiverseGamblingPlugin plugin;
+    private final CasinoDecor decor;
+    private final NamespacedKey layoutKey;
+    private final NamespacedKey floorKey;
     private World world;
     private CasinoLayout layout;
     private int floorY;
     private boolean built;
+    private boolean createdThisRun;
+    private CasinoBuildJob job;
 
     public CasinoWorldManager(MultiverseGamblingPlugin plugin) {
         this.plugin = plugin;
+        this.decor = new CasinoDecor(plugin);
+        this.layoutKey = new NamespacedKey(plugin, "layout");
+        this.floorKey = new NamespacedKey(plugin, "floor");
     }
 
     // --------------------------------------------------------------------- setup
 
     /**
-     * Loads (or creates) the world and builds the structures the first time.
+     * Loads (or creates) the world and builds the structures when they are missing or
+     * belong to an older design.
      */
     public boolean setup() {
         if (!plugin.config().worldEnabled()) {
@@ -75,22 +100,25 @@ public final class CasinoWorldManager {
         if (!ensure()) {
             return false;
         }
-        if (plugin.config().worldBuildStructures() && !looksBuilt()) {
-            build();
+        if (plugin.config().worldBuildStructures() && !upToDate()) {
+            plugin.getLogger().info("Building the casino world '" + world.getName() + "' (design v"
+                    + DESIGN_VERSION + "); it takes a few seconds and the server keeps running meanwhile.");
+            startBuild(null);
         } else {
             built = true;
+            decor.start(world, layout, floorY);
         }
         plugin.getLogger().info("Casino world '" + world.getName() + "' ready: " + layout.arenas().size()
-                + " arenas inside a " + layout.size() + "x" + layout.size() + " border, ground at y="
+                + " pavilions inside a " + layout.size() + "x" + layout.size() + " border, ground at y="
                 + (floorY + 1) + ".");
         return true;
     }
 
     /**
-     * Creates the world when it does not exist yet and refreshes border and spawn.
+     * Creates the world when it does not exist yet and refreshes border, spawn and rules.
      */
     public boolean ensure() {
-        if (world != null && Bukkit.getWorld(world.getName()) != null) {
+        if (world != null && Bukkit.getWorld(world.getName()) != null && layout != null) {
             return true;
         }
         String name = plugin.config().worldName();
@@ -101,12 +129,21 @@ public final class CasinoWorldManager {
                         + "'). Refusing to build there; set world.name to a dedicated world.");
                 return false;
             }
-            world = new WorldCreator(name)
-                    .environment(World.Environment.NORMAL)
-                    .type(WorldType.FLAT)
-                    .generateStructures(false)
-                    .generatorSettings(FLAT_SETTINGS)
-                    .createWorld();
+            try {
+                world = new WorldCreator(name)
+                        .environment(World.Environment.NORMAL)
+                        .type(WorldType.FLAT)
+                        .generateStructures(false)
+                        .generatorSettings(FLAT_SETTINGS)
+                        .createWorld();
+                createdThisRun = world != null;
+            } catch (RuntimeException error) {
+                // A broken world must never take the whole plugin down: log it and
+                // let the games run from the menu instead of aborting onEnable.
+                plugin.getLogger().severe("Could not create the casino world '" + name + "': "
+                        + error.getMessage());
+                return false;
+            }
         }
         if (world == null) {
             plugin.getLogger().severe("Could not create or load the casino world '" + name + "'.");
@@ -115,7 +152,8 @@ public final class CasinoWorldManager {
         probeFloor();
         layout = createLayout();
         applyBorder();
-        world.setSpawnLocation(0, floorY + 1, 0);
+        applyRules();
+        world.setSpawnLocation(0, floorY + 1, 20);
         return true;
     }
 
@@ -140,7 +178,7 @@ public final class CasinoWorldManager {
             try {
                 CasinoLayout bigger = CasinoLayout.of(candidate, ids);
                 plugin.getLogger().warning("Using a " + candidate + "x" + candidate
-                        + " casino world so every arena fits; raise world.size in config.yml.");
+                        + " casino world so every pavilion fits; raise world.size in config.yml.");
                 return bigger;
             } catch (IllegalArgumentException ignored) {
                 // Keep growing; the last attempt below reports the failure.
@@ -155,11 +193,46 @@ public final class CasinoWorldManager {
         world.getWorldBorder().setWarningDistance(0);
     }
 
+    /**
+     * A casino needs no monsters, no weather and no fire, and keeps the hour the
+     * configuration asks for.
+     */
+    private void applyRules() {
+        try {
+            world.setGameRule(GameRules.SPAWN_MOBS, false);
+            world.setGameRule(GameRules.SPAWN_PHANTOMS, false);
+            world.setGameRule(GameRules.SPAWN_PATROLS, false);
+            world.setGameRule(GameRules.SPAWN_WANDERING_TRADERS, false);
+            world.setGameRule(GameRules.RAIDS, false);
+            world.setGameRule(GameRules.MOB_GRIEFING, false);
+            world.setGameRule(GameRules.ADVANCE_WEATHER, false);
+            world.setGameRule(GameRules.FIRE_SPREAD_RADIUS_AROUND_PLAYER, 0);
+            world.setStorm(false);
+            world.setThundering(false);
+            long time = plugin.config().worldTime();
+            world.setGameRule(GameRules.ADVANCE_TIME, time < 0);
+            if (time >= 0) {
+                world.setTime(time);
+            }
+        } catch (RuntimeException error) {
+            // A server that renamed a rule must not lose the casino over it.
+            plugin.getLogger().warning("Could not apply the casino world rules: " + error.getMessage());
+        }
+    }
+
+    /**
+     * The ground level. Stored with the build, because trees and buildings could fool a
+     * fresh measurement later on; measured in a far corner the casino never builds in
+     * the first time.
+     */
     private void probeFloor() {
-        // Probe far away from the plaza and the roads, so the level stays stable no
-        // matter how many times the structures are rebuilt.
+        Integer stored = world.getPersistentDataContainer().get(floorKey, PersistentDataType.INTEGER);
+        if (stored != null) {
+            floorY = stored;
+            return;
+        }
         int probe = Math.max(1, plugin.config().worldSize() / 2 - 4);
-        floorY = world.getHighestBlockYAt(probe, probe) + 1;
+        floorY = world.getHighestBlockYAt(probe, probe);
     }
 
     /**
@@ -173,310 +246,215 @@ public final class CasinoWorldManager {
         return ids;
     }
 
+    /**
+     * What the current casino is made of: when it differs from what is stamped in the
+     * world, the casino on disk belongs to another design and is rebuilt.
+     */
+    private String signature() {
+        StringBuilder out = new StringBuilder("v").append(DESIGN_VERSION).append('|').append(layout.size());
+        for (CasinoLayout.Arena arena : layout.arenas()) {
+            out.append('|').append(arena.gameId());
+            Game game = plugin.games().byId(arena.gameId()).orElse(null);
+            if (game instanceof BoardGame board) {
+                BoardGrid grid = board.boardGrid();
+                out.append(':').append(grid.columns()).append('x').append(grid.rows())
+                        .append('/').append(board.boardCells());
+            }
+        }
+        return out.toString();
+    }
+
+    private boolean upToDate() {
+        PersistentDataContainer data = world.getPersistentDataContainer();
+        return signature().equals(data.get(layoutKey, PersistentDataType.STRING))
+                && data.has(floorKey, PersistentDataType.INTEGER);
+    }
+
     // ------------------------------------------------------------------ building
 
     /**
-     * True when the plaza marker is already in place.
+     * True when the casino on disk matches the current design.
      */
     public boolean looksBuilt() {
-        return world != null && world.getBlockAt(0, floorY, 0).getType() == Material.GOLD_BLOCK;
+        return world != null && layout != null && upToDate();
     }
 
     /**
-     * Builds (or rebuilds) the plaza, the roads and the arenas.
+     * Builds (or rebuilds) the plaza, the boulevards and the pavilions in the background.
      *
-     * @return true when the build finished, false when the world is not ready
+     * @param whenDone told whether the build finished, on the main thread; may be null
      */
-    public boolean rebuild() {
+    public BuildStart rebuild(Consumer<Boolean> whenDone) {
+        if (job != null && job.running()) {
+            return BuildStart.BUSY;
+        }
         if (!ensure()) {
-            return false;
+            return BuildStart.FAILED;
         }
-        return build();
+        startBuild(whenDone);
+        return BuildStart.STARTED;
     }
 
-    private boolean build() {
-        if (world == null || layout == null) {
-            return false;
-        }
-        long started = System.currentTimeMillis();
-        try {
-            roads();
-            plaza();
-            for (CasinoLayout.Arena arena : layout.arenas()) {
-                arena(arena);
-            }
-            built = true;
-        } catch (RuntimeException error) {
-            plugin.getLogger().severe("Could not build the casino structures: " + error);
-            error.printStackTrace();
-            return false;
-        }
-        plugin.getLogger().info("Casino structures built in " + (System.currentTimeMillis() - started)
-                + " ms (" + layout.arenas().size() + " arenas).");
-        return true;
-    }
-
-    private void roads() {
-        for (CasinoLayout.Road road : layout.roads()) {
-            int stepX = Integer.compare(road.toX(), road.fromX());
-            int stepZ = Integer.compare(road.toZ(), road.fromZ());
-            int x = road.fromX();
-            int z = road.fromZ();
-            while (true) {
-                // Roads stop at the plaza edge and resume on the far side of an arena.
-                if (!insidePlaza(x, z) && !insideArena(x, z)) {
-                    strip(x, z, road.alongX());
+    private void startBuild(Consumer<Boolean> whenDone) {
+        Map<String, CasinoBlueprint.BoardPad> boards = new LinkedHashMap<>();
+        for (Game game : plugin.games().all()) {
+            if (game instanceof BoardGame board) {
+                BoardGrid grid = board.boardGrid();
+                if (!grid.fitsIn(CasinoLayout.ARENA_RADIUS)) {
+                    plugin.getLogger().warning("The " + game.id() + " board is " + grid.columns()
+                            + "x" + grid.rows() + " blocks, too big for a pavilion: that game will only"
+                            + " use its menu until the configuration shrinks it.");
+                    continue;
                 }
-                if (x == road.toX() && z == road.toZ()) {
-                    break;
-                }
-                x += stepX;
-                z += stepZ;
+                boards.put(game.id(), new CasinoBlueprint.BoardPad(grid, board.boardCells(),
+                        board.boardTile(), board.boardFiller()));
             }
         }
-    }
-
-    /**
-     * A three block wide piece of road centred on the segment.
-     */
-    private void strip(int x, int z, boolean alongX) {
-        int half = CasinoLayout.ROAD_WIDTH / 2;
-        for (int offset = -half; offset <= half; offset++) {
-            if (alongX) {
-                set(x, floorY, z + offset, Material.POLISHED_DIORITE);
+        long planning = System.currentTimeMillis();
+        CasinoBlueprint blueprint = CasinoBlueprint.design(layout, floorY, boards);
+        plugin.getLogger().info("Casino design ready: " + blueprint.blocks() + " blocks and "
+                + blueprint.trees().size() + " trees planned in " + (System.currentTimeMillis() - planning) + " ms.");
+        built = false;
+        decor.stop();
+        String expected = signature();
+        job = new CasinoBuildJob(plugin, world, blueprint, layout.size(), result -> {
+            if (result.complete()) {
+                PersistentDataContainer data = world.getPersistentDataContainer();
+                data.set(layoutKey, PersistentDataType.STRING, expected);
+                data.set(floorKey, PersistentDataType.INTEGER, floorY);
+                built = true;
+                plugin.getLogger().info("Casino world built in " + (result.millis() / 1000.0) + " s: "
+                        + result.changed() + " blocks changed over " + result.chunks() + " chunks.");
             } else {
-                set(x + offset, floorY, z, Material.POLISHED_DIORITE);
+                plugin.getLogger().warning("The casino build did not finish (" + result.failed()
+                        + " chunks could not be loaded); run /mvgam world build to try again.");
             }
+            decor.start(world, layout, floorY);
+            if (whenDone != null) {
+                whenDone.accept(result.complete());
+            }
+        });
+        job.start();
+    }
+
+    /**
+     * True while a build is running.
+     */
+    public boolean building() {
+        return job != null && job.running();
+    }
+
+    /**
+     * Share of the running build already done, from 0 to 1.
+     */
+    public double buildProgress() {
+        return job == null ? 1.0 : job.progress();
+    }
+
+    /**
+     * Respawns the decoration, for example after the language files were reloaded.
+     */
+    public void refreshDecor() {
+        if (ready() && !building()) {
+            decor.start(world, layout, floorY);
         }
     }
 
-    private boolean insidePlaza(int x, int z) {
-        return x * x + z * z <= CasinoLayout.PLAZA_RADIUS * CasinoLayout.PLAZA_RADIUS;
+    /**
+     * Stops whatever runs in the background and removes the decoration.
+     */
+    public void shutdown() {
+        if (job != null) {
+            job.cancel();
+        }
+        decor.stop();
     }
 
-    private boolean insideArena(int x, int z) {
+    // ------------------------------------------------------------------- diagnosis
+
+    /**
+     * Snapshot of the world for {@code /mvgam world info}: what exists, what was built and
+     * what is missing. It answers with whatever it knows, whatever state the world is in,
+     * so it can be run from the console right after a failed start.
+     */
+    public WorldReport report() {
+        String name = plugin.config().worldName();
+        int games = plugin.games().all().size();
+        List<String> tooBig = boardsTooBig();
+        if (!plugin.config().worldEnabled()) {
+            return new WorldReport(name, WorldReport.Status.DISABLED, WorldReport.Source.ABSENT,
+                    false, 0, -1, 0, 0, games, 0, tooBig);
+        }
+        if (isMainWorldName(name)) {
+            return new WorldReport(name, WorldReport.Status.MAIN_WORLD, WorldReport.Source.ABSENT,
+                    false, 0, -1, 0, 0, games, 0, tooBig);
+        }
+        // The world may be loaded by the server even when this manager gave up on it.
+        World live = world != null && Bukkit.getWorld(world.getName()) != null ? world : Bukkit.getWorld(name);
+        if (live == null) {
+            return new WorldReport(name, WorldReport.Status.MISSING, WorldReport.Source.ABSENT,
+                    false, 0, -1, 0, 0, games, 0, tooBig);
+        }
+        WorldReport.Source source = createdThisRun ? WorldReport.Source.CREATED_HERE : WorldReport.Source.LOADED;
+        boolean flat = live.getWorldType() == WorldType.FLAT;
+        if (layout == null) {
+            return new WorldReport(name, WorldReport.Status.NOT_PREPARED, source, flat,
+                    0, -1, 0, 0, games, boards(), tooBig);
+        }
+        int builtArenas = builtArenas(live);
+        WorldReport.Status status = building() ? WorldReport.Status.BUILDING
+                : !looksBuilt() ? WorldReport.Status.NOT_BUILT
+                : builtArenas < layout.arenas().size() ? WorldReport.Status.PARTIAL
+                : WorldReport.Status.READY;
+        return new WorldReport(name, status, source, flat, layout.size(), floorY + 1,
+                builtArenas, layout.arenas().size(), games, boards(), tooBig);
+    }
+
+    /**
+     * How many pavilions carry the accent colour the build paves their centre with, so
+     * a half finished or partially cleared world is visible at a glance.
+     */
+    private int builtArenas(World target) {
+        int count = 0;
         for (CasinoLayout.Arena arena : layout.arenas()) {
-            if (arena.contains(x, z)) {
-                return true;
+            if (!target.isChunkLoaded(arena.centerX() >> 4, arena.centerZ() >> 4)) {
+                // Not loaded means not looked at: trust the stamp of the last build.
+                count += looksBuilt() ? 1 : 0;
+                continue;
+            }
+            if (target.getBlockAt(arena.centerX(), floorY, arena.centerZ()).getType()
+                    == CasinoBlueprint.accent(arena)) {
+                count++;
             }
         }
-        return false;
-    }
-
-    private void plaza() {
-        int radius = CasinoLayout.PLAZA_RADIUS;
-        disc(0, 0, radius, Material.POLISHED_DEEPSLATE);
-        disc(0, 0, radius - 5, Material.SMOOTH_QUARTZ);
-        disc(0, 0, 4, Material.GOLD_BLOCK);
-        kerb(radius);
-        // Welcome monument in the middle of the plaza.
-        set(0, floorY + 1, 0, Material.GOLD_BLOCK);
-        set(0, floorY + 2, 0, Material.GOLD_BLOCK);
-        set(0, floorY + 3, 0, Material.SEA_LANTERN);
-        sign(2, floorY + 1, 0, Material.OAK_SIGN, BlockFace.EAST,
-                "&6&lMultiverseGambling", "&7Casino world", "&7/mvgam menu", "&7/mvgam language");
-        // Lamps on the diagonals keep the four road exits clear.
-        for (int dx : new int[]{-1, 1}) {
-            for (int dz : new int[]{-1, 1}) {
-                lamp(dx * 22, dz * 22);
-            }
-        }
+        return count;
     }
 
     /**
-     * One block high rim around the plaza, opened wherever a road leaves it.
+     * Pavilions of the games played by clicking blocks, as planned by the layout.
      */
-    private void kerb(int radius) {
-        for (int x = -radius - 1; x <= radius + 1; x++) {
-            for (int z = -radius - 1; z <= radius + 1; z++) {
-                int distance = x * x + z * z;
-                if (distance < radius * radius || distance > (radius + 1) * (radius + 1)) {
-                    continue;
-                }
-                if (Math.abs(x) <= CasinoLayout.ROAD_WIDTH || Math.abs(z) <= CasinoLayout.ROAD_WIDTH) {
-                    continue;
-                }
-                set(x, floorY + 1, z, Material.POLISHED_BLACKSTONE);
+    private int boards() {
+        int count = 0;
+        for (Game game : plugin.games().all()) {
+            if (game instanceof BoardGame board && board.boardGrid().fitsIn(CasinoLayout.ARENA_RADIUS)) {
+                count++;
             }
         }
-    }
-
-    private void disc(int centerX, int centerZ, int radius, Material material) {
-        for (int x = -radius; x <= radius; x++) {
-            for (int z = -radius; z <= radius; z++) {
-                if (x * x + z * z <= radius * radius) {
-                    set(centerX + x, floorY, centerZ + z, material);
-                }
-            }
-        }
-    }
-
-    private void arena(CasinoLayout.Arena arena) {
-        Material floor = PALETTE[arena.index() % PALETTE.length];
-        int radius = CasinoLayout.ARENA_RADIUS;
-        for (int x = -radius; x <= radius; x++) {
-            for (int z = -radius; z <= radius; z++) {
-                boolean border = Math.abs(x) == radius || Math.abs(z) == radius;
-                set(arena.centerX() + x, floorY, arena.centerZ() + z,
-                        border ? Material.POLISHED_BLACKSTONE : floor);
-            }
-        }
-        Game game = plugin.games().byId(arena.gameId()).orElse(null);
-        BoardGame board = game instanceof BoardGame boardGame ? boardGame : null;
-        if (board == null) {
-            medallion(arena, floor);
-        } else {
-            boardPad(arena, board);
-        }
-        fence(arena);
-        for (int dx : new int[]{-1, 1}) {
-            for (int dz : new int[]{-1, 1}) {
-                lamp(arena.centerX() + dx * (radius - 2), arena.centerZ() + dz * (radius - 2));
-            }
-        }
-        arenaSign(arena, board != null);
+        return count;
     }
 
     /**
-     * Small medallion in the middle of the platform, for the games played in a menu.
+     * Games whose board is too big for a pavilion: they only live in their menu until
+     * the configuration shrinks the board.
      */
-    private void medallion(CasinoLayout.Arena arena, Material floor) {
-        for (int x = -2; x <= 2; x++) {
-            for (int z = -2; z <= 2; z++) {
-                boolean ring = Math.abs(x) == 2 || Math.abs(z) == 2;
-                set(arena.centerX() + x, floorY, arena.centerZ() + z,
-                        ring ? Material.GOLD_BLOCK : floor);
+    private List<String> boardsTooBig() {
+        List<String> tooBig = new ArrayList<>();
+        for (Game game : plugin.games().all()) {
+            if (game instanceof BoardGame board && !board.boardGrid().fitsIn(CasinoLayout.ARENA_RADIUS)) {
+                tooBig.add(game.id());
             }
         }
-    }
-
-    /**
-     * Resting board of a game played by clicking blocks: one tile per cell, the filler
-     * of a grid the configuration does not fill, and a blackstone frame around it that
-     * also holds the block used to collect a prize when one is on the table.
-     */
-    private void boardPad(CasinoLayout.Arena arena, BoardGame game) {
-        BoardGrid grid = game.boardGrid();
-        if (!grid.fitsIn(CasinoLayout.ARENA_RADIUS)) {
-            plugin.getLogger().warning("The " + arena.gameId() + " board is " + grid.columns()
-                    + "x" + grid.rows() + " blocks, too big for an arena: that game will only"
-                    + " use its menu until the configuration shrinks it.");
-            return;
-        }
-        int y = floorY + 1;
-        for (int cell = 0; cell < grid.cellCount(); cell++) {
-            set(arena.centerX() + grid.dx(cell), y, arena.centerZ() + grid.dz(cell),
-                    cell < game.boardCells() ? game.boardTile() : game.boardFiller());
-        }
-        for (int dx = grid.originX() - 1; dx <= grid.originX() + grid.columns(); dx++) {
-            frame(arena, dx, grid.originZ() - 1, y);
-            frame(arena, dx, grid.originZ() + grid.rows(), y);
-        }
-        for (int dz = grid.originZ(); dz < grid.originZ() + grid.rows(); dz++) {
-            frame(arena, grid.originX() - 1, dz, y);
-            frame(arena, grid.originX() + grid.columns(), dz, y);
-        }
-    }
-
-    private void frame(CasinoLayout.Arena arena, int dx, int dz, int y) {
-        if (!arena.contains(arena.centerX() + dx, arena.centerZ() + dz)) {
-            return;
-        }
-        set(arena.centerX() + dx, y, arena.centerZ() + dz, Material.POLISHED_BLACKSTONE);
-    }
-
-    /**
-     * Fence around the platform with a three block opening on the entrance side.
-     */
-    private void fence(CasinoLayout.Arena arena) {
-        CasinoLayout.Edge entrance = CasinoLayout.entrance(arena);
-        boolean openAlongX = entrance == CasinoLayout.Edge.NORTH || entrance == CasinoLayout.Edge.SOUTH;
-        for (int x = arena.minX(); x <= arena.maxX(); x++) {
-            for (int z : new int[]{arena.minZ(), arena.maxZ()}) {
-                if (isOpening(entrance, openAlongX, z, x, arena)) {
-                    continue;
-                }
-                set(x, floorY + 1, z, Material.OAK_FENCE);
-            }
-        }
-        for (int z = arena.minZ(); z <= arena.maxZ(); z++) {
-            for (int x : new int[]{arena.minX(), arena.maxX()}) {
-                if (isOpening(entrance, !openAlongX, x, z, arena)) {
-                    continue;
-                }
-                set(x, floorY + 1, z, Material.OAK_FENCE);
-            }
-        }
-    }
-
-    /**
-     * @param acrossX  true when the fence line being walked runs along the X axis
-     * @param position the coordinate that changes along that line
-     * @param fixed    the coordinate that stays put
-     */
-    private boolean isOpening(CasinoLayout.Edge entrance, boolean acrossX, int fixed, int position,
-                              CasinoLayout.Arena arena) {
-        boolean onEntranceEdge = switch (entrance) {
-            case NORTH -> fixed == arena.minZ();
-            case SOUTH -> fixed == arena.maxZ();
-            case WEST -> fixed == arena.minX();
-            case EAST -> fixed == arena.maxX();
-        };
-        if (!onEntranceEdge) {
-            return false;
-        }
-        int middle = acrossX ? arena.centerX() : arena.centerZ();
-        return Math.abs(position - middle) <= 1;
-    }
-
-    /**
-     * Sign outside the entrance so the arena is easy to find from the road.
-     */
-    private void arenaSign(CasinoLayout.Arena arena, boolean playedOnBlocks) {
-        Game game = plugin.games().byId(arena.gameId()).orElse(null);
-        String fallback = game == null ? arena.gameId() : game.name();
-        String label = plugin.messages().getOr("catalog." + arena.gameId() + ".name", fallback);
-        int x = arena.centerX();
-        int z = arena.centerZ();
-        int offset = CasinoLayout.ARENA_RADIUS + 2;
-        String hint = playedOnBlocks ? "&7Click to play" : "&7/mvgam play";
-        String[] lines = {"&6" + label, "&7" + arena.gameId(), hint,
-                "&8Arena " + (arena.index() + 1)};
-        switch (CasinoLayout.entrance(arena)) {
-            case NORTH -> sign(x, floorY + 1, z - offset, Material.OAK_SIGN, BlockFace.NORTH, lines);
-            case SOUTH -> sign(x, floorY + 1, z + offset, Material.OAK_SIGN, BlockFace.SOUTH, lines);
-            case WEST -> sign(x - offset, floorY + 1, z, Material.OAK_SIGN, BlockFace.WEST, lines);
-            case EAST -> sign(x + offset, floorY + 1, z, Material.OAK_SIGN, BlockFace.EAST, lines);
-        }
-    }
-
-    // ------------------------------------------------------------------- placing
-
-    private void lamp(int x, int z) {
-        set(x, floorY, z, Material.CHISELED_STONE_BRICKS);
-        set(x, floorY + 1, z, Material.CHISELED_STONE_BRICKS);
-        set(x, floorY + 2, z, Material.SEA_LANTERN);
-    }
-
-    private void set(int x, int y, int z, Material material) {
-        world.getBlockAt(x, y, z).setType(material, false);
-    }
-
-    private void sign(int x, int y, int z, Material material, BlockFace facing, String... lines) {
-        Block block = world.getBlockAt(x, y, z);
-        block.setType(material, false);
-        BlockData data = material.createBlockData();
-        if (data instanceof Rotatable rotatable) {
-            rotatable.setRotation(facing);
-        }
-        block.setBlockData(data, false);
-        BlockState state = block.getState();
-        if (state instanceof Sign sign) {
-            for (int i = 0; i < Math.min(4, lines.length); i++) {
-                sign.getSide(Side.FRONT).line(i, Text.c(lines[i]));
-            }
-            sign.update(true, false);
-        }
+        return tooBig;
     }
 
     // ------------------------------------------------------------------- players
@@ -494,16 +472,16 @@ public final class CasinoWorldManager {
     }
 
     /**
-     * Y of the floor blocks of the plaza and the arenas.
+     * Y of the ground blocks of the plaza and the pavilions; players stand one higher.
      */
     public int floorY() {
         return floorY;
     }
 
     /**
-     * The arena of one game, ready to paint a show on.
+     * The pavilion of one game, ready to stage a show on.
      *
-     * @return {@code null} when the casino world is disabled or has no arena for that
+     * @return {@code null} when the casino world is disabled or has no pavilion for that
      * game, so callers can fall back to their menus instead of failing
      */
     public ArenaStage stage(String gameId) {
@@ -518,13 +496,14 @@ public final class CasinoWorldManager {
     }
 
     /**
-     * Where players land when they ask for the casino world.
+     * Where players land when they ask for the casino world: on the plaza, facing the
+     * fountain and the welcome board.
      */
     public Location spawn() {
         if (world == null) {
             return null;
         }
-        return new Location(world, 0.5, floorY + 1, 3.5, 180.0f, 0.0f);
+        return new Location(world, 0.5, floorY + 1, 20.5, 180.0f, 0.0f);
     }
 
     /**
@@ -538,6 +517,28 @@ public final class CasinoWorldManager {
         world.getChunkAt(target).load();
         player.setFallDistance(0.0f);
         return player.teleport(target);
+    }
+
+    /**
+     * Sends a player in front of the main gate of one pavilion, looking at its stage.
+     *
+     * @return false when the casino world is not ready or the game has no pavilion
+     */
+    public boolean teleportToArena(Player player, String gameId) {
+        if (!ensure() || !ready()) {
+            return false;
+        }
+        ArenaStage stage = stage(gameId);
+        if (stage == null) {
+            return false;
+        }
+        stage.load();
+        player.setFallDistance(0.0f);
+        // Just outside the main gate: the whole pavilion is in front of the player.
+        Location spot = stage.local(0, 0, CasinoLayout.ARENA_RADIUS + 3);
+        spot.setYaw(stage.frame().lookYaw(0, CasinoLayout.ARENA_RADIUS + 3, 0, 0));
+        spot.setPitch(-8.0f);
+        return player.teleport(spot);
     }
 
     /**

@@ -61,8 +61,19 @@ public final class HorseRaceGame extends AbstractGroupGame {
 
     @Override
     protected void onBetPlaced(Player player, double amount) {
-        picks.putIfAbsent(player.getUniqueId(), Rng.intBetween(0, plugin.config().horseRaceRunners() - 1));
+        ensureField();
+        picks.putIfAbsent(player.getUniqueId(), Rng.intBetween(0, field.size() - 1));
         sendHorseChooser(player.getUniqueId());
+    }
+
+    /**
+     * The field of the next race is drawn when the room opens, so everybody sees the odds
+     * of every horse before picking one. Only the winner is drawn when the race starts.
+     */
+    private void ensureField() {
+        if (field.isEmpty()) {
+            field = HorseOdds.field(plugin.config().horseRaceRunners(), plugin.config().houseEdge());
+        }
     }
 
     private void sendHorseChooser(UUID playerId) {
@@ -71,21 +82,44 @@ public final class HorseRaceGame extends AbstractGroupGame {
         if (player == null) {
             return;
         }
-        for (int i = 0; i < runners; i++) {
+        ensureField();
+        for (int i = 0; i < runners && i < field.size(); i++) {
             int horse = i + 1;
             player.sendMessage(plugin.messages().componentPlainFor(player,
                             "group.race.horse-button", "horse", horse)
                     .append(chatButton(
-                            plugin.messages().forSender(player, "group.race.ticket", "horse", horse),
+                            plugin.messages().forSender(player, "group.race.ticket", "horse", horse)
+                                    + " &7" + Text.multiplier(field.get(i).odds()),
                             "horse " + horse,
                             plugin.messages().forSender(player, "group.race.bet-horse", "horse", horse))));
         }
     }
 
     @Override
+    protected boolean houseDuelAvailable() {
+        return true;
+    }
+
+    /**
+     * The race already pays fixed odds set by the house, so against the house it is the
+     * same race with a single bettor: the horse picked pays its own odds.
+     */
+    @Override
+    protected double houseDuelMultiplier(Player player) {
+        Integer horse = player == null ? null : picks.get(player.getUniqueId());
+        ensureField();
+        return horse == null || horse < 0 || horse >= field.size() ? 1.0 : field.get(horse).odds();
+    }
+
+    @Override
+    protected boolean houseDuelNeedsChoice() {
+        return true;
+    }
+
+    @Override
     protected void onRoundStart() {
         picks.replaceAll((id, horse) -> horse);
-        field = HorseOdds.field(plugin.config().horseRaceRunners(), plugin.config().houseEdge());
+        ensureField();
         winner = drawWinner();
         race = buildRace();
         step = 0;
@@ -113,7 +147,7 @@ public final class HorseRaceGame extends AbstractGroupGame {
                 tellKeyed(id, "group.race.refunded");
             }
         }
-        if (pot.size() < minPlayers()) {
+        if (pot.size() < minPlayers() && !(houseDuelActive() && pot.size() == 1)) {
             endRound();
             return;
         }
@@ -272,6 +306,7 @@ public final class HorseRaceGame extends AbstractGroupGame {
                 tellKeyed(player.getUniqueId(), "group.race.picked", "horse", horse + 1);
                 broadcastPlain("group.race.goes-with",
                         "player", player.getName(), "horse", horse + 1);
+                houseChoiceMade(player);
             } catch (NumberFormatException error) {
                 message(player, "group.invalid-horse");
             }

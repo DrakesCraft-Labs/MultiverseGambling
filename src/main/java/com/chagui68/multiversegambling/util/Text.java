@@ -23,7 +23,8 @@ public final class Text {
      * Turns "&aHello" into a Component.
      */
     public static Component c(String legacy) {
-        return LEGACY.deserialize(legacy == null ? "" : legacy);
+        // Language files write the line breaks of floating labels as a literal backslash n.
+        return LEGACY.deserialize(legacy == null ? "" : legacy.replace("\\n", "\n"));
     }
 
     public static List<Component> lines(List<String> raw) {

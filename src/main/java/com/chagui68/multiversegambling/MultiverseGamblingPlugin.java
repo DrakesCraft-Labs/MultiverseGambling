@@ -4,7 +4,9 @@ import com.chagui68.multiversegambling.command.MultiverseGamblingCommand;
 import com.chagui68.multiversegambling.config.Messages;
 import com.chagui68.multiversegambling.config.MultiverseGamblingConfig;
 import com.chagui68.multiversegambling.economy.EconomyManager;
+import com.chagui68.multiversegambling.economy.ItemBank;
 import com.chagui68.multiversegambling.fair.FairnessService;
+import com.chagui68.multiversegambling.game.Game;
 import com.chagui68.multiversegambling.game.GameCategory;
 import com.chagui68.multiversegambling.game.GameRegistry;
 import com.chagui68.multiversegambling.games.group.BombBoardGame;
@@ -32,12 +34,16 @@ import com.chagui68.multiversegambling.gui.GuiListener;
 import com.chagui68.multiversegambling.gui.GuiManager;
 import com.chagui68.multiversegambling.i18n.LanguageStore;
 import com.chagui68.multiversegambling.listener.BoardListener;
+import com.chagui68.multiversegambling.listener.PropListener;
 import com.chagui68.multiversegambling.listener.PlayerListener;
 import com.chagui68.multiversegambling.session.SessionManager;
 import com.chagui68.multiversegambling.stats.StatsStore;
 import com.chagui68.multiversegambling.world.CasinoWorldManager;
 import com.chagui68.multiversegambling.world.anim.ArenaShow;
 import com.chagui68.multiversegambling.world.board.ArenaBoard;
+import java.util.function.Supplier;
+import java.util.logging.Level;
+
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
@@ -49,6 +55,12 @@ import org.bukkit.scheduler.BukkitTask;
  * from the {@code engine} package (pinned by unit tests) and all the suspense runs
  * on the single clock of {@link SessionManager}. Text is resolved per player by
  * {@link Messages}, so the whole plugin can be switched between languages in game.</p>
+ *
+ * <p>Enabling is written so that no single piece can take the plugin down with it: the
+ * catalogue, the casino world and the data files are each prepared on their own, and a
+ * failing one is reported and skipped. The menus, the wallet and the games keep working
+ * without the dedicated world, and the JSON files survive being edited by hand or left
+ * half written by a crash (see {@code util.JsonStore}).</p>
  */
 public final class MultiverseGamblingPlugin extends JavaPlugin {
 
@@ -57,6 +69,7 @@ public final class MultiverseGamblingPlugin extends JavaPlugin {
     private LanguageStore languages;
     private EconomyManager economy;
     private FairnessService fair;
+    private ItemBank items;
     private StatsStore stats;
     private SessionManager sessions;
     private GuiManager guis;
@@ -74,6 +87,7 @@ public final class MultiverseGamblingPlugin extends JavaPlugin {
         economy = new EconomyManager(this);
         economy.setup();
         fair = new FairnessService(this);
+        items = new ItemBank(this);
         stats = new StatsStore(this);
         sessions = new SessionManager(this);
         guis = new GuiManager(this);
@@ -82,11 +96,20 @@ public final class MultiverseGamblingPlugin extends JavaPlugin {
         registerGames();
 
         world = new CasinoWorldManager(this);
-        world.setup();
+        try {
+            world.setup();
+        } catch (RuntimeException error) {
+            // The dedicated world is the one optional piece: the menus, the wallet and
+            // every game work without it, so a broken world is reported instead of
+            // aborting the startup.
+            getLogger().log(Level.SEVERE, "The casino world could not be prepared; the games"
+                    + " stay menu-only and /mvgam world build can be tried again later.", error);
+        }
 
         getServer().getPluginManager().registerEvents(new GuiListener(this), this);
         getServer().getPluginManager().registerEvents(new PlayerListener(this), this);
         getServer().getPluginManager().registerEvents(new BoardListener(this), this);
+        getServer().getPluginManager().registerEvents(new PropListener(), this);
 
         MultiverseGamblingCommand command = new MultiverseGamblingCommand(this);
         PluginCommand pluginCommand = getCommand("mvgam");
@@ -123,6 +146,9 @@ public final class MultiverseGamblingPlugin extends JavaPlugin {
         // an arena are put back the same way.
         ArenaShow.clearAll();
         ArenaBoard.clearAll();
+        if (world != null) {
+            world.shutdown();
+        }
         if (autosave != null) {
             autosave.cancel();
         }
@@ -131,6 +157,9 @@ public final class MultiverseGamblingPlugin extends JavaPlugin {
         }
         if (stats != null) {
             stats.save();
+        }
+        if (items != null) {
+            items.save();
         }
         if (fair != null) {
             fair.save();
@@ -143,32 +172,51 @@ public final class MultiverseGamblingPlugin extends JavaPlugin {
 
     /**
      * The whole catalogue. Adding a game is adding one line here.
+     *
+     * <p>Each game is built inside {@link #registerGame(Supplier)}, so one game that
+     * cannot be prepared is reported and skipped while the rest of the catalogue loads.
+     * The hubs are built from the registry, so a missing game simply has no entry.</p>
      */
     private void registerGames() {
         // --- Solo ---
-        games.register(new ClassicRouletteGame(this));
-        games.register(new SlotsGame(this));
-        games.register(new CrashGame(this));
-        games.register(new MinesGame(this));
-        games.register(new TowersGame(this));
-        games.register(new BlackjackGame(this));
-        games.register(new HighLowGame(this));
-        games.register(new DiceGame(this));
-        games.register(new PlinkoGame(this));
-        games.register(new LuckyWheelGame(this));
-        games.register(new ScratchCardGame(this));
-        games.register(new CoinFlipGame(this));
+        registerGame(() -> new ClassicRouletteGame(this));
+        registerGame(() -> new SlotsGame(this));
+        registerGame(() -> new CrashGame(this));
+        registerGame(() -> new MinesGame(this));
+        registerGame(() -> new TowersGame(this));
+        registerGame(() -> new BlackjackGame(this));
+        registerGame(() -> new HighLowGame(this));
+        registerGame(() -> new DiceGame(this));
+        registerGame(() -> new PlinkoGame(this));
+        registerGame(() -> new LuckyWheelGame(this));
+        registerGame(() -> new ScratchCardGame(this));
+        registerGame(() -> new CoinFlipGame(this));
 
         // --- Group ---
-        games.register(new ColorRouletteGame(this));
-        games.register(new JackpotGame(this));
-        games.register(new HotBombGame(this));
-        games.register(new BombBoardGame(this));
-        games.register(new RussianRouletteGame(this));
-        games.register(new HorseRaceGame(this));
-        games.register(new DuelGame(this));
-        games.register(new RaffleGame(this));
-        games.register(new DicePokerGame(this));
+        registerGame(() -> new ColorRouletteGame(this));
+        registerGame(() -> new JackpotGame(this));
+        registerGame(() -> new HotBombGame(this));
+        registerGame(() -> new BombBoardGame(this));
+        registerGame(() -> new RussianRouletteGame(this));
+        registerGame(() -> new HorseRaceGame(this));
+        registerGame(() -> new DuelGame(this));
+        registerGame(() -> new RaffleGame(this));
+        registerGame(() -> new DicePokerGame(this));
+    }
+
+    /**
+     * Builds and registers one game. A game is never worth stopping the plugin for.
+     */
+    private void registerGame(Supplier<Game> factory) {
+        Game game = null;
+        try {
+            game = factory.get();
+            games.register(game);
+        } catch (RuntimeException error) {
+            getLogger().log(Level.SEVERE, "Could not prepare the game "
+                    + (game == null ? "of the catalogue" : "'" + game.id() + "'")
+                    + "; it will be missing from the menus.", error);
+        }
     }
 
     private void scheduleAutosave() {
@@ -188,6 +236,10 @@ public final class MultiverseGamblingPlugin extends JavaPlugin {
         config.reload();
         messages.reload();
         economy.setup();
+        if (world != null) {
+            // The floating names of the pavilions are written in the default language.
+            world.refreshDecor();
+        }
         if (autosave != null) {
             autosave.cancel();
         }
@@ -208,6 +260,13 @@ public final class MultiverseGamblingPlugin extends JavaPlugin {
 
     public EconomyManager economy() {
         return economy;
+    }
+
+    /**
+     * Items staked in bets and items waiting for players who were offline.
+     */
+    public ItemBank items() {
+        return items;
     }
 
     public FairnessService fair() {

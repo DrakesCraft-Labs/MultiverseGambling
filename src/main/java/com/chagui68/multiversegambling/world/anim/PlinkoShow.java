@@ -1,35 +1,60 @@
 package com.chagui68.multiversegambling.world.anim;
 
 import com.chagui68.multiversegambling.MultiverseGamblingPlugin;
+import com.chagui68.multiversegambling.util.Text;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.Particle;
 import org.bukkit.Sound;
+import org.bukkit.entity.BlockDisplay;
 import org.bukkit.entity.Display;
 import org.bukkit.entity.ItemDisplay;
-import org.bukkit.inventory.ItemStack;
+import org.bukkit.util.Transformation;
+import org.joml.Vector3f;
 
 /**
- * Plinko on the floor of an arena: a pyramid of pegs with a ball hopping down it, one
- * bounce per level, and a row of buckets at the far end that lights up where it lands.
+ * Plinko on the pavilion as a wall of displays.
  *
- * <p>The board lies flat on the ground and runs away from the watcher, which is what
- * makes a pyramid as wide as the arena fit in it. The bounces come from the same
- * provably fair rolls that decide the bucket, so the ball takes the real path and the
- * bucket it stops in is the one that pays.</p>
+ * <p>The pyramid stands up in front of the audience: a dark panel in a golden frame, a
+ * grid of pegs that gets wider as it comes down, a shelf of buckets coloured from the
+ * rich edges to the poor middle with their multipliers written under them, and a ball
+ * that really falls, hopping over every peg it hits. The peg lights up as the ball
+ * bounces off it. Every piece is a display entity, so the ground of the arena is never
+ * touched, the board is crisp at any distance and the fall is smooth.</p>
+ *
+ * <p>The bounces come from the same provably fair rolls that decide the bucket, so the
+ * ball takes the real path and stops on the bucket the game pays for.</p>
  */
 public final class PlinkoShow extends ArenaShow {
 
-    /** Frames spent on each level of the pyramid. */
-    private static final int FRAMES_PER_LEVEL = 3;
-    /** Level 0 sits this many blocks in front of the middle of the arena. */
-    private static final int START_DEPTH = 6;
-    /** Height of the ball over the board. */
-    private static final double BALL_HEIGHT = 1.9;
+    /** How far in front of the wall the ball hangs, so it never clips the pegs. */
+    private static final float BALL_DEPTH = 0.42f;
+    /** How high the ball hops over a peg, as a share of the row height. */
+    private static final double HOP = 0.55;
 
-    private final int[] positions;
-    private final int rows;
+    private static final Material PANEL = Material.BLACK_CONCRETE;
+    private static final Material PEG = Material.LIGHT_GRAY_CONCRETE;
+    private static final Material LIT_PEG = Material.GLOWSTONE;
+    private static final Material CROWN_PEG = Material.GOLD_BLOCK;
+    private static final Material WON_BUCKET = Material.LIME_CONCRETE;
+
+    private final PlinkoBoard board;
+    private final int[] path;
     private final int bucket;
+    private double[] multipliers;
+    private final List<BlockDisplay> buckets = new ArrayList<>();
+    private final List<List<BlockDisplay>> pegs = new ArrayList<>();
+    private final List<BlockDisplay> bulbs = new ArrayList<>();
+    private Location anchor;
     private ItemDisplay ball;
+    private int lastLevel = -1;
+    private BlockDisplay litPeg;
+    private boolean landed;
 
     /**
      * @param rolls  uniform roll per bounce, in the order the ball meets them
@@ -39,83 +64,211 @@ public final class PlinkoShow extends ArenaShow {
     public PlinkoShow(MultiverseGamblingPlugin plugin, ArenaStage stage,
                       double[] rolls, int bucket, int ticks) {
         super(plugin, stage, ticks);
-        this.positions = path(rolls);
-        this.rows = rolls.length;
-        this.bucket = Math.max(0, Math.min(rows, bucket));
+        this.board = new PlinkoBoard(Math.max(1, rolls.length));
+        this.path = PlinkoBoard.path(rolls);
+        this.bucket = Math.max(0, Math.min(rolls.length, bucket));
     }
 
     /**
-     * Where the ball sits after each bounce, in blocks from the middle of the arena. The
-     * last entry is the bucket it lands in, so the ball can never end anywhere else than
-     * the bucket that the game pays for.
+     * Multiplier paid by every bucket, written under the shelf.
      */
-    static int[] path(double[] rolls) {
-        int[] positions = new int[rolls.length + 1];
-        int rights = 0;
-        for (int level = 0; level <= rolls.length; level++) {
-            if (level > 0 && rolls[level - 1] < 0.5) {
-                rights++;
-            }
-            positions[level] = 2 * rights - level;
-        }
-        return positions;
+    public PlinkoShow multipliers(double[] multipliers) {
+        this.multipliers = multipliers == null ? null : multipliers.clone();
+        return this;
+    }
+
+    /**
+     * The wall this show draws, for tests and for whoever reads the geometry next.
+     */
+    PlinkoBoard board() {
+        return board;
+    }
+
+    /**
+     * Bucket the ball ends in.
+     */
+    public int bucket() {
+        return bucket;
     }
 
     @Override
     protected void onStart() {
-        drawBoard();
-        ball = spawn(placeAt(0), ItemDisplay.class, display -> {
-            display.setItemStack(new ItemStack(Material.SNOWBALL));
-            display.setBillboard(Display.Billboard.CENTER);
-            display.setGravity(false);
-            display.setInvulnerable(true);
-        });
+        anchor = local(0, 0, 0);
+        buildWall();
+        ball = item(anchor, Material.SNOWBALL, ballPose(0));
+        ball.setBillboard(Display.Billboard.CENTER);
+        ball.setGlowColorOverride(Color.WHITE);
+        ball.setGlowing(true);
+        playSound(Sound.BLOCK_NOTE_BLOCK_CHIME, 0.7f, 1.2f);
     }
 
     @Override
     protected void onFrame(int elapsed, int duration) {
-        double level = Math.min(rows, progress(elapsed) * rows);
-        moveBall(placeAt(level));
-        if (elapsed % FRAMES_PER_LEVEL == 0) {
-            playSound(Sound.BLOCK_NOTE_BLOCK_HAT, 0.4f, (float) (0.9 + level / Math.max(1, rows)));
+        double level = Math.min(board.rows(), progress(elapsed) * board.rows());
+        Props.animate(ball, ballPose(level), 1);
+        int whole = (int) Math.floor(level);
+        if (whole != lastLevel && whole < board.levels()) {
+            lastLevel = whole;
+            hitPeg(whole);
         }
     }
 
     @Override
     protected void onSettle() {
-        moveBall(placeAt(rows));
-        // The bucket that took the ball is left lit until the board is taken down.
-        tile(positions[rows], 1, START_DEPTH - rows, Material.LIME_CONCRETE);
-        playSound(Sound.BLOCK_NOTE_BLOCK_BELL, 0.9f, 1.3f);
+        land();
     }
 
-    private void moveBall(Location location) {
-        if (ball != null && ball.isValid()) {
-            ball.teleport(location);
+    private void land() {
+        if (landed) {
+            return;
         }
-    }
-
-    /** Where the ball is after {@code level} bounces; fractions allowed, for smoothness. */
-    private Location placeAt(double level) {
-        int whole = (int) Math.floor(level);
-        int next = Math.min(whole + 1, rows);
-        double fraction = level - whole;
-        double fromX = positions[whole];
-        double toX = positions[next];
-        return stage().at(fromX + (toX - fromX) * fraction, BALL_HEIGHT, START_DEPTH - level);
-    }
-
-    private void drawBoard() {
-        for (int level = 0; level < rows; level++) {
-            for (int peg = 0; peg <= level; peg++) {
-                tile(2 * peg - level, 1, START_DEPTH - level, Material.LIGHT_GRAY_CONCRETE);
+        landed = true;
+        Props.animate(ball, ballPose(board.rows()), 2);
+        if (bucket < buckets.size()) {
+            BlockDisplay plate = buckets.get(bucket);
+            if (plate.isValid()) {
+                plate.setBlock(WON_BUCKET.createBlockData());
+                plate.setGlowColorOverride(Color.LIME);
+                plate.setGlowing(true);
+                Props.animate(plate, Props.box(bucketCentre(bucket), shelfSize(1.25f)), 4);
             }
         }
-        // Buckets: the edges are the ones that pay silly money, like the menu says.
-        for (int slot = 0; slot <= rows; slot++) {
-            boolean edge = slot == 0 || slot == rows;
-            tile(2 * slot - rows, 1, START_DEPTH - rows,
-                    edge ? Material.GOLD_BLOCK : Material.GRAY_CONCRETE);
+        Vector3f spot = bucketCentre(bucket);
+        boolean rich = multipliers != null && bucket < multipliers.length && multipliers[bucket] >= 1.0;
+        if (rich) {
+            celebrate(spot.x, spot.y + 0.5, spot.z + 0.4);
+        } else {
+            particles(Particle.SMOKE, spot.x, spot.y + 0.3, spot.z + 0.4, 10, 0.2, 0.02);
         }
+        playSound(rich ? Sound.BLOCK_NOTE_BLOCK_BELL : Sound.BLOCK_NOTE_BLOCK_BASS, 0.9f, rich ? 1.3f : 0.8f);
+    }
+
+    @Override
+    protected void onAnimate(int age) {
+        if (age % 3 != 0) {
+            return;
+        }
+        int phase = age / 3;
+        for (int i = 0; i < bulbs.size(); i++) {
+            BlockDisplay bulb = bulbs.get(i);
+            if (bulb.isValid()) {
+                boolean lit = landed ? phase % 2 == 0 : (i + phase) % 3 == 0;
+                bulb.setBlock((lit ? Material.GLOWSTONE : Material.GOLD_BLOCK).createBlockData());
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------ the wall
+
+    private void buildWall() {
+        double half = board.halfWidth() + 0.3;
+        float height = (float) (board.height() + 0.6);
+        float bottom = (float) (board.bucketY() - 0.9);
+        float middle = (bottom + height) / 2;
+        float tall = height - bottom;
+        // A dark panel behind everything, in a golden frame, on a stone plinth.
+        block(anchor, PANEL, Props.box(new Vector3f(0, middle, -0.08f), new Vector3f((float) half * 2, tall, 0.1f)));
+        block(anchor, Material.POLISHED_BLACKSTONE_BRICKS,
+                Props.box(new Vector3f(0, bottom / 2, 0), new Vector3f((float) half * 2 + 0.6f, bottom, 1.2f)));
+        for (int side : new int[]{-1, 1}) {
+            block(anchor, Material.GOLD_BLOCK, Props.box(new Vector3f((float) (side * (half + 0.1)), middle, -0.05f),
+                    new Vector3f(0.2f, tall, 0.25f)));
+        }
+        block(anchor, Material.GOLD_BLOCK, Props.box(new Vector3f(0, height + 0.05f, -0.05f),
+                new Vector3f((float) half * 2 + 0.4f, 0.2f, 0.25f)));
+        int lights = (int) Math.round(half * 2 / 0.6);
+        for (int i = 0; i <= lights; i++) {
+            float x = (float) (-half + i * (half * 2 / lights));
+            bulbs.add(block(anchor, Material.GLOWSTONE,
+                    Props.box(new Vector3f(x, height + 0.3f, 0.0f), new Vector3f(0.2f, 0.2f, 0.12f))));
+        }
+        text(local(0, height + 0.55, 0), Text.c("&6&lPLINKO"), Props.scaled(2.2f), Display.Billboard.FIXED);
+
+        float pegSize = (float) Math.min(0.32, board.column() * 0.55);
+        for (int level = 0; level < board.levels(); level++) {
+            List<BlockDisplay> row = new ArrayList<>();
+            for (int index = 0; index < board.pegs(level); index++) {
+                boolean apex = level == 0;
+                float size = apex ? pegSize * 1.2f : pegSize;
+                row.add(block(anchor, apex ? CROWN_PEG : PEG, Props.box(
+                        new Vector3f((float) board.pegX(level, index), (float) board.levelY(level), 0.05f),
+                        new Vector3f(size, size, size))));
+            }
+            pegs.add(row);
+        }
+        for (int slot = 0; slot <= board.rows(); slot++) {
+            buckets.add(block(anchor, bucketColour(slot), Props.box(bucketCentre(slot), shelfSize(1.0f))));
+            if (multipliers != null && slot < multipliers.length) {
+                Vector3f under = bucketCentre(slot);
+                float scale = (float) Math.max(0.35, Math.min(0.8, board.column() * 1.15));
+                text(local(under.x, under.y - 0.55, 0.2), Text.c(labelColour(multipliers[slot])
+                        + Text.number(multipliers[slot]) + "x"), Props.scaled(scale), Display.Billboard.FIXED);
+            }
+        }
+    }
+
+    /**
+     * The ball hits the peg of that level: it lights up for a moment.
+     */
+    private void hitPeg(int level) {
+        if (level < 0 || level >= pegs.size()) {
+            return;
+        }
+        int column = path[level];
+        int index = (column + level) / 2;
+        List<BlockDisplay> row = pegs.get(level);
+        if (index < 0 || index >= row.size()) {
+            return;
+        }
+        if (litPeg != null && litPeg.isValid()) {
+            litPeg.setBlock((pegs.get(0).contains(litPeg) ? CROWN_PEG : PEG).createBlockData());
+        }
+        litPeg = row.get(index);
+        litPeg.setBlock(LIT_PEG.createBlockData());
+        playSound(Sound.BLOCK_NOTE_BLOCK_HAT, 0.45f, (float) (0.8 + level / (double) Math.max(1, board.rows())));
+    }
+
+    // ------------------------------------------------------------------ the ball
+
+    private Transformation ballPose(double level) {
+        double fraction = level - Math.floor(level);
+        // Between two rows the ball hops up off the peg before it drops again.
+        double hop = level >= board.rows() ? 0 : Math.sin(fraction * Math.PI) * HOP * board.row();
+        float x = (float) board.ballX(path, level);
+        float y = (float) (board.ballY(level) + hop + 0.12);
+        float size = (float) Math.max(0.35, Math.min(0.55, board.column() * 0.9));
+        return Props.centred(new Vector3f(x, y, BALL_DEPTH), Props.none(), new Vector3f(size, size, size));
+    }
+
+    private Vector3f bucketCentre(int slot) {
+        return new Vector3f((float) board.bucketX(slot), (float) board.bucketY(), 0.15f);
+    }
+
+    private Vector3f shelfSize(float grow) {
+        return new Vector3f((float) board.column() * 1.85f, 0.3f * grow, 0.55f);
+    }
+
+    /**
+     * Bucket colours from the rich edges to the poor middle.
+     */
+    private Material bucketColour(int slot) {
+        double distance = Math.abs(slot - board.rows() / 2.0) / Math.max(1.0, board.rows() / 2.0);
+        if (distance > 0.85) {
+            return Material.GOLD_BLOCK;
+        }
+        if (distance > 0.6) {
+            return Material.ORANGE_CONCRETE;
+        }
+        if (distance > 0.3) {
+            return Material.YELLOW_CONCRETE;
+        }
+        return Material.GRAY_CONCRETE;
+    }
+
+    private static String labelColour(double multiplier) {
+        if (multiplier >= 5) {
+            return "&6&l";
+        }
+        return multiplier >= 1.0 ? "&e" : "&7";
     }
 }

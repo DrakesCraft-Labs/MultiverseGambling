@@ -13,3 +13,8 @@ tools/
 balances.json
 stats.json
 fairness.json
+languages.json
+pending-items.yml
+
+# Copias de seguridad de los editores.
+*~

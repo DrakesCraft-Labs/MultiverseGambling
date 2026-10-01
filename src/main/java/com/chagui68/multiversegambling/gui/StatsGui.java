@@ -32,14 +32,14 @@ public final class StatsGui extends Gui {
     @Override
     protected void render() {
         clearActions();
-        fill(Items.of(Material.GRAY_STAINED_GLASS_PANE).name(" ").build());
+        frame(Material.LIGHT_BLUE_STAINED_GLASS_PANE);
         Player viewer = player();
 
         UUID id = viewer.getUniqueId();
         PlayerStats stats = plugin.stats().of(id);
         double profit = stats.profit();
 
-        set(4, Items.of(Material.PLAYER_HEAD)
+        set(4, head(viewer, Items.of(Material.PLAYER_HEAD)
                 .name("&6" + viewer.getName())
                 .lore(messages().loreFor(viewer, "gui.stats.lore",
                         "games", stats.games,
@@ -53,7 +53,7 @@ public final class StatsGui extends Gui {
                         "favourite", messages().gameName(viewer, stats.favouriteGame(),
                                 stats.favouriteGame())))
                 .glow(true)
-                .build());
+                .build()));
 
         set(20, Items.of(Material.EMERALD)
                 .name(messages().forSender(viewer, "gui.stats.top-profit"))
@@ -101,8 +101,21 @@ public final class StatsGui extends Gui {
                 .toList();
     }
 
+    private static org.bukkit.inventory.ItemStack head(Player owner, org.bukkit.inventory.ItemStack item) {
+        if (item.getItemMeta() instanceof org.bukkit.inventory.meta.SkullMeta meta) {
+            meta.setOwningPlayer(owner);
+            item.setItemMeta(meta);
+        }
+        return item;
+    }
+
     @Override
     public String sessionId() {
         return "stats";
+    }
+
+    @Override
+    protected boolean holdsRound() {
+        return false;
     }
 }

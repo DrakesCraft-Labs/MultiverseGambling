@@ -110,11 +110,11 @@ public final class MultiverseGamblingConfig {
     }
 
     public int rouletteSpinTicks() {
-        return Math.max(20, cfg.getInt("games.roulette.spin-ticks", 60));
+        return Math.max(20, cfg.getInt("games.roulette.spin-ticks", 100));
     }
 
     public int slotsSpinTicks() {
-        return Math.max(10, cfg.getInt("games.slots.spin-ticks", 40));
+        return Math.max(10, cfg.getInt("games.slots.spin-ticks", 60));
     }
 
     public int minesTiles() {
@@ -157,12 +157,11 @@ public final class MultiverseGamblingConfig {
         return ranged(cfg.getInt("games.towers.levels", 9), 1, 25);
     }
 
-    public int towersTiles() {
-        return ranged(cfg.getInt("games.towers.tiles", 4), 2, 9);
-    }
-
-    public int towersBombs() {
-        return ranged(cfg.getInt("games.towers.bombs", 1), 1, towersTiles() - 1);
+    /** Difficulty highlighted in the menu of the towers. */
+    public com.chagui68.multiversegambling.engine.TowerDifficulty towersDefaultDifficulty() {
+        return com.chagui68.multiversegambling.engine.TowerDifficulty.of(
+                cfg.getString("games.towers.default-difficulty", "medium"),
+                com.chagui68.multiversegambling.engine.TowerDifficulty.MEDIUM);
     }
 
     public int blackjackDecks() {
@@ -251,6 +250,26 @@ public final class MultiverseGamblingConfig {
         return ranged(cfg.getInt("group.duel.accept-seconds", 30), 5, 300);
     }
 
+    // ----------------------------------------------------------------- item bets
+
+    /** True when the games that support it accept bets staked with items. */
+    public boolean itemBetsEnabled() {
+        return cfg.getBoolean("item-bets.enabled", true);
+    }
+
+    /** Most items a single bet can stake. */
+    public int itemBetsMaxItems() {
+        return ranged(cfg.getInt("item-bets.max-items", 1728), 1, 100000);
+    }
+
+    /** Item types that can never be staked: exact names or *_SUFFIX / PREFIX_* families. */
+    public java.util.List<String> itemBetsBlocked() {
+        if (!cfg.isList("item-bets.blocked")) {
+            return java.util.List.of("*SHULKER_BOX", "*BUNDLE");
+        }
+        return cfg.getStringList("item-bets.blocked");
+    }
+
     // --------------------------------------------------------------- casino world
 
     /** True when the plugin should create and load the dedicated casino world. */
@@ -270,6 +289,15 @@ public final class MultiverseGamblingConfig {
     /** Build the plaza, the arenas and the roads on startup when they are missing. */
     public boolean worldBuildStructures() {
         return cfg.getBoolean("world.build-structures", true);
+    }
+
+    /**
+     * Hour the casino world is frozen at, in ticks (0 sunrise, 6000 noon, 13000 dusk,
+     * 18000 midnight); a negative value keeps the normal day and night cycle.
+     */
+    public long worldTime() {
+        long time = cfg.getLong("world.time", 13000L);
+        return time < 0 ? -1L : time % 24000L;
     }
 
     /** Send every player to the casino world as soon as they join the server. */
@@ -292,7 +320,7 @@ public final class MultiverseGamblingConfig {
 
     /** Blocks between the centre of the arena and the spot the watcher stands on. */
     public int worldAnimationsViewDistance() {
-        return ranged(cfg.getInt("world.animations.view-distance", 11), 5, 20);
+        return ranged(cfg.getInt("world.animations.view-distance", 14), 5, 20);
     }
 
     // -------------------------------------------------------------------- extras

@@ -1,16 +1,18 @@
 package com.chagui68.multiversegambling.world;
 
-import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
+import org.yaml.snakeyaml.Yaml;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 class CasinoLayoutTest {
 
@@ -34,10 +36,11 @@ class CasinoLayoutTest {
     void theDefaultWorldHoldsTheWholeGrid() {
         CasinoLayout layout = CasinoLayout.of(500, GAMES);
         assertEquals(5, layout.columns());
-        // 2 * (2 * SPACING + ARENA_RADIUS + MARGIN) = 480, so 500 blocks are enough.
+        // 2 * (2 * SPACING + ARENA_RADIUS + MARGIN) = 408, so 500 blocks are enough and
+        // leave a green belt round the edge.
         assertTrue(layout.extent() * 2 <= 500,
                 "extent " + layout.extent() + " does not fit in 500 blocks");
-        assertEquals(240, layout.extent());
+        assertEquals(204, layout.extent());
     }
 
     @Test
@@ -102,31 +105,74 @@ class CasinoLayoutTest {
     }
 
     @Test
-    void everyArenaIsReachableByRoad() {
+    void everyArenaSitsOnTwoBoulevards() {
         CasinoLayout layout = CasinoLayout.of(500, GAMES);
         List<CasinoLayout.Road> roads = layout.roads();
-        long onAnAxis = layout.arenas().stream()
-                .filter(arena -> arena.centerX() == 0 || arena.centerZ() == 0)
-                .count();
-        assertEquals(2L * layout.arenas().size() - onAnAxis, roads.size(),
-                "arenas on an axis need a single leg, the rest need two");
         for (CasinoLayout.Road road : roads) {
             assertTrue(road.alongX() || road.alongZ(), "roads are straight lines");
         }
-        List<String> reached = new ArrayList<>();
-        for (CasinoLayout.Road road : roads) {
-            if (!road.alongX()) {
-                reached.add(road.toX() + ":" + road.toZ());
-            } else if (road.toZ() == 0 && road.fromX() == 0) {
-                reached.add(road.toX() + ":0");
-            }
-        }
         for (CasinoLayout.Arena arena : layout.arenas()) {
-            if (arena.centerX() == 0 || arena.centerZ() == 0) {
-                assertTrue(reached.contains(arena.centerX() + ":" + arena.centerZ()),
-                        arena.gameId() + " has no road");
+            long through = roads.stream().filter(road -> road.passes(arena.centerX(), arena.centerZ())).count();
+            assertTrue(through >= 2, arena.gameId() + " is not on a crossing of two boulevards");
+        }
+    }
+
+    @Test
+    void everyBoulevardMeetsTheOnesLeavingThePlaza() {
+        CasinoLayout layout = CasinoLayout.of(500, GAMES);
+        List<CasinoLayout.Road> roads = layout.roads();
+        List<CasinoLayout.Road> fromPlaza = new ArrayList<>();
+        for (CasinoLayout.Road road : roads) {
+            if (road.passes(0, 0)) {
+                fromPlaza.add(road);
             }
         }
+        assertEquals(2, fromPlaza.size(), "one boulevard along each axis crosses the plaza");
+        for (CasinoLayout.Road road : roads) {
+            boolean meets = false;
+            for (CasinoLayout.Road axis : fromPlaza) {
+                int x = road.alongX() ? axis.fromX() : road.fromX();
+                int z = road.alongX() ? road.fromZ() : axis.fromZ();
+                if (road == axis || (road.passes(x, z) && axis.passes(x, z))) {
+                    meets = true;
+                }
+            }
+            assertTrue(meets, "a boulevard is cut off from the plaza: " + road);
+        }
+    }
+
+    @Test
+    void theRingRoadRunsOutsideEveryPavilionAndInsideTheWorld() {
+        CasinoLayout layout = CasinoLayout.of(500, GAMES);
+        int ring = layout.ringRoad();
+        for (CasinoLayout.Arena arena : layout.arenas()) {
+            assertTrue(Math.abs(arena.centerX()) + CasinoLayout.ARENA_RADIUS + CasinoLayout.ROAD_WIDTH / 2 < ring,
+                    arena.gameId() + " touches the ring road");
+            assertTrue(Math.abs(arena.centerZ()) + CasinoLayout.ARENA_RADIUS + CasinoLayout.ROAD_WIDTH / 2 < ring,
+                    arena.gameId() + " touches the ring road");
+        }
+        assertTrue(ring + CasinoLayout.ROAD_WIDTH / 2 <= layout.extent(), "the ring road leaves the casino");
+    }
+
+    @Test
+    void theCellsNobodyUsesBecomeGardens() {
+        CasinoLayout layout = CasinoLayout.of(500, GAMES);
+        assertEquals(CasinoLayout.capacity(layout.columns()) - GAMES.size(), layout.gardens().size());
+        for (CasinoLayout.Garden garden : layout.gardens()) {
+            for (CasinoLayout.Arena arena : layout.arenas()) {
+                assertTrue(garden.centerX() != arena.centerX() || garden.centerZ() != arena.centerZ(),
+                        "a garden was laid over " + arena.gameId());
+            }
+            assertTrue(garden.centerX() != 0 || garden.centerZ() != 0, "a garden was laid over the plaza");
+        }
+    }
+
+    @Test
+    void thePlazaLeavesRoomBeforeTheFirstPavilions() {
+        // The inner edge of the closest pavilions must stay clear of the plaza hedge.
+        assertTrue(CasinoLayout.SPACING - CasinoLayout.ARENA_RADIUS > CasinoLayout.PLAZA_RADIUS + 4);
+        assertTrue(CasinoLayout.STAGE_RADIUS < CasinoLayout.ARENA_RADIUS - 4,
+                "the stage must leave room for the walkway and the bleachers");
     }
 
     @Test
@@ -159,10 +205,26 @@ class CasinoLayoutTest {
     }
 
     @Test
-    void theRoadsStartAtThePlaza() {
-        CasinoLayout layout = CasinoLayout.of(500, GAMES);
-        assertAll(() -> layout.roads().forEach(road -> assertTrue(
-                (road.fromX() == 0 && road.fromZ() == 0) || road.alongX() || road.alongZ(),
-                "road does not start at the plaza")));
+    void theFlatWorldSettingsAreJsonWithABiome() {
+        // Servers since 1.18.2 read these settings as JSON, so the old
+        // "3;minecraft:bedrock,2*minecraft:dirt,minecraft:grass_block;1;minecraft:plains"
+        // string was rejected with a MalformedJsonException that aborted world
+        // creation and stopped the whole plugin from enabling. JSON is also valid
+        // YAML, so SnakeYAML verifies the shape without pulling in another parser.
+        Object settings = new Yaml().load(CasinoWorldManager.FLAT_SETTINGS);
+        assertInstanceOf(Map.class, settings, "world settings are not a JSON object");
+        Map<?, ?> json = (Map<?, ?>) settings;
+        Object layers = json.get("layers");
+        assertInstanceOf(List.class, layers, "no layer list in the flat world settings");
+        for (Object layer : (List<?>) layers) {
+            assertInstanceOf(Map.class, layer, "a layer is not a JSON object");
+            Map<?, ?> entry = (Map<?, ?>) layer;
+            String block = String.valueOf(entry.get("block"));
+            assertTrue(block.startsWith("minecraft:"), block + " is not a namespaced block");
+            assertInstanceOf(Number.class, entry.get("height"), "no height for " + block);
+            assertTrue(((Number) entry.get("height")).intValue() >= 1, "empty layer " + block);
+        }
+        assertEquals("minecraft:plains", json.get("biome"),
+                "a modern flat world needs a biome, or the server cannot pick a surface");
     }
 }

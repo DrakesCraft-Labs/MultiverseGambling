@@ -45,14 +45,33 @@ public final class DicePokerGame extends AbstractGroupGame {
     }
 
     @Override
+    protected boolean houseDuelAvailable() {
+        return true;
+    }
+
+    /**
+     * Against the house, the dealer rolls a hand too: the better hand wins, a tie gives
+     * the stake back. Both hands come from the same dice, so the duel is even and is paid
+     * with the house edge.
+     */
+    @Override
+    protected double houseDuelMultiplier(Player player) {
+        return fairDuelMultiplier(0.5);
+    }
+
+    @Override
     protected void onRoundStart() {
         hands.clear();
         resolvedCount = 0;
         timer = 0;
         broadcastRoundHeader();
-        broadcastPlain("group.dice-poker.dealing", "players", pot.size());
+        broadcastPlain("group.dice-poker.dealing", "players", pot.size() + (houseDuelActive() ? 1 : 0));
+        List<UUID> seats = new ArrayList<>(pot.participants());
+        if (houseDuelActive()) {
+            seats.add(FairnessService.HOUSE);
+        }
         // The rolls are generated right here, before anybody can react.
-        for (UUID id : pot.participants()) {
+        for (UUID id : seats) {
             int[] dice = new int[DicePoker.DICE];
             for (int i = 0; i < dice.length; i++) {
                 dice[i] = plugin.fair().rollInt(FairnessService.HOUSE, 6) + 1;
@@ -104,6 +123,19 @@ public final class DicePokerGame extends AbstractGroupGame {
         // Everybody has revealed: the winner is settled.
         resolvedCount++;
         List<UUID> tied = bestHand();
+        if (houseDuelActive()) {
+            int outcome = tied.size() > 1 ? 0 : !tied.isEmpty() && isHouse(tied.get(0)) ? -1 : 1;
+            if (outcome != 0) {
+                UUID best = tied.get(0);
+                broadcastPlainFor(player -> new Object[]{
+                                "player", playerName(best),
+                                "hand", handName(player, DicePoker.handOf(hands.get(best))),
+                                "dice", DicePoker.describe(hands.get(best))},
+                        "group.dice-poker.winner");
+            }
+            settleHouseDuel(outcome, houseDuelMultiplier(null));
+            return;
+        }
         UUID winner = tied.isEmpty() ? null : tied.get(0);
 
         double total = pot.total();

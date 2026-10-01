@@ -54,6 +54,80 @@ public final class WheelMath {
     }
 
     /**
+     * Ease out quadratic: gentler than {@link #ease(double)} at the start, which keeps
+     * the first frames of a big wheel from turning too far in one step.
+     */
+    public static double easeQuad(double progress) {
+        double clamped = Math.max(0, Math.min(1, progress));
+        double left = 1 - clamped;
+        return 1 - left * left;
+    }
+
+    /**
+     * How many tiles of the wheel each sector gets.
+     *
+     * <p>A tile is a straight block, so a wheel needs plenty of them to look round: a
+     * wheel with few sectors splits every sector in several tiles. Equal sectors always
+     * get the same number of tiles; weighted sectors (a jackpot, where a bigger stake is
+     * a bigger slice) share {@code minimumTiles} by largest remainder, never less than
+     * one tile each, so even the smallest stake is visible.</p>
+     *
+     * @param weights      size of each sector, any positive scale; {@code null} for equal
+     * @param sectors      number of sectors when {@code weights} is {@code null}
+     * @param minimumTiles tiles the whole wheel should at least have
+     */
+    public static int[] allocate(double[] weights, int sectors, int minimumTiles) {
+        int count = weights == null ? sectors : weights.length;
+        if (count <= 0) {
+            return new int[0];
+        }
+        int[] tiles = new int[count];
+        boolean equal = weights == null;
+        if (!equal) {
+            equal = true;
+            for (double weight : weights) {
+                if (Math.abs(weight - weights[0]) > 1e-9) {
+                    equal = false;
+                    break;
+                }
+            }
+        }
+        if (equal) {
+            int each = Math.max(1, (int) Math.ceil(minimumTiles / (double) count));
+            java.util.Arrays.fill(tiles, each);
+            return tiles;
+        }
+        int total = Math.max(minimumTiles, count);
+        double sum = 0;
+        for (double weight : weights) {
+            sum += Math.max(0, weight);
+        }
+        // Everybody gets one tile first; the rest is shared by weight.
+        java.util.Arrays.fill(tiles, 1);
+        int left = total - count;
+        double[] remainders = new double[count];
+        int given = 0;
+        for (int i = 0; i < count; i++) {
+            double share = sum <= 0 ? left / (double) count : left * Math.max(0, weights[i]) / sum;
+            int whole = (int) Math.floor(share);
+            tiles[i] += whole;
+            given += whole;
+            remainders[i] = share - whole;
+        }
+        for (int extra = given; extra < left; extra++) {
+            int best = 0;
+            for (int i = 1; i < count; i++) {
+                if (remainders[i] > remainders[best]) {
+                    best = i;
+                }
+            }
+            tiles[best]++;
+            remainders[best] = -1;
+        }
+        return tiles;
+    }
+
+    /**
      * X offset of a point at that angle and radius.
      */
     public static double x(double angle, double radius) {

@@ -48,6 +48,7 @@ public abstract class ArenaBoard {
     private final ArenaStage stage;
     private final BoardGrid grid;
     private final BlockPaint paint;
+    private org.bukkit.entity.TextDisplay status;
     private boolean open;
     private boolean lingering;
     private boolean closed;
@@ -105,6 +106,10 @@ public abstract class ArenaBoard {
         try {
             onClose();
         } finally {
+            if (status != null && status.isValid()) {
+                status.remove();
+            }
+            status = null;
             paint.restore();
             if (ACTIVE.get(gameId) == this) {
                 ACTIVE.remove(gameId);
@@ -133,8 +138,15 @@ public abstract class ArenaBoard {
      * the delayed cleanup of a lingering board never gets to run then.
      */
     public static void clearAll() {
+        // One board that cannot be cleared must not leave the next arena reserved with
+        // its blocks painted, so each is closed on its own.
         for (ArenaBoard board : new ArrayList<>(ACTIVE.values())) {
-            board.close();
+            try {
+                board.close();
+            } catch (RuntimeException error) {
+                board.plugin.getLogger().severe("Could not clear the " + board.gameId
+                        + " board: " + error);
+            }
         }
         ACTIVE.clear();
     }
@@ -216,6 +228,29 @@ public abstract class ArenaBoard {
         spot.setYaw(180.0f);
         spot.setPitch(30.0f);
         return spot;
+    }
+
+    /**
+     * A floating sign over the board with the state of the round: what is at stake,
+     * what the next pick pays. Created on first use, removed with the board.
+     */
+    protected final void status(net.kyori.adventure.text.Component text) {
+        if (closed) {
+            return;
+        }
+        if (status == null || !status.isValid()) {
+            org.bukkit.Location spot = stage.at(0, 3.2, grid.originZ() - 1.5);
+            status = stage.world().spawn(spot, org.bukkit.entity.TextDisplay.class, display -> {
+                display.setPersistent(false);
+                display.addScoreboardTag(com.chagui68.multiversegambling.world.anim.Props.TAG);
+                display.setBrightness(com.chagui68.multiversegambling.world.anim.Props.FULL_BRIGHT);
+                display.setBillboard(org.bukkit.entity.Display.Billboard.VERTICAL);
+                display.setBackgroundColor(org.bukkit.Color.fromARGB(160, 0, 0, 0));
+                display.setLineWidth(300);
+                display.setTransformation(com.chagui68.multiversegambling.world.anim.Props.scaled(1.4f));
+            });
+        }
+        status.text(text);
     }
 
     /**

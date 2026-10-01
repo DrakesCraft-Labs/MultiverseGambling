@@ -47,10 +47,27 @@ public final class HotBombGame extends AbstractGroupGame {
     }
 
     @Override
+    protected boolean houseDuelAvailable() {
+        return true;
+    }
+
+    /**
+     * Against the house, the dealer takes the other chair: whoever holds the bomb when it
+     * goes off loses, which is an even game, paid with the house edge.
+     */
+    @Override
+    protected double houseDuelMultiplier(Player player) {
+        return fairDuelMultiplier(0.5);
+    }
+
+    @Override
     protected void onRoundStart() {
         timer = 0;
         alive.clear();
         alive.addAll(pot.participants());
+        if (houseDuelActive()) {
+            alive.add(FairnessService.HOUSE);
+        }
         holder = pickHolder(null);
         fuseTicks = rollFuse();
         passTicks = 20;
@@ -68,6 +85,7 @@ public final class HotBombGame extends AbstractGroupGame {
         if (stage != null) {
             show = new BombShow(plugin, stage, Math.max(40, (int) (plugin.config().hotBombMaxSeconds() * 20)));
             show.start();
+            show.holder(online(holder), playerName(holder));
         }
     }
 
@@ -107,6 +125,9 @@ public final class HotBombGame extends AbstractGroupGame {
             if (!next.equals(holder)) {
                 UUID previous = holder;
                 holder = next;
+                if (show != null) {
+                    show.holder(online(holder), playerName(holder));
+                }
                 Player previousPlayer = online(previous);
                 if (previousPlayer != null) {
                     previousPlayer.sendMessage(plugin.messages().componentPlainFor(previousPlayer,
@@ -155,7 +176,8 @@ public final class HotBombGame extends AbstractGroupGame {
         }
         broadcastPlain("group.hot-bomb.boom",
                 "player", playerName(victim),
-                "amount", plugin.economy().format(pot.amountOf(victim)));
+                "amount", plugin.economy().format(isHouse(victim)
+                        ? pot.amountOf(houseDuelPlayer()) : pot.amountOf(victim)));
         broadcastPlain("group.hot-bomb.pot-now",
                 "pot", plugin.economy().format(pot.total()), "alive", alive.size());
 
@@ -164,6 +186,9 @@ public final class HotBombGame extends AbstractGroupGame {
             return;
         }
         holder = pickHolder(victim);
+        if (show != null) {
+            show.holder(online(holder), playerName(holder));
+        }
         fuseTicks = rollFuse();
         fuseTotal = Math.max(1, fuseTicks);
         passTicks = 20;
@@ -171,6 +196,11 @@ public final class HotBombGame extends AbstractGroupGame {
     }
 
     private void settle() {
+        if (houseDuelActive()) {
+            UUID survivor = alive.isEmpty() ? FairnessService.HOUSE : alive.iterator().next();
+            settleHouseDuel(isHouse(survivor) ? -1 : 1, houseDuelMultiplier(null));
+            return;
+        }
         if (alive.isEmpty()) {
             // Nobody survived: the pot stays with the house.
             broadcastPlain("group.hot-bomb.no-survivors");
@@ -195,6 +225,9 @@ public final class HotBombGame extends AbstractGroupGame {
         alive.remove(playerId);
         if (playerId.equals(holder) && !alive.isEmpty()) {
             holder = pickHolder(playerId);
+            if (show != null) {
+                show.holder(online(holder), playerName(holder));
+            }
         }
     }
 

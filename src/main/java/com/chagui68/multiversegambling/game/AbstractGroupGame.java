@@ -45,6 +45,11 @@ public abstract class AbstractGroupGame extends AbstractGame {
     protected Phase phase = Phase.WAITING;
     protected int timer;
     protected int round;
+    /** True while the player alone in the room is playing the dealer. */
+    private boolean houseDuel;
+    private UUID houseDuelPlayer;
+    /** Player who asked for the house from the bet selector and still has to choose. */
+    private UUID houseRequested;
 
     protected AbstractGroupGame(MultiverseGamblingPlugin plugin, GameMeta meta) {
         super(plugin, meta);
@@ -80,7 +85,57 @@ public abstract class AbstractGroupGame extends AbstractGame {
             return;
         }
 
+        // Alone in an empty room, the selector also offers to play straight against the
+        // house, so nobody has to wait for company.
+        boolean emptyRoom = phase != Phase.IN_GAME && pot.size() == 0 && waiting.isEmpty();
+        if (houseDuelAvailable() && emptyRoom) {
+            plugin.guis().openBetSelector(player, this, bet -> placeBet(player, bet),
+                    bet -> betAgainstHouse(player, bet));
+            return;
+        }
         plugin.guis().openBetSelector(player, this, bet -> placeBet(player, bet));
+    }
+
+    /**
+     * Stakes and sits down against the house right away; a game that needs a choice
+     * first (a colour, a horse) starts the duel as soon as that choice is made.
+     */
+    private void betAgainstHouse(Player player, double amount) {
+        if (pot.size() > 0 || !waiting.isEmpty() || phase == Phase.IN_GAME) {
+            // Somebody came in meanwhile: an ordinary seat at the table.
+            placeBet(player, amount);
+            return;
+        }
+        houseRequested = player.getUniqueId();
+        placeBet(player, amount);
+        if (!pot.contains(player.getUniqueId())) {
+            houseRequested = null;
+            return;
+        }
+        if (!houseDuelNeedsChoice()) {
+            houseRequested = null;
+            startHouseDuel(player);
+        } else {
+            message(player, "group.house-duel.choose-first");
+        }
+    }
+
+    /**
+     * True when the duel can only start after the player chose something (a colour, a
+     * horse): the game then calls {@link #houseChoiceMade(Player)} once it was made.
+     */
+    protected boolean houseDuelNeedsChoice() {
+        return false;
+    }
+
+    /**
+     * The choice a pending duel was waiting for is made: the duel starts.
+     */
+    protected final void houseChoiceMade(Player player) {
+        if (houseRequested != null && houseRequested.equals(player.getUniqueId())) {
+            houseRequested = null;
+            startHouseDuel(player);
+        }
     }
 
     /** Records (or replaces) the player's stake. */
@@ -100,9 +155,170 @@ public abstract class AbstractGroupGame extends AbstractGame {
                 "amount", plugin.economy().format(amount), "game", name());
         onBetPlaced(player, amount);
         broadcastLobby();
+        // Waiting alone is the moment to offer the duel against the house, so nobody is
+        // stuck in a room that will never fill up.
+        offerHouseDuel(player);
         if (phase == Phase.WAITING && pot.size() >= minPlayers()) {
             startBettingWindow();
         }
+    }
+
+    // -------------------------------------------------------------- against house
+
+    /**
+     * True when this game can be played one against the house, which is what saves a
+     * player who is alone in the room from waiting for somebody else forever. The offer
+     * with its chat button is sent by {@link #offerHouseDuel(Player)}.
+     */
+    protected boolean houseDuelAvailable() {
+        return false;
+    }
+
+    @Override
+    public final boolean playableAgainstHouse() {
+        return houseDuelAvailable();
+    }
+
+    /**
+     * What the duel pays right now, for the offer line. A game with a choice in it (a
+     * colour, a horse) answers with what the current choice pays.
+     */
+    protected double houseDuelMultiplier(Player player) {
+        return 1.0;
+    }
+
+    /**
+     * Called before {@link #onRoundStart()} when the round is a duel, so a game can put
+     * its own state in place first.
+     */
+    protected void onHouseDuelStart(Player player) {
+    }
+
+    /**
+     * True while the single player of the room is duelling the dealer. The subclass uses
+     * it in {@code onRoundStart} and {@code tickRound} to run the duel instead of the
+     * group round.
+     */
+    protected final boolean houseDuelActive() {
+        return houseDuel;
+    }
+
+    /**
+     * The player of the running duel, or {@code null}.
+     */
+    protected final UUID houseDuelPlayer() {
+        return houseDuelPlayer;
+    }
+
+    /**
+     * Sends the offer and its button to a player who is alone in the room. Does nothing
+     * for a game that cannot be played against the house, or when the room already has
+     * company, so it is safe to call whenever the room changes.
+     */
+    protected final void offerHouseDuel(Player player) {
+        if (!houseDuelAvailable() || phase == Phase.IN_GAME || pot.size() != 1
+                || !pot.contains(player.getUniqueId()) || player.getUniqueId().equals(houseRequested)) {
+            return;
+        }
+        player.sendMessage(plugin.messages()
+                .componentPlainFor(player, "group.house-duel.offer",
+                        "multiplier", Text.multiplier(houseDuelMultiplier(player)))
+                .append(Text.c("  "))
+                .append(chatButton(
+                        plugin.messages().forSender(player, "group.house-duel.button"),
+                        "house",
+                        plugin.messages().forSender(player, "group.house-duel.hover"))));
+    }
+
+    /**
+     * Starts the duel for whoever is alone in the room. Reachable from the chat button
+     * and from {@code /mvgam action house}, so it works with or without a menu.
+     */
+    protected final void startHouseDuel(Player player) {
+        if (!houseDuelAvailable()) {
+            message(player, "group.unknown-action");
+            return;
+        }
+        if (phase == Phase.IN_GAME) {
+            message(player, "group.round-in-progress");
+            return;
+        }
+        if (!pot.contains(player.getUniqueId())) {
+            message(player, "group.not-in-table");
+            return;
+        }
+        if (pot.size() != 1 || !waiting.isEmpty()) {
+            message(player, "group.house-duel-crowded");
+            return;
+        }
+        houseDuel = true;
+        houseDuelPlayer = player.getUniqueId();
+        onHouseDuelStart(player);
+        beginRound();
+    }
+
+    /**
+     * What a duel the player wins with that chance pays: the house edge taken out of a
+     * fair bet, so every duel carries the same edge as the solo games.
+     */
+    protected final double fairDuelMultiplier(double chance) {
+        if (chance <= 0) {
+            return 1.0;
+        }
+        double edge = Math.max(0.0, Math.min(0.5, plugin.config().houseEdge()));
+        return Math.max(1.0, Math.min(1000.0, (1.0 - edge) / chance));
+    }
+
+    /**
+     * Settles the running duel and closes the round.
+     *
+     * @param outcome positive when the player beat the house, zero on a draw (the stake
+     *                comes back) and negative when the house won
+     */
+    protected final void settleHouseDuel(int outcome, double multiplier) {
+        UUID playerId = houseDuelPlayer;
+        Player player = playerId == null ? null : online(playerId);
+        double stake = playerId == null ? 0 : pot.amountOf(playerId);
+        if (outcome > 0) {
+            pot.payoutByMultiplier(id -> id.equals(playerId) ? multiplier : 0);
+        } else if (outcome < 0) {
+            pot.burn();
+        }
+        // A draw is refunded by endRound, like any money left in the pot.
+        if (playerId != null && outcome != 0) {
+            plugin.stats().record(playerId, id(), stake, outcome > 0 ? stake * multiplier : 0);
+        }
+        if (player != null) {
+            if (outcome > 0) {
+                message(player, "group.house-duel.won", "prize", plugin.economy().format(stake * multiplier),
+                        "multiplier", Text.multiplier(multiplier));
+                showTitle(player, "group.house-duel.won-title", "group.house-duel.won-subtitle",
+                        "prize", plugin.economy().format(stake * multiplier));
+                player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.2f);
+                plugin.games().announceWin(player, stake, stake * multiplier);
+            } else if (outcome == 0) {
+                message(player, "group.house-duel.draw", "bet", plugin.economy().format(stake));
+            } else {
+                message(player, "group.house-duel.lost", "bet", plugin.economy().format(stake));
+                showTitle(player, "group.house-duel.lost-title", "group.house-duel.lost-subtitle");
+                player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 0.9f);
+            }
+        }
+        endRound();
+    }
+
+    /**
+     * True for the seat of the house in a duel.
+     */
+    protected static boolean isHouse(UUID id) {
+        return com.chagui68.multiversegambling.fair.FairnessService.HOUSE.equals(id);
+    }
+
+    /**
+     * Name of the house, in the default language.
+     */
+    protected final String houseName() {
+        return Text.strip(plugin.messages().getOr("group.house-duel.house-name", "The house"));
     }
 
     // ---------------------------------------------------------------- life cycle
@@ -142,7 +358,7 @@ public abstract class AbstractGroupGame extends AbstractGame {
         broadcast("group.betting-open", "seconds", timer);
     }
 
-    private void beginRound() {
+    protected final void beginRound() {
         round++;
         phase = Phase.IN_GAME;
         timer = 0;
@@ -177,6 +393,10 @@ public abstract class AbstractGroupGame extends AbstractGame {
      */
     @Override
     public void handleAction(Player player, String action, String[] args) {
+        if ("house".equals(action)) {
+            startHouseDuel(player);
+            return;
+        }
         message(player, "group.unknown-action");
     }
 
@@ -201,6 +421,9 @@ public abstract class AbstractGroupGame extends AbstractGame {
         gone.clear();
         phase = Phase.WAITING;
         timer = 0;
+        houseDuel = false;
+        houseDuelPlayer = null;
+        houseRequested = null;
         onRoundEnd();
         broadcast("group.round-finished");
         promptWaiting();
@@ -216,6 +439,9 @@ public abstract class AbstractGroupGame extends AbstractGame {
         gone.clear();
         phase = Phase.WAITING;
         timer = 0;
+        houseDuel = false;
+        houseDuelPlayer = null;
+        houseRequested = null;
         onRoundEnd();
     }
 
@@ -253,6 +479,14 @@ public abstract class AbstractGroupGame extends AbstractGame {
             pot.remove(playerId);
             gone.remove(playerId);
             broadcastLobby();
+            // The room shrank to one player: offer them the dealer instead of an empty
+            // waiting room.
+            if (pot.size() == 1) {
+                Player left = online(pot.participants().iterator().next());
+                if (left != null) {
+                    offerHouseDuel(left);
+                }
+            }
         }
     }
 
@@ -342,6 +576,9 @@ public abstract class AbstractGroupGame extends AbstractGame {
     }
 
     protected final String playerName(UUID playerId) {
+        if (isHouse(playerId)) {
+            return houseName();
+        }
         Player player = online(playerId);
         if (player != null) {
             return player.getName();

@@ -8,6 +8,8 @@ import com.chagui68.multiversegambling.game.GameMeta;
 import com.chagui68.multiversegambling.gui.Gui;
 import com.chagui68.multiversegambling.util.Items;
 import com.chagui68.multiversegambling.util.Text;
+import com.chagui68.multiversegambling.world.anim.ArenaStage;
+import com.chagui68.multiversegambling.world.anim.CoinFlipShow;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,6 +22,9 @@ import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.SkullMeta;
+import org.bukkit.scheduler.BukkitRunnable;
 
 /**
  * Duel, one against one.
@@ -60,6 +65,11 @@ public final class DuelGame extends AbstractGame {
                 .build());
         // This game runs by itself: it never uses the shared waiting room.
         plugin.sessions().register(id(), this::tick);
+    }
+
+    @Override
+    public boolean playableAgainstHouse() {
+        return true;
     }
 
     @Override
@@ -177,18 +187,147 @@ public final class DuelGame extends AbstractGame {
 
         Player loser = challengerWins ? target : challenger;
         Player winner = challengerWins ? challenger : target;
-
-        announceBoth(winner, loser, total);
-        if (challenger != null) {
-            info(challenger, title(challenger));
-            message(challenger, challengerWins ? "duel.won-against" : "duel.lost-against",
-                    "player", target.getName(),
-                    "amount", plugin.economy().format(challenge.amount));
+        UUID challengerId = challenge.challenger;
+        double amount = challenge.amount;
+        Runnable announce = () -> {
+            announceBoth(winner, loser, total);
+            Player challengerNow = online(challengerId);
+            if (challengerNow != null) {
+                info(challengerNow, title(challengerNow));
+                message(challengerNow, challengerWins ? "duel.won-against" : "duel.lost-against",
+                        "player", target.getName(),
+                        "amount", plugin.economy().format(amount));
+            }
+            if (target.isOnline()) {
+                info(target, title(target));
+                message(target, challengerWins ? "duel.lost-against" : "duel.won-against",
+                        "player", playerName(challengerId),
+                        "amount", plugin.economy().format(amount));
+            }
+        };
+        // The money is already settled; the coin in the pavilion only keeps the suspense
+        // and the result is announced the moment it lands.
+        if (!flipInArena(challenger, target, challengerWins, announce)) {
+            announce.run();
         }
-        info(target, title(target));
-        message(target, challengerWins ? "duel.lost-against" : "duel.won-against",
-                "player", playerName(challenge.challenger),
-                "amount", plugin.economy().format(challenge.amount));
+    }
+
+    /**
+     * A duel against the house: the same coin, the player against the dealer, an even
+     * toss paid with the house edge, so nobody needs a rival online to play.
+     */
+    public void challengeHouse(Player player, double amount) {
+        if (!plugin.config().gameEnabled(id())) {
+            message(player, "games.disabled", "game", name());
+            return;
+        }
+        if (pending.containsKey(player.getUniqueId())) {
+            message(player, "duel.already-busy");
+            return;
+        }
+        double stake = Math.max(minBet(), Math.min(maxBet(), amount));
+        Wager wager = plugin.economy().stake(player, stake);
+        if (wager == null) {
+            message(player, "economy.not-enough-money", "bet", plugin.economy().format(stake));
+            return;
+        }
+        double edge = Math.max(0.0, Math.min(0.5, plugin.config().houseEdge()));
+        double multiplier = Math.max(1.0, 2.0 * (1.0 - edge));
+        // One provably fair toss, attributed to the player like every solo bet.
+        boolean wins = plugin.fair().roll(player.getUniqueId()) < 0.5;
+        double payout = settle(player, wager, wins ? multiplier : 0);
+        String house = Text.strip(plugin.messages().getOr("group.house-duel.house-name", "The house"));
+        Runnable announce = () -> {
+            if (!player.isOnline()) {
+                return;
+            }
+            info(player, title(player));
+            message(player, wins ? "duel.house-won" : "duel.house-lost",
+                    "amount", plugin.economy().format(stake),
+                    "prize", plugin.economy().format(payout));
+            player.showTitle(Title.title(
+                    Text.c(plugin.messages().forSender(player, wins ? "duel.win-title" : "duel.lose-title")),
+                    Text.c(wins ? "&f" + plugin.economy().format(payout)
+                            : plugin.messages().forSender(player, "duel.lose-subtitle")),
+                    Title.Times.times(java.time.Duration.ofMillis(150), java.time.Duration.ofMillis(1800),
+                            java.time.Duration.ofMillis(300))));
+            player.playSound(player.getLocation(), wins ? Sound.ENTITY_PLAYER_LEVELUP : Sound.ENTITY_VILLAGER_NO,
+                    1.0f, wins ? 1.2f : 0.9f);
+        };
+        ArenaStage stage = arenaFor(player);
+        if (stage == null) {
+            announce.run();
+            return;
+        }
+        int frames = 60;
+        CoinFlipShow show = new CoinFlipShow(plugin, stage, wins, frames)
+                .captions(player.getName(), house)
+                .contenders(head(player), new ItemStack(Material.GOLD_BLOCK));
+        show.start();
+        new BukkitRunnable() {
+            private int frame;
+
+            @Override
+            public void run() {
+                if (frame++ < frames) {
+                    show.tick();
+                    return;
+                }
+                cancel();
+                show.settle();
+                announce.run();
+            }
+        }.runTaskTimer(plugin, 1L, 1L);
+    }
+
+    /**
+     * Tosses the coin of the duel in the pavilion, the heads of both players on either
+     * side of it.
+     *
+     * @return false when there is no pavilion to toss it in
+     */
+    private boolean flipInArena(Player challenger, Player target, boolean challengerWins, Runnable announce) {
+        if (challenger == null) {
+            return false;
+        }
+        ArenaStage stage = arenaFor(target);
+        if (stage == null) {
+            return false;
+        }
+        int distance = plugin.config().worldAnimationsViewDistance();
+        if (plugin.config().worldAnimationsTeleport()) {
+            challenger.teleport(stage.watcher(distance, ArenaStage.TABLE_PITCH, 0, 2));
+            target.teleport(stage.watcher(distance, ArenaStage.TABLE_PITCH, 1, 2));
+        }
+        int frames = 60;
+        CoinFlipShow show = new CoinFlipShow(plugin, stage, challengerWins, frames)
+                .captions(challenger.getName(), target.getName())
+                .contenders(head(challenger), head(target));
+        show.start();
+        new BukkitRunnable() {
+            private int frame;
+
+            @Override
+            public void run() {
+                if (frame++ < frames) {
+                    show.tick();
+                    return;
+                }
+                cancel();
+                show.settle();
+                announce.run();
+            }
+        }.runTaskTimer(plugin, 1L, 1L);
+        return true;
+    }
+
+    private static ItemStack head(Player player) {
+        ItemStack head = new ItemStack(Material.PLAYER_HEAD);
+        if (head.getItemMeta() instanceof SkullMeta meta) {
+            meta.setOwningPlayer(player);
+            head.setItemMeta(meta);
+        }
+        return head;
     }
 
     private void announceBoth(Player winner, Player loser, double total) {
@@ -284,7 +423,7 @@ public final class DuelGame extends AbstractGame {
         @Override
         protected void render() {
             clearActions();
-            fill(Items.of(Material.BLACK_STAINED_GLASS_PANE).name(" ").build());
+            frame(Material.WHITE_STAINED_GLASS_PANE);
 
             set(4, Items.of(Material.IRON_SWORD)
                     .name(label(player(), "panel.duel.info"))
@@ -317,7 +456,16 @@ public final class DuelGame extends AbstractGame {
                 slot++;
             }
 
-            set(40, Items.of(Material.BARRIER)
+            set(38, Items.of(Material.GOLD_BLOCK)
+                    .name(label(player(), "panel.duel.house"))
+                    .lore(labelLore(player(), "panel.duel.house-lore"))
+                    .glow(true)
+                    .build(), e -> {
+                close();
+                plugin.guis().openBetSelector(player(), game, amount -> game.challengeHouse(player(), amount));
+            });
+
+            set(42, Items.of(Material.BARRIER)
                     .name(label(player(), "panel.common.close"))
                     .build(), e -> close());
         }

@@ -2,6 +2,7 @@ package com.chagui68.multiversegambling.world.anim;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import com.chagui68.multiversegambling.world.CasinoLayout;
 import org.junit.jupiter.api.Test;
 
 class ShowGeometryTest {
@@ -22,7 +23,7 @@ class ShowGeometryTest {
                         bucket++;
                     }
                 }
-                int[] path = PlinkoShow.path(rolls);
+                int[] path = PlinkoBoard.path(rolls);
                 assertEquals(rows + 1, path.length);
                 assertEquals(0, path[0], "the ball always starts over the middle");
                 assertEquals(2 * bucket - rows, path[rows],
@@ -34,7 +35,7 @@ class ShowGeometryTest {
     @Test
     void everyPlinkoBounceMovesTheBallExactlyOnePlace() {
         double[] rolls = {0.1, 0.9, 0.2, 0.8, 0.3};
-        int[] path = PlinkoShow.path(rolls);
+        int[] path = PlinkoBoard.path(rolls);
         for (int level = 1; level < path.length; level++) {
             assertEquals(1, Math.abs(path[level] - path[level - 1]),
                     "bounce " + level + " left the ball somewhere it cannot be");
@@ -42,15 +43,14 @@ class ShowGeometryTest {
     }
 
     @Test
-    void aPlinkoBoardNeverGrowsWiderThanItsArena() {
-        // The bucket row spans 2 * rows + 1 columns, and the arena is 25 wide.
-        assertEquals(25, 2 * 12 + 1);
-        for (double roll : new double[]{0.0, 0.49, 0.51, 0.99}) {
-            double[] rolls = new double[12];
-            java.util.Arrays.fill(rolls, roll);
-            int[] path = PlinkoShow.path(rolls);
-            for (int offset : path) {
-                assertTrue(Math.abs(offset) <= 12, "the ball left the arena at " + offset);
+    void everyPlinkoBucketSitsInsideItsArena() {
+        // The wall stands up, so it has to fit across the arena for every row count the
+        // configuration allows, buckets included.
+        for (int rows : new int[]{6, 12, 16, 20}) {
+            PlinkoBoard board = new PlinkoBoard(rows);
+            for (int bucket = 0; bucket <= rows; bucket++) {
+                assertTrue(Math.abs(board.bucketX(bucket)) + board.column() <= CasinoLayout.ARENA_RADIUS,
+                        "bucket " + bucket + " of a " + rows + " row wall is outside the arena");
             }
         }
     }
@@ -58,24 +58,38 @@ class ShowGeometryTest {
     // ------------------------------------------------------------------ crash
 
     @Test
-    void theCrashTowerClimbsOneBlockPerDoubling() {
-        assertEquals(1, CrashTowerShow.heightFor(1.0, 1000));
-        assertEquals(2, CrashTowerShow.heightFor(2.0, 1000));
-        assertEquals(3, CrashTowerShow.heightFor(4.0, 1000));
-        assertEquals(4, CrashTowerShow.heightFor(8.0, 1000));
-        assertEquals(10, CrashTowerShow.heightFor(512.0, 1000));
+    void theRocketClimbsAndMovesRightWhileTheMultiplierGrows() {
+        double previousX = Double.NEGATIVE_INFINITY;
+        double previousY = Double.NEGATIVE_INFINITY;
+        for (double multiplier = 1.0; multiplier <= 5000; multiplier *= 1.15) {
+            double x = CrashCurve.x(multiplier);
+            double y = CrashCurve.y(multiplier);
+            assertTrue(x > previousX, "the rocket went back at " + multiplier);
+            assertTrue(y >= previousY, "the rocket came down at " + multiplier);
+            previousX = x;
+            previousY = y;
+        }
     }
 
     @Test
-    void theCrashTowerNeverFallsAndNeverGrowsPastItsCap() {
-        double previous = 0;
-        for (double multiplier = 1.0; multiplier <= 2000; multiplier *= 1.2) {
-            int height = CrashTowerShow.heightFor(multiplier, 1000);
-            assertTrue(height >= previous, "the tower must never come down");
-            assertTrue(height >= 1 && height <= 11, "height " + height + " is out of range");
-            previous = height;
+    void theRocketNeverLeavesItsChart() {
+        for (double multiplier : new double[]{0.0, 1.0, 1.5, 2, 10, 1000, 1e9}) {
+            double x = CrashCurve.x(multiplier);
+            double y = CrashCurve.y(multiplier);
+            assertTrue(x >= CrashCurve.LEFT && x <= CrashCurve.LEFT + CrashCurve.WIDTH, "x " + x);
+            assertTrue(y >= CrashCurve.BOTTOM && y <= CrashCurve.BOTTOM + CrashCurve.HEIGHT, "y " + y);
+            assertTrue(Math.abs(x) + 1 <= CasinoLayout.STAGE_RADIUS, "the chart is wider than the stage");
         }
-        assertEquals(1, CrashTowerShow.heightFor(0.0, 1000));
+        assertEquals(0.5, CrashCurve.progress(2.0), 1e-9, "half the chart at 2x");
+        assertEquals(0.0, CrashCurve.progress(0.5), 1e-9, "below 1x counts as the start");
+    }
+
+    @Test
+    void theRocketTurnsTowardsTheSkyAsTheCurveSteepens() {
+        double start = CrashCurve.heading(1.0);
+        double late = CrashCurve.heading(50.0);
+        assertTrue(start > late, "the nose must lift as the curve gets steeper");
+        assertTrue(start <= Math.PI / 2 && late > 0, "the rocket always flies up and to the right");
     }
 
     // ------------------------------------------------------------------- dice

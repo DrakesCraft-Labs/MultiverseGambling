@@ -7,6 +7,7 @@ import com.chagui68.multiversegambling.fair.FairnessService;
 import com.chagui68.multiversegambling.game.AbstractGroupGame;
 import com.chagui68.multiversegambling.game.GameCategory;
 import com.chagui68.multiversegambling.game.GameMeta;
+import com.chagui68.multiversegambling.util.Text;
 import com.chagui68.multiversegambling.world.anim.ArenaShow;
 import com.chagui68.multiversegambling.world.anim.ArenaStage;
 import com.chagui68.multiversegambling.world.anim.WheelShow;
@@ -62,9 +63,34 @@ public final class RaffleGame extends AbstractGroupGame {
     }
 
     @Override
+    protected boolean houseDuelAvailable() {
+        return true;
+    }
+
+    /**
+     * Against the house, the house buys as many tickets as the player and a single prize
+     * is drawn: an even draw, paid with the house edge.
+     */
+    @Override
+    protected double houseDuelMultiplier(Player player) {
+        return fairDuelMultiplier(0.5);
+    }
+
+    @Override
     protected void onBetPlaced(Player player, double amount) {
-        int bought = Math.max(1, (int) Math.floor(amount / ticketPrice()));
+        int bought = Math.max(1, (int) Math.floor(amount / ticketPrice() + 1e-9));
         int capped = Math.min(bought, plugin.config().raffleMaxTickets());
+        double cost = capped * ticketPrice();
+        if (Math.abs(cost - amount) > 0.004) {
+            // Only whole tickets are sold: the stake is trimmed to what the tickets cost,
+            // so the chances in the draw always match the money put in.
+            pot.remove(player.getUniqueId());
+            if (!pot.add(player, cost)) {
+                tickets.remove(player.getUniqueId());
+                message(player, "economy.not-enough-money", "bet", plugin.economy().format(cost));
+                return;
+            }
+        }
         tickets.put(player.getUniqueId(), capped);
         int total = tickets.values().stream().mapToInt(Integer::intValue).sum();
         broadcastPlain("group.raffle.tickets-bought",
@@ -77,6 +103,17 @@ public final class RaffleGame extends AbstractGroupGame {
     @Override
     protected void onRoundStart() {
         timer = 0;
+        // Tickets of anybody who left the room before the draw go with them.
+        tickets.keySet().removeIf(id -> !pot.contains(id));
+        if (houseDuelActive()) {
+            UUID playerId = houseDuelPlayer();
+            // The house buys exactly as many tickets as the player.
+            tickets.put(FairnessService.HOUSE, tickets.getOrDefault(playerId, 1));
+            broadcastRoundHeader();
+            broadcastPlain("group.raffle.duel-intro", "tickets", tickets.getOrDefault(playerId, 1),
+                    "multiplier", Text.multiplier(houseDuelMultiplier(null)));
+            return;
+        }
         broadcastRoundHeader();
         int total = tickets.values().stream().mapToInt(Integer::intValue).sum();
         broadcastPlain("group.raffle.sold",
@@ -143,28 +180,48 @@ public final class RaffleGame extends AbstractGroupGame {
             show = null;
         }
 
-        double total = pot.total();
-        Map<UUID, Double> prizes = new LinkedHashMap<>();
-        for (int i = 0; i < order.size() && i < PRIZES.length; i++) {
-            prizes.merge(order.get(i), total * PRIZES[i], Double::sum);
+        if (houseDuelActive()) {
+            UUID first = order.isEmpty() ? FairnessService.HOUSE : order.get(0);
+            broadcastPlain("group.raffle.duel-winner", "player", playerName(first));
+            settleHouseDuel(isHouse(first) ? -1 : 1, houseDuelMultiplier(null));
+            return;
         }
-        pot.payoutByMultiplier(id -> prizes.getOrDefault(id, 0.0));
+
+        double total = pot.total();
+        // With fewer winners than prizes (two players for three prizes) the shares of the
+        // prizes that were drawn are scaled up, so the whole pot is always paid out.
+        int drawn = Math.min(order.size(), PRIZES.length);
+        double share = 0;
+        for (int i = 0; i < drawn; i++) {
+            share += PRIZES[i];
+        }
+        double[] amounts = new double[drawn];
+        Map<UUID, Double> prizes = new LinkedHashMap<>();
+        for (int i = 0; i < drawn; i++) {
+            amounts[i] = share <= 0 ? 0 : total * PRIZES[i] / share;
+            prizes.merge(order.get(i), amounts[i], Double::sum);
+        }
+        // The pot pays multipliers over every stake: an absolute prize becomes one here.
+        pot.payoutByMultiplier(id -> {
+            double stake = pot.amountOf(id);
+            return stake <= 0 ? 0 : prizes.getOrDefault(id, 0.0) / stake;
+        });
 
         broadcastPlain("group.raffle.banner");
         String[] labels = {"group.raffle.first-prize", "group.raffle.second-prize",
                 "group.raffle.third-prize"};
-        for (int i = 0; i < order.size() && i < labels.length; i++) {
+        for (int i = 0; i < drawn && i < labels.length; i++) {
             final int index = i;
             broadcastPlainFor(player -> new Object[]{
                             "prize", plugin.messages().forSender(player, labels[index]),
                             "player", playerName(order.get(index)),
-                            "amount", plugin.economy().format(total * PRIZES[index])},
+                            "amount", plugin.economy().format(amounts[index])},
                     "group.raffle.prize");
         }
         soundAll(Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.1f);
-        if (!order.isEmpty()) {
+        if (drawn > 0) {
             showTitle(online(order.get(0)), "group.raffle.title", "group.raffle.title-subtitle",
-                    "prize", plugin.economy().format(total * PRIZES[0]));
+                    "prize", plugin.economy().format(amounts[0]));
         }
         endRound();
     }
@@ -187,11 +244,20 @@ public final class RaffleGame extends AbstractGroupGame {
         }
         List<UUID> pool = new ArrayList<>(tickets.keySet());
         List<Material> sectors = new ArrayList<>(pool.size());
+        List<String> names = new ArrayList<>(pool.size());
+        double[] weights = new double[pool.size()];
         for (int index = 0; index < pool.size(); index++) {
-            sectors.add(SECTOR_COLOURS[index % SECTOR_COLOURS.length]);
+            sectors.add(isHouse(pool.get(index)) ? Material.BLACK_CONCRETE
+                    : SECTOR_COLOURS[index % SECTOR_COLOURS.length]);
+            names.add(playerName(pool.get(index)));
+            weights[index] = Math.max(1, tickets.getOrDefault(pool.get(index), 1));
         }
         int landing = winner == null ? 0 : Math.max(0, pool.indexOf(winner));
-        WheelShow wheel = new WheelShow(plugin, stage, sectors, landing, DRAW_TIMER);
+        // More tickets, bigger slice: the drum is drawn like the draw itself.
+        WheelShow wheel = new WheelShow(plugin, stage, sectors, landing, DRAW_TIMER)
+                .style(WheelShow.Style.FORTUNE)
+                .labels(names)
+                .weights(weights);
         wheel.start();
         return wheel;
     }

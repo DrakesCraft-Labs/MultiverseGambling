@@ -10,7 +10,8 @@ import com.chagui68.multiversegambling.gui.Gui;import com.chagui68.multiversegam
 import com.chagui68.multiversegambling.util.Items;
 import com.chagui68.multiversegambling.util.Text;
 import com.chagui68.multiversegambling.world.anim.ArenaStage;
-import com.chagui68.multiversegambling.world.anim.CrashTowerShow;
+import com.chagui68.multiversegambling.world.anim.CrashRocketShow;
+import com.chagui68.multiversegambling.world.anim.HoloButton;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -51,7 +52,7 @@ public final class CrashGame extends AbstractSoloGame {
         int ticks = (int) Math.ceil(CrashTable.secondsToReach(crashPoint, growth) * 20.0) + 1;
 
         ArenaStage stage = arenaFor(player, ArenaStage.BOARD_PITCH);
-        CrashTowerShow show = stage == null ? null : new CrashTowerShow(plugin, stage,
+        CrashRocketShow show = stage == null ? null : new CrashRocketShow(plugin, stage,
                 plugin.config().crashMaxMultiplier(), Math.max(2, ticks));
         if (show != null) {
             show.start();
@@ -59,6 +60,14 @@ public final class CrashGame extends AbstractSoloGame {
 
         CrashRound round = new CrashRound(player, wager, crashPoint, growth, Math.max(2, ticks), show);
         rounds.put(player.getUniqueId(), round);
+        if (show != null) {
+            // A big button right in front of the player: the rocket is watched, not a menu.
+            // Created with its widest text, so the hitbox fits the multiplier as it grows.
+            round.button = show.addControlRow(0.75, player.getUniqueId(), java.util.List.of(new HoloButton.Spec(
+                    buttonText(player, 99.99, wager.amount() * 99.99), HoloButton.GREEN, 1.5f,
+                    this::cashOut))).get(0);
+            round.button.text(buttonText(player, 1.0, wager.amount()));
+        }
         round.run();
 
         if (show == null) {
@@ -73,6 +82,15 @@ public final class CrashGame extends AbstractSoloGame {
                         plugin.messages().forSender(player, "panel.crash.cash-out"),
                         "/mvgam action cashout",
                         plugin.messages().forSender(player, "panel.crash.click-fast"))));
+    }
+
+    /**
+     * Label of the floating cash out button: what cashing out pays right now.
+     */
+    private net.kyori.adventure.text.Component buttonText(Player viewer, double multiplier, double prize) {
+        return Text.c(plugin.messages().forSender(viewer, "panel.crash.hologram",
+                "multiplier", Text.multiplier(multiplier),
+                "prize", plugin.economy().format(prize)));
     }
 
     @Override
@@ -111,12 +129,13 @@ public final class CrashGame extends AbstractSoloGame {
         private final Wager wager;
         private final double crashPoint;
         private final double growth;
-        private final CrashTowerShow show;
+        private final CrashRocketShow show;
+        private HoloButton button;
         private double current = 1.0;
         private boolean finished;
 
         CrashRound(Player player, Wager wager, double crashPoint, double growth,
-                   int durationTicks, CrashTowerShow show) {
+                   int durationTicks, CrashRocketShow show) {
             super(plugin, player, CrashGame.this.id(), durationTicks);
             this.wager = wager;
             this.crashPoint = crashPoint;
@@ -148,6 +167,12 @@ public final class CrashGame extends AbstractSoloGame {
             if (show != null) {
                 show.climb(current);
             }
+            if (button != null && elapsed % 3 == 0) {
+                Player viewer = player();
+                if (viewer != null) {
+                    button.text(buttonText(viewer, current, wager.amount() * Math.min(current, crashPoint)));
+                }
+            }
             Player online = player();
             if (online == null) {
                 return;
@@ -170,6 +195,9 @@ public final class CrashGame extends AbstractSoloGame {
             finished = true;
             double multiplier = Math.min(current, crashPoint);
             cancel();
+            if (button != null) {
+                button.remove();
+            }
             if (show != null) {
                 show.cashOut();
                 show.settle();
@@ -198,6 +226,9 @@ public final class CrashGame extends AbstractSoloGame {
         @Override
         protected void onFinish() {
             finished = true;
+            if (button != null) {
+                button.remove();
+            }
             if (show != null) {
                 show.burst();
                 show.settle();
@@ -253,7 +284,7 @@ public final class CrashGame extends AbstractSoloGame {
         @Override
         protected void render() {
             clearActions();
-            fill(Items.of(Material.BLACK_STAINED_GLASS_PANE).name(" ").build());
+            frame(Material.ORANGE_STAINED_GLASS_PANE);
 
             CrashRound round = game.roundOf(player().getUniqueId());
             if (round == null || round.finished()) {

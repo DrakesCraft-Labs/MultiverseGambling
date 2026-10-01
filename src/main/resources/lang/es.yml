@@ -23,6 +23,7 @@ economy:
   account-created: '&7Bienvenido al casino. Te hemos abierto una cuenta con {balance}.'
 
 games:
+  closed-cashed: '&7Saliste de la ronda con tus ganancias: cobrado a &f{multiplier} &7(&a{prize}&7).'
   disabled: '&cEl juego &f{game} &cesta desactivado en la configuracion.'
   already-playing: '&cYa tienes una partida abierta. Termínala o ciérrala antes de empezar otra.'
   win: '&aHas ganado &f{prize} &a(apostaste {bet}, beneficio de {profit}).'
@@ -37,6 +38,21 @@ games:
   lose-title: '&c&lSIN PREMIO'
 
 group:
+  # Se ofrece a quien esta solo en una sala, para que nadie espere jugadores que no llegan.
+  house-duel:
+    choose-first: '&7Haz tu eleccion y la ronda contra la casa empieza al momento.'
+    won: '&aLe ganaste a la casa! Recibes &f{prize} &7({multiplier}).'
+    won-title: '&a&lLE GANASTE A LA CASA'
+    won-subtitle: '&f{prize}'
+    draw: '&7Empate con la casa: recuperas tus &f{bet}&7.'
+    lost: '&cLa casa gana esta ronda. Perdiste &f{bet}&c.'
+    lost-title: '&c&lGANA LA CASA'
+    lost-subtitle: '&7Suerte la proxima vez'
+    house-name: 'La casa'
+    offer: '&7No entra nadie mas. Juega esta ronda contra la casa con el boton, o con &f/mvgam action house&7. Una victoria paga &f{multiplier}&7.'
+    button: '&a&lJugar contra la casa'
+    hover: '&7Se sienta el crupier enfrente, con la misma apuesta.'
+  house-duel-crowded: '&7Solo puedes jugar contra la casa cuando estas solo en la sala.'
   waiting-players: '&7Esperando jugadores para empezar: &f{current}&7/&f{min}&7.'
   betting-open: '&aLas apuestas estan abiertas &f{seconds}s&a. Puedes entrar ya.'
   betting-hint: '&7Usa &f/mvgam play <juego> &7para entrar.'
@@ -61,6 +77,8 @@ group:
   russian-roulette-finished: '&7La partida ya ha terminado.'
   russian-roulette-not-your-turn: '&cNo es tu turno; &f{player} &cdebe disparar.'
   jackpot:
+    duel-intro: '&7La casa iguala tus &f{amount}&7: un sorteo, mitad del bote cada uno. Ganar paga &f{multiplier}&7.'
+    duel-winner: '&7El bote es para &f{player}&7.'
     total-pot: '&6Bote total: &f{pot}'
     line: '&7  {player}: &f{amount} &8({chance} de las opciones)'
     starting: '&7El sorteo empieza en unos segundos.'
@@ -91,6 +109,8 @@ group:
       four-of-a-kind: 'Poker'
       five-of-a-kind: 'Repoker'
   raffle:
+    duel-intro: '&7La casa compra tambien &f{tickets} &7boletos: un premio, sorteado ahora. Ganar paga &f{multiplier}&7.'
+    duel-winner: '&7El premio es para &f{player}&7.'
     tickets-bought: '&8» &f{player} &7ha comprado &f{tickets} &7boleta(s) por &6{amount}&7. Boletas vendidas: &f{total}'
     sold: '&7Boletas vendidas: &f{total} &7a &6{price} &7cada una.'
     pot: '&7Bote a repartir: &6{pot}'
@@ -124,6 +144,7 @@ group:
     survived: '&a&lHAS SOBREVIVIDO'
     survived-subtitle: '&f{prize}'
   bomb-board:
+    duel-intro: '&7Contra la casa: tu y el crupier os turnais, empiezas tu. Quien encuentre antes una bomba pierde. Ganar paga &f{multiplier}&7.'
     board: '&7Bote: &6{pot} &8| &7tablero de &f{tiles} &7casillas con &c{bombs} &7bombas.'
     playing: '&7Jugando: &f{players} &7jugadores.'
     ready: '&7Preparados... &f{seconds}s'
@@ -153,6 +174,11 @@ group:
     pull-hover: '&7Probabilidad de disparo: {chance}'
     no-survivors: '&cNo quedo nadie en pie; el bote se queda para la casa.'
     banner: '&8&m        &r &6RULETA RUSA &8&m        '
+    duel-intro: '&7El crupier se sienta enfrente: &f{bullets}&7 de &f{chambers}&7 recamaras cargadas. Empiezas tu y la victoria paga &f{multiplier}&7.'
+    duel-empty-you: '&7Aprietas el gatillo... &fclic&7. Recamara vacia; el revolver cambia de manos.'
+    duel-empty-house: '&7El crupier aprieta el gatillo... &fclic&7. Recamara vacia; el revolver vuelve a ti.'
+    duel-lost: '&cBang. Estas fuera y la casa se queda con tus &f{amount}&c.'
+    duel-won: '&aBang! El crupier esta fuera y te paga &f{prize} &a(&f{multiplier}&a).'
     winner: '&a&f{player} &aes el ultimo en pie y se lleva &6{pot}&a.'
     title: '&a&lHAS SOBREVIVIDO'
     title-subtitle: '&f{prize}'
@@ -168,6 +194,9 @@ group:
     won: '&aTu apuesta al {colour} paga &f{multiplier}&a, es decir &f{prize}'
     lost: '&cTu apuesta al {colour} no ha entrado.'
     odds: '&7Pagos de la ruleta: {payouts}'
+    duel-intro: '&7La casa se pone al otro lado de la mesa: tu {colour} paga &f{multiplier}&7 si la ruleta se para ahi.'
+    pick: '&7Elige tu color: '
+    pick-hover: '&7Cambia tu apuesta al {colour}'
     colour-red: '&crojo'
     colour-black: '&8negro'
     colour-green: '&averde'
@@ -191,6 +220,8 @@ group:
     bet-horse: '&7Apostar por el caballo {horse}'
 
 duel:
+  house-won: '&aLa moneda cayo de tu lado: le ganas a la casa y recibes &f{prize}&a.'
+  house-lost: '&cLa moneda cayo del lado de la casa: perdiste &f{amount}&c.'
   self-duel: '&cNo puedes retarte a ti mismo.'
   already-busy: '&cTanto tu como ese jugador ya teneis un duelo pendiente.'
   rival-cannot-afford: '&c{player} no tiene saldo suficiente para aceptar ese duelo.'
@@ -228,14 +259,105 @@ language:
   reset: '&aTu idioma vuelve a ser automatico; ahora lees en &f{language}&a.'
 
 # ---------------------------------------------------------------------------
-#  Mundo del casino: /mvgam world [build]
+#  Mundo del casino: /mvgam world [build|info]
 # ---------------------------------------------------------------------------
 world:
   disabled: '&cEl mundo del casino esta desactivado en la configuracion.'
   teleporting: '&aBienvenido al mundo del casino &f{world}&a.'
   unavailable: '&cEl mundo del casino todavia no esta listo; revisa la consola del servidor.'
-  built: '&aMundo del casino &f{world} &areconstruido con la plaza, las carreteras y todas las arenas.'
+  built: '&aMundo del casino &f{world} &aconstruido: la plaza, los bulevares y todos los pabellones estan listos.'
   build-failed: '&cNo se pudo construir el mundo del casino &f{world}&c; revisa la consola del servidor.'
+  building: '&eConstruyendo el mundo del casino &f{world}&e en segundo plano; te aviso cuando termine.'
+  build-busy: '&eEl mundo del casino ya se esta construyendo (&f{progress}&e hecho).'
+  # Carteles y nombres flotantes del mundo del casino, en el idioma por defecto.
+  decor:
+    welcome: '&fBienvenido al casino!'
+    menu: '&e/mvgam menu &7- todos los juegos'
+    play-any: '&e/mvgam play <id> &7- directo a un juego'
+    language: '&e/mvgam language &7- tu idioma'
+    walk: '&7Sigue los bulevares: cada pabellon es un juego.'
+    play: '&7/mvgam play {game}'
+    click-board: '&7Pulsa el tablero para jugar'
+  # Informe de /mvgam world info: que existe, que esta construido y que falta.
+  info:
+    header: '&8&m        &r &6Mundo del casino &8&m        '
+    line-world: '&7Mundo: &f{world}&7 - {source}'
+    line-terrain: '&7Terreno: &f{terrain}'
+    line-size: '&7Tamano: &f{size}x{size}&7 bloques, suelo en &fy={ground}'
+    line-arenas: '&7Arenas: &f{built}&7/&f{planned}&7 construidas, &f{games}&7 juegos registrados'
+    line-boards: '&7Se juegan en bloques: &f{boards}&7 arenas'
+    hint: '&e- {hint}'
+    source-created: 'creado por el plugin'
+    source-loaded: 'mundo existente, cargado del disco'
+    source-absent: 'no cargado'
+    terrain-flat: 'plano, suelo de minecraft:plains (ajustes del plugin)'
+    terrain-existing: 'no lo eligio el plugin: el mundo ya estaba ahi'
+    hint-disabled: 'world.enabled es false; ponlo en true y reinicia el servidor'
+    hint-main-world: 'world.name apunta al mundo principal del servidor; cambialo y reinicia'
+    hint-missing: 'el mundo no esta cargado; arregla el error de la consola y ejecuta /mvgam world build'
+    hint-not-prepared: 'el mundo esta cargado pero el plugin no pudo prepararlo; arregla el error de la consola y ejecuta /mvgam world build'
+    hint-unbuilt: 'las estructuras no estan construidas todavia; ejecuta /mvgam world build'
+    hint-building: 'el casino se esta construyendo ahora mismo; solo tarda unos segundos'
+    hint-partial: 'faltan arenas; ejecuta /mvgam world build'
+    hint-size: 'world.size es demasiado pequeno para todos los juegos; subelo y ejecuta /mvgam world build'
+    hint-board-too-big: 'estos juegos se quedan en su menu porque su tablero no cabe en una arena: {games}'
+
+# Apuestas con items: el menu del cofre y los pagos en items.
+items:
+  title: '&8Apuesta con items · &5{game}'
+  header: '&d&lApuesta con items · &f{game}'
+  header-lore:
+    - '&7Mete en el cofre los items que quieres'
+    - '&7apostar: un solo tipo, la cantidad que quieras.'
+    - '&7Tambien sirven los items custom: ganas'
+    - '&7copias del mismo item exacto.'
+    - ''
+    - '&7Maximo de items por apuesta: &f{max}'
+  cancel: '&c&lCancelar'
+  cancel-lore:
+    - '&7Todo lo que haya en el cofre vuelve a ti.'
+  money: '&6&lApostar dinero'
+  money-lore:
+    - '&7Vuelve al menu de apuesta normal.'
+  summary: '&f{count} &7× &f{item}'
+  summary-lore:
+    - '&7Esto es lo que apuestas.'
+  summary-help:
+    - '&7Mete un solo tipo de item en el cofre.'
+  preview-tag: '&8(vista previa)'
+  empty-chest: '&7El cofre esta vacio'
+  mixed: '&cUn solo tipo de item a la vez'
+  blocked: '&cEse item no se puede apostar'
+  too-many: '&cDemasiados items para una apuesta'
+  empty: '&cNo hay nada que apostar'
+  outcomes: '&b&lLo que recibes'
+  outcomes-empty: '&7Mete items en el cofre para verlo.'
+  outcome-line: '&7{result}{chance} &8» &e{multiplier} &8= {items}'
+  outcome-lose: '&7Cualquier otro resultado &8» &cpierdes los {count} &c{item}'
+  outcomes-note: '&8La fraccion de un item se paga por azar: la media es exacta.'
+  play-locked: '&8Mete items en el cofre para jugar'
+  play: '&a&lJUGAR CON ESTOS ITEMS'
+  play-lore:
+    - '&7Apuestas &f{count} &7× &f{item}&7.'
+    - '&7Los premios se pagan con el mismo item.'
+    - ''
+    - '&ePulsa para jugar'
+  amount: '&f{count} &7× &f{item}'
+  amount-chance: '&f{count} &7× &f{item} &8(+1 al {chance})'
+  won: '&aRecibes &f{count} &a× &f{item} &7(apostaste {staked}).'
+  lost: '&cPerdiste &f{count} &c× &f{item}&c.'
+  delivered: '&aPremios guardados mientras no estabas: &f{count} &aitems estan en tu inventario.'
+  dropped: '&eTu inventario esta lleno: algunos items cayeron a tus pies.'
+  outcome:
+    bucket: 'Cubo {bucket}'
+    tiles: '{count} casilla(s)'
+    roulette-even: 'Rojo, negro, par, impar, 1-18, 19-36'
+    roulette-dozen: 'Una docena o una columna'
+    roulette-number: 'Un numero exacto'
+    coin: 'Acertar la cara'
+    dice: 'Un objetivo que gana el {chance}'
+    slots-triple: 'Tres {symbol} {name}'
+    slots-pair: 'Dos {symbol} {name}'
 
 command:
   players-only: '&cEste comando es para usarlo dentro del juego.'
@@ -245,9 +367,16 @@ command:
   unknown-player: '&cNo encuentro al jugador &f{player}&c.'
   invalid-amount: '&c&f{value} &cno es una cantidad valida.'
   usage: '&cUso correcto: &f{usage}'
+  balance: '&7Tu saldo es &6{balance}&7.'
+  balance-other: '&7El saldo de &f{player}&7 es &6{balance}&7.'
+  balance-updated: '&aSaldo de &f{player} &aactualizado a &6{balance}&a.'
+  reloaded: '&aConfiguracion y mensajes recargados. Partidas activas: &f{games}&a.'
+  session-cancelled: '&aPartida de &f{player} &acerrada y dinero devuelto.'
 
 # Lineas de los cuatro juegos que se juegan pulsando los bloques de su arena.
 board:
+  mines-status-choosing: '&c&l{count} &7minas en &f{tiles} &7casillas\n&7La primera casilla paga &a{next}\n&8Mas minas, mas paga cada casilla\n&crojo &8-1  &averde &8+1  &8pulsa una casilla para empezar'
+  mines-status: '&7Minas: &c{count}  &7Siguiente casilla: &a{next}\n&7Cobrar ahora: &6{current} &7= &f{prize}'
   finished: '&7Ronda terminada. Pulsa el tablero para jugar otra vez.'
   mines-count: '&7Minas: &c{count}&7 de &f{tiles}&7. El &averde &7suma y el &crojo &7quita; pulsa una casilla para destapar.'
   cash-out: '&7Retirarse paga &f{prize}&7: pulsa el &6bloque dorado&7.'
@@ -255,11 +384,6 @@ board:
   other-player: '&cEsta ronda es de &f{player}&c.'
   starting: '&7La ronda esta a punto de empezar...'
   other-turn: '&7Le toca a &f{player}&7.'
-  balance: '&7Tu saldo es &6{balance}&7.'
-  balance-other: '&7El saldo de &f{player}&7 es &6{balance}&7.'
-  balance-updated: '&aSaldo de &f{player} &aactualizado a &6{balance}&a.'
-  reloaded: '&aConfiguracion y mensajes recargados. Partidas activas: &f{games}&a.'
-  session-cancelled: '&aPartida de &f{player} &acerrada y dinero devuelto.'
 
 # ---------------------------------------------------------------------------
 #  Menus. Las lineas que empiezan por guion son una lista: cada una se muestra
@@ -276,6 +400,23 @@ gui:
       name: 'En grupo'
       description: 'Apuestas contra y con otros jugadores.'
   hub:
+    summary: '&7Partidas: &f{games} &8| &7Beneficio: {profit}'
+    divider: '&8──────────────'
+    against-house: '&6⚔ &7Tambien se juega contra la casa'
+    visit: '&b◈ Clic derecho: ir a su pabellon'
+    world: '&b&lMundo casino'
+    world-lore:
+      - '&7Viaja a la plaza del casino:'
+      - '&7cada juego tiene su pabellon.'
+      - ''
+      - '&ePulsa para viajar'
+    world-off:
+      - '&7El mundo casino esta desactivado.'
+    language: '&e&lIdioma'
+    language-lore:
+      - '&7Lees en: &f{language}'
+      - ''
+      - '&ePulsa para ver los idiomas'
     title: '&8MultiverseGambling &7· &6Menu principal'
     balance: '&6Tu saldo: &f{balance}'
     balance-lore:
@@ -300,7 +441,7 @@ gui:
       - '&e/mvgam verify'
     bet: '&7Apuesta: &f{min} &7- &f{max}'
     players: '&7Jugadores: &f{min} &7- &f{max}'
-    play: '&ePulsa para jugar'
+    play: '&a▶ Clic izquierdo: jugar'
     disabled: '&cDesactivado en la configuracion'
     tab-lore:
       - '&7{description}'
@@ -338,6 +479,16 @@ gui:
       - '&7Ventaja configurada: &f{edge}'
     back: '&eVolver al menu'
   bet:
+    items: '&d&l❖ APOSTAR ITEMS'
+    items-lore:
+      - '&7Apuesta items en lugar de dinero:'
+      - '&7vanilla o custom, y mira cuantos'
+      - '&7recibes en cada resultado.'
+    house: '&6&l⚔ JUGAR CONTRA LA CASA'
+    house-lore:
+      - '&7No hace falta nadie mas: el crupier'
+      - '&7ocupa el otro asiento ahora mismo.'
+      - '&7Apuesta: &f{bet}'
     title: '&8Apuesta &7· &6{game}'
     current: '&6Apuesta: &f{bet}'
     lore:
@@ -398,6 +549,10 @@ panel:
     no-challenges: '&7No hay retos pendientes'
     pending-challenges: '&eRetos pendientes: &f{amount}'
   common:
+    # Carteles sobre la mesa de cartas del mundo del casino.
+    table-won: '&a&lGANAS'
+    table-lost: '&c&lPIERDES'
+    table-push: '&e&lEMPATE'
     close: '&cCerrar'
     cancel: '&cCancelar'
     refund-lore: '&7Recuperas tu apuesta.'
@@ -427,17 +582,15 @@ panel:
     star: 'estrella'
     crown: 'corona'
   slots:
-    title: '&8Tragamonedas'
-    spin: '&a&lGIRAR'
-    symbol: '&f{symbol} {name}'
-    hidden: '&8?'
-    triple-lore: '&7Tres iguales: &f{multiplier}'
-    click-spin: '&7Pulsa SPIN para volver a girar'
+    button-again: '&a&l↻ GIRAR OTRA VEZ\n&7apuesta &f{bet}'
+    button-change: '&b&l✎ CAMBIAR APUESTA'
+    again-prompt: '&7Otra tirada?'
+    chat-again: '&a&l[↻ Girar otra vez · {bet}]'
+    chat-again-hover: '&7Vuelve a girar con la misma apuesta: &f{bet}'
+    chat-change: '&b&l[Cambiar apuesta]'
+    chat-change-hover: '&7Elige otra apuesta antes'
+    pair-suffix: ' &7(dos: &e{multiplier}&7)'
     prize-table: '&6Tabla de premios'
-    table-line: '&7{symbol} {name}: &f{multiplier} &8(al {chance})'
-    will-stake: '&7Vas a apostar &6{bet}'
-    last-prize: '&7Ultimo premio: &f{prize}'
-    need-money: '&7Necesitas mas saldo para girar'
     winning-combination: '&7Combinacion ganadora: &f{multiplier}'
   mines:
     title: '&8Minas &7· &6Destapa o retirate'
@@ -464,7 +617,7 @@ panel:
     start-lore: '&7El multiplicador sube con cada acierto.'
     cash-out-lore: '&7Te llevas &f{prize}'
     close-lore-done: '&7Ronda terminada.'
-    close-lore-live: '&7Si te sales pierdes la apuesta.'
+    close-lore-live: '&7Cerrar cobra las casillas que destapaste.'
     boom: '&cboom'
     lost: '&7Has pisado una mina en la casilla &f{tile} &7y has perdido &f{bet}'
     cashed-subtitle: '&a{multiplier}'
@@ -484,6 +637,8 @@ panel:
     picked: '&7Elegiste {side} &7y ha salido {result}'
     odds: '&7Acertar paga &f{multiplier} &7(ventaja de la casa del {edge}).'
   lucky-wheel:
+    summary: '&6&lTabla de premios'
+    summary-line: '&f{count} &7casillas: &e{multiplier}'
     title: '&8{game}'
     segments: '&7Segmentos: &f{count}'
     top-prize: '&7Premio mayor: &f{multiplier}'
@@ -500,6 +655,25 @@ panel:
     spinning: '&7La ruleta gira... &f{multiplier}'
     result: '&7La ruleta se ha parado en la casilla &f{tile}&7, que paga &f{multiplier}'
   towers:
+    choose: '&6&lELIGE LA DIFICULTAD'
+    difficulty:
+      easy: '&aFacil'
+      medium: '&bMedia'
+      hard: '&eDificil'
+      expert: '&cExperto'
+      master: '&5Maestro'
+    difficulty-lore:
+      - '&7Puertas por piso: &f{tiles}'
+      - '&7Bombas por piso: &c{bombs}'
+      - '&7El piso 1 paga &a{first}'
+      - '&7La cima ({levels} pisos) paga &6{top}'
+      - ''
+      - '&ePulsa para subir'
+    button-difficulty: '&f&l{name}\n&7{tiles} puertas · &c{bombs} ☠\n&7cima &6{top}'
+    button-cash: '&f&l✔ COBRAR &e{multiplier}\n&7{prize}'
+    button-first: '&7Abre una puerta\n&7para empezar a subir'
+    arena-hint: '&7Elige una dificultad en los botones flotantes y luego una puerta en cada piso. Cobra antes de caer!'
+    close-cashes: '&7Cerrar cobra lo que hayas subido.'
     title: '&8{game} &7· &6Elige una casilla segura'
     floor: '&6Piso &f{floor}&7/&f{levels}'
     multiplier: '&7Multiplicador: &a{multiplier}'
@@ -525,6 +699,9 @@ panel:
     cashed-subtitle: '&a{multiplier}'
     cashed: '&7Has subido &f{floors} &7pisos y te has retirado a &f{multiplier}'
   plinko:
+    how: '&e&lComo funciona'
+    call-free: '&7Cantar un cubo es solo una apuesta personal: nunca cambia el pago.'
+    call-cancel: '&aCantado. &7Pulsa otra vez para quitarlo.'
     title: '&8{game} &7· &6Suelta la bolita'
     falling: '&7La bolita cae {path} &7({level}/{rows})'
     bucket-subtitle: '&fCubo {bucket} &8· &a{multiplier}'
@@ -541,7 +718,14 @@ panel:
     will-stake: '&7Apuestas &6{bet}'
     falls-alone: '&7y la bolita cae sola.'
     click-drop: '&ePulsa para soltarla'
+    call-bucket: '&7Tambien puedes cantar un cubo: pulsa el que creas que va a caer.'
+    call-hint: '&ePulsa para cantar este cubo'
+    call-lore: '&aHas cantado este cubo; suelta la bolita para verlo.'
+    called: '&aTu cante: cubo &f{bucket}&a.'
+    call-hit: '&aLa has clavado! La bolita se ha parado en el cubo &f{bucket}&a.'
+    call-miss: '&7Cantaste el cubo &f{called}&7 y la bolita fue al &f{bucket}&7.'
   crash:
+    hologram: '&f&l✔ COBRAR &e{multiplier}\n&7{prize}'
     title: '&8{game} &7· &6Retirate antes del crash'
     bar: '&7Multiplicador {colour}{multiplier} &8| &7Retirarse ahora paga &f{prize}'
     cashed-subtitle: '&a{multiplier}'
@@ -561,6 +745,14 @@ panel:
     close-button: '&cCerrar sin retirarte'
     close-lore: '&7La ronda sigue si cierras el menu.'
   high-low:
+    arena-hint: '&7Adivina con los botones flotantes: &amayor&7, &cmenor&7 o &6cobrar&7.'
+    impossible: '&8Ninguna carta puede ganar por este lado'
+    button-higher: '&a&l▲ MAYOR\n&7paga &f{multiplier}'
+    button-lower: '&c&l▼ MENOR\n&7paga &f{multiplier}'
+    button-cash: '&6&l✔ COBRAR\n&e{multiplier} &7= &f{prize}'
+    button-no-cash: '&7COBRAR\n&8adivina primero'
+    table-history: 'ANTERIORES'
+    table-current: 'CARTA'
     title: '&8{game}'
     current: '&6Carta actual: &f{card}'
     chain: '&7Encadenado: &a{multiplier}'
@@ -579,7 +771,7 @@ panel:
     nothing: '&7Nada que cobrar'
     cash-lore: '&7Te llevas &f{prize}'
     cash-first: '&7Consigue al menos un acierto.'
-    close-lore: '&7Retirate para no perder la cadena.'
+    close-lore: '&7Cerrar cobra tu cadena (o te devuelve la apuesta si no has adivinado).'
     max-chain: '&6Racha maxima alcanzada'
     max-lore: '&7Has llegado al limite de pasos.'
     max-collect: '&7Retirate para cobrar.'
@@ -640,6 +832,12 @@ panel:
       seven: '&aSiete'
       crown: '&dCorona'
   duel:
+    house: '&6&l⚔ Duelo contra la casa'
+    house-lore:
+      - '&7Sin rivales conectados? Lanza la moneda'
+      - '&7contra el crupier: un lanzamiento parejo.'
+      - ''
+      - '&ePulsa para elegir tu apuesta'
     title: '&8{game} &7· &6Elige rival'
     info: '&6Duelo 1 vs 1'
     info-lore:
@@ -709,6 +907,20 @@ panel:
     black: 'negro'
     green: 'verde'
   blackjack:
+    first-card: '&7Tu primera carta: &f{card} &8| &7El crupier muestra: &f{dealer}&7. Continua a la segunda carta o abandona recuperando la mitad.'
+    surrendered: '&7Abandonaste con &f{card}&7 y recuperas &a{refund}&7.'
+    table-surrender: '&7&lABANDONO'
+    button-continue: '&a&l▶ CONTINUAR\n&7segunda carta'
+    button-surrender: '&c&l✖ ABANDONAR\n&7recuperas &f{refund}'
+    button-hit: '&a&lPEDIR'
+    button-stand: '&c&lPLANTARSE'
+    button-double: '&6&lDOBLAR'
+    continue: '&a&lCONTINUAR'
+    continue-lore: '&7Recibe la segunda carta y juega la mano.'
+    surrender: '&c&lABANDONAR'
+    surrender-lore: '&7Te retiras ahora y recuperas &f{refund}&7.'
+    table-dealer: 'CRUPIER'
+    table-natural: '&6&lBLACKJACK!'
     title: '&8Blackjack'
     closed: '&7Mesa cerrada'
     hand: '&7Tu mano: &f{value}'
@@ -736,6 +948,8 @@ panel:
     dealer-bust: '&aEl crupier se ha pasado.'
     prize-subtitle: '&a{prize}'
   color-roulette:
+    room: '&b&lEn la sala &7({players})'
+    room-line: '&f{player} &8» {colour} &8· &6{bet}'
     title: '&8{game} &7· &6Elige un color'
     info: '&6Elige tu color'
     info-lore:

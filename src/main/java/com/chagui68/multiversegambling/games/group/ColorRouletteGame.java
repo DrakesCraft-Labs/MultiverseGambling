@@ -16,12 +16,15 @@ import com.chagui68.multiversegambling.world.anim.WheelShow;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 
+import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import com.chagui68.multiversegambling.util.Items;
 import com.chagui68.multiversegambling.util.Text;
 
@@ -66,6 +69,49 @@ public final class ColorRouletteGame extends AbstractGroupGame {
                 "player", player.getName(),
                 "amount", plugin.economy().format(amount),
                 "pot", plugin.economy().format(pot.total()));
+        // The menu is one way to pick a colour, the chat buttons are the other: whoever
+        // is watching the wheel instead of the menu can still change their mind.
+        offerColours(player);
+    }
+
+    /**
+     * One line with a button per colour, in the language of the reader.
+     */
+    private void offerColours(Player player) {
+        Component line = plugin.messages().componentPlainFor(player, "group.color-roulette.pick");
+        for (Outcome outcome : Outcome.values()) {
+            line = line.append(Text.c("  ")).append(chatButton(
+                    colourFor(player, outcome),
+                    "color " + outcome.name().toLowerCase(Locale.ROOT),
+                    plugin.messages().forSender(player, "group.color-roulette.pick-hover",
+                            "colour", colourFor(player, outcome))));
+        }
+        player.sendMessage(line);
+    }
+
+    /**
+     * Chat button path: {@code /mvgam action color red}, so the colour can be picked
+     * without a menu at all.
+     */
+    @Override
+    public void handleAction(Player player, String action, String[] args) {
+        if ("color".equals(action) && args.length > 0) {
+            Outcome outcome = outcomeFor(args[0]);
+            if (outcome != null) {
+                choose(player, outcome);
+                return;
+            }
+        }
+        super.handleAction(player, action, args);
+    }
+
+    private static Outcome outcomeFor(String name) {
+        return switch (name.toLowerCase(Locale.ROOT)) {
+            case "red" -> Outcome.RED;
+            case "black" -> Outcome.BLACK;
+            case "green" -> Outcome.GREEN;
+            default -> null;
+        };
     }
 
     /**
@@ -77,6 +123,8 @@ public final class ColorRouletteGame extends AbstractGroupGame {
             return;
         }
         choices.put(player.getUniqueId(), outcome);
+        sound(player, Sound.BLOCK_NOTE_BLOCK_PLING, 0.7f, 1.6f);
+        houseChoiceMade(player);
         ColorWheel wheel = wheel();
         broadcastPlainFor(viewer -> new Object[]{
                         "player", player.getName(),
@@ -98,9 +146,34 @@ public final class ColorRouletteGame extends AbstractGroupGame {
     }
 
     @Override
+    protected boolean houseDuelAvailable() {
+        return true;
+    }
+
+    @Override
+    protected boolean houseDuelNeedsChoice() {
+        return true;
+    }
+
+    /**
+     * The duel pays what the colour really pays, so a player alone in the room bets
+     * against the wheel instead of against a pot that would be their own money.
+     */
+    @Override
+    protected double houseDuelMultiplier(Player player) {
+        return wheel().payout(choices.getOrDefault(player.getUniqueId(), Outcome.RED));
+    }
+
+    @Override
     protected void onRoundStart() {
         result = null;
         timer = 0;
+
+        if (houseDuelActive()) {
+            startDuelRound();
+            return;
+        }
+
         broadcastRoundHeader();
 
         // Whoever did not pick a colour gets their money back and leaves the round.
@@ -119,10 +192,74 @@ public final class ColorRouletteGame extends AbstractGroupGame {
         broadcastPlain("group.color-roulette.spins-in", "seconds", 3);
     }
 
+    /**
+     * The duel: one player, one colour and one spin, paid by the wheel.
+     */
+    private void startDuelRound() {
+        UUID playerId = houseDuelPlayer();
+        Outcome choice = choices.getOrDefault(playerId, Outcome.RED);
+        broadcastRoundHeader();
+        broadcastPlain("group.color-roulette.duel-intro",
+                "colour", colourFor(online(playerId), choice),
+                "multiplier", Text.multiplier(wheel().payout(choice)));
+    }
+
+    private void tickDuelRound() {
+        if (result == null) {
+            // Drawn before the wheel is painted, so the ball lands on the colour that
+            // really came up. The wheel belongs to nobody, so the roll is the house's.
+            result = wheel().spin(() -> plugin.fair().roll(FairnessService.HOUSE));
+            show = startWheelShow();
+            return;
+        }
+        if (timer <= SPIN_TICKS) {
+            if (show != null) {
+                show.tick();
+            }
+            return;
+        }
+        if (show != null) {
+            show.settle();
+            show = null;
+        }
+        settleDuel();
+    }
+
+    /**
+     * Pays the duel: the wheel's own payout when the called colour came up, nothing when
+     * it did not. The stake was charged when the player bet, as in every round.
+     */
+    private void settleDuel() {
+        UUID playerId = houseDuelPlayer();
+        Player viewer = online(playerId);
+        Outcome choice = choices.getOrDefault(playerId, Outcome.RED);
+        double multiplier = wheel().payout(result);
+        double stake = pot.amountOf(playerId);
+        boolean won = choice == result;
+        if (won) {
+            pot.payoutByMultiplier(id -> id.equals(playerId) ? multiplier : 0);
+        }
+        broadcastPlainFor(v -> new Object[]{"colour", colourFor(v, result)},
+                "group.color-roulette.stopped");
+        if (viewer != null) {
+            viewer.sendMessage(plugin.messages().componentPlainFor(viewer,
+                    won ? "group.color-roulette.won" : "group.color-roulette.lost",
+                    "colour", colourFor(viewer, choice),
+                    "multiplier", Text.multiplier(multiplier),
+                    "prize", plugin.economy().format(stake * multiplier)));
+        }
+        soundAll(won ? Sound.ENTITY_PLAYER_LEVELUP : Sound.ENTITY_VILLAGER_NO, 0.9f, 1.2f);
+        endRound();
+    }
+
     @Override
     protected void tickRound() {
         ColorWheel wheel = wheel();
         timer++;
+        if (houseDuelActive()) {
+            tickDuelRound();
+            return;
+        }
         if (timer <= ANNOUNCE_TICKS) {
             if (timer % 20 == 0) {
                 int seconds = (ANNOUNCE_TICKS - timer) / 20;
@@ -194,6 +331,14 @@ public final class ColorRouletteGame extends AbstractGroupGame {
     }
 
     private void showOdds() {
+        // Everybody gets the buttons again when the betting window opens, so a colour can
+        // still be changed until the wheel starts.
+        for (UUID id : pot.participants()) {
+            Player viewer = online(id);
+            if (viewer != null) {
+                offerColours(viewer);
+            }
+        }
         ColorWheel wheel = wheel();
         broadcastPlainFor(viewer -> {
             StringBuilder builder = new StringBuilder();
@@ -227,7 +372,8 @@ public final class ColorRouletteGame extends AbstractGroupGame {
             return null;
         }
         List<Material> sectors = colourSectors();
-        WheelShow wheelShow = new WheelShow(plugin, stage, sectors, sectorFor(sectors, result), SPIN_TICKS);
+        WheelShow wheelShow = new WheelShow(plugin, stage, sectors, sectorFor(sectors, result), SPIN_TICKS)
+                .style(WheelShow.Style.ROULETTE);
         wheelShow.start();
         return wheelShow;
     }
@@ -283,10 +429,13 @@ public final class ColorRouletteGame extends AbstractGroupGame {
      */
     private final class ColorGui extends Gui {
 
+        /** Each colour is a column of three: the middle one is the button. */
+        private static final int[][] COLUMNS = {{10, 19, 28}, {13, 22, 31}, {16, 25, 34}};
+
         private final ColorRouletteGame game;
 
         ColorGui(MultiverseGamblingPlugin plugin, Player player, ColorRouletteGame game) {
-            super(plugin, player, 3, plugin.messages().forSender(player, "panel.color-roulette.title",
+            super(plugin, player, 5, plugin.messages().forSender(player, "panel.color-roulette.title",
                     "game", displayName(player)));
             this.game = game;
         }
@@ -295,6 +444,10 @@ public final class ColorRouletteGame extends AbstractGroupGame {
         protected void render() {
             clearActions();
             fill(Items.of(Material.BLACK_STAINED_GLASS_PANE).name(" ").build());
+            ItemStack frame = Items.of(Material.GRAY_STAINED_GLASS_PANE).name(" ").build();
+            for (int slot : new int[]{0, 1, 2, 3, 5, 6, 7, 8, 36, 37, 38, 39, 41, 42, 43, 44}) {
+                set(slot, frame);
+            }
 
             ColorWheel wheel = game.wheel();
             Outcome chosen = game.choiceOf(player().getUniqueId());
@@ -310,17 +463,18 @@ public final class ColorRouletteGame extends AbstractGroupGame {
                     .glow(true)
                     .build());
 
-            int[] slots = {11, 13, 15};
             Outcome[] values = Outcome.values();
-            for (int i = 0; i < values.length; i++) {
+            for (int i = 0; i < values.length && i < COLUMNS.length; i++) {
                 Outcome outcome = values[i];
                 boolean selected = outcome == chosen;
-                set(slots[i], Items.of(materialOf(outcome))
-                        .name((selected ? "&a> " : "")
-                                + game.colourFor(player(), outcome))
+                ItemStack pillar = Items.of(selected ? Material.LIME_STAINED_GLASS_PANE : paneOf(outcome))
+                        .name((selected ? "&a\u25B6 " : "") + game.colourFor(player(), outcome))
+                        .build();
+                ItemStack button = Items.of(materialOf(outcome))
+                        .name((selected ? "&a\u25B6 " : "") + game.colourFor(player(), outcome)
+                                + " &8\u00b7 &f" + Text.multiplier(wheel.payout(outcome)))
                         .lore(
-                                label(player(), "panel.color-roulette.pockets",
-                                        "count", wheel.pockets(outcome)),
+                                label(player(), "panel.color-roulette.pockets", "count", wheel.pockets(outcome)),
                                 label(player(), "panel.common.pays",
                                         "multiplier", Text.multiplier(wheel.payout(outcome))),
                                 label(player(), "panel.color-roulette.chance",
@@ -329,16 +483,42 @@ public final class ColorRouletteGame extends AbstractGroupGame {
                                 selected ? label(player(), "panel.common.selected")
                                         : label(player(), "panel.color-roulette.click-pick"))
                         .glow(selected)
-                        .build(), e -> {
+                        .build();
+                java.util.function.Consumer<org.bukkit.event.inventory.InventoryClickEvent> pick = e -> {
                     game.choose(player(), outcome);
                     refresh();
-                });
+                };
+                set(COLUMNS[i][0], pillar, pick);
+                set(COLUMNS[i][1], button, pick);
+                set(COLUMNS[i][2], pillar, pick);
             }
 
-            set(22, Items.of(Material.BARRIER)
+            // Who is in the room and what everybody backs.
+            List<String> room = new ArrayList<>();
+            for (UUID id : game.pot.participants()) {
+                Outcome pick = game.choiceOf(id);
+                room.add(label(player(), "panel.color-roulette.room-line",
+                        "player", game.playerName(id),
+                        "colour", pick == null ? "&8-" : game.colourFor(player(), pick),
+                        "bet", plugin.economy().format(game.pot.amountOf(id))));
+            }
+            set(40, Items.of(Material.PLAYER_HEAD)
+                    .name(label(player(), "panel.color-roulette.room", "players", room.size()))
+                    .lore(room)
+                    .build());
+
+            set(44, Items.of(Material.BARRIER)
                     .name(label(player(), "panel.common.close"))
                     .lore(label(player(), "panel.color-roulette.close-lore"))
                     .build(), e -> close());
+        }
+
+        private static Material paneOf(Outcome outcome) {
+            return switch (outcome) {
+                case RED -> Material.RED_STAINED_GLASS_PANE;
+                case BLACK -> Material.BLACK_STAINED_GLASS_PANE;
+                case GREEN -> Material.GREEN_STAINED_GLASS_PANE;
+            };
         }
 
         @Override

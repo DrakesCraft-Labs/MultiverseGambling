@@ -11,11 +11,15 @@ import com.chagui68.multiversegambling.session.TimedSession;
 import com.chagui68.multiversegambling.util.Items;
 import com.chagui68.multiversegambling.util.Text;
 import com.chagui68.multiversegambling.world.anim.ArenaStage;
+import com.chagui68.multiversegambling.world.anim.PlinkoBoard;
 import com.chagui68.multiversegambling.world.anim.PlinkoShow;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 
 /**
  * Plinko: the ball falls down the pyramid and lands in a bucket.
@@ -48,6 +52,25 @@ public final class PlinkoGame extends AbstractSoloGame {
     }
 
     @Override
+    public boolean supportsItemBets() {
+        return true;
+    }
+
+    /** Every bucket and what it multiplies the stake by. */
+    @Override
+    public List<com.chagui68.multiversegambling.game.ItemOutcome> itemOutcomes(Player viewer) {
+        int rows = rows();
+        double[] table = table();
+        List<com.chagui68.multiversegambling.game.ItemOutcome> out = new ArrayList<>();
+        for (int bucket = 0; bucket <= rows; bucket++) {
+            out.add(new com.chagui68.multiversegambling.game.ItemOutcome(
+                    plugin.messages().forSender(viewer, "items.outcome.bucket", "bucket", bucket),
+                    table[bucket], PlinkoTable.bucketChance(rows, bucket)));
+        }
+        return out;
+    }
+
+    @Override
     protected void start(Player player, double bet) {
         Wager wager = stake(player, bet);
         if (wager == null) {
@@ -56,19 +79,30 @@ public final class PlinkoGame extends AbstractSoloGame {
         new PlinkoGui(plugin, player, this, wager).show();
     }
 
-    /** Drops the ball. */
+    /** Drops the ball without calling a bucket. */
     void drop(Player player, Wager wager) {
+        drop(player, wager, -1);
+    }
+
+    /**
+     * Drops the ball.
+     *
+     * @param called bucket the player called before the drop, or {@code -1} when they
+     *               dropped the ball straight away. Calling a bucket never changes what
+     *               is paid: the rolls do, and the roll is drawn here.
+     */
+    void drop(Player player, Wager wager, int called) {
         int rows = rows();
         // The direction of every bounce comes from the provably fair generator, and the
-        // same rolls drive the ball down the board drawn in the arena.
+        // same rolls drive the ball down the wall drawn in the arena.
         double[] rolls = plugin.fair().rolls(player.getUniqueId(), rows);
-        int bucket = bucketFor(rolls);
+        int bucket = PlinkoBoard.bucketOf(rolls);
         UUID playerId = player.getUniqueId();
-        int ticks = rows * 3;
+        int ticks = Math.max(30, rows * 4);
 
-        ArenaStage stage = arenaFor(player);
+        ArenaStage stage = arenaFor(player, ArenaStage.BOARD_PITCH);
         if (stage != null) {
-            PlinkoShow show = new PlinkoShow(plugin, stage, rolls, bucket, ticks);
+            PlinkoShow show = new PlinkoShow(plugin, stage, rolls, bucket, ticks).multipliers(table());
             new TimedSession(plugin, player, id(), ticks) {
 
                 @Override
@@ -84,13 +118,13 @@ public final class PlinkoGame extends AbstractSoloGame {
                 @Override
                 protected void onFinish() {
                     show.settle();
-                    settleDrop(playerId, wager, bucket);
+                    settleDrop(playerId, wager, bucket, called);
                 }
 
                 @Override
                 protected void onCancel() {
                     show.cancel();
-                    refund(wager);
+                    settleDrop(playerId, wager, bucket, called);
                 }
             }.run();
             return;
@@ -121,25 +155,27 @@ public final class PlinkoGame extends AbstractSoloGame {
 
             @Override
             protected void onFinish() {
-                settleDrop(playerId, wager, bucket);
+                settleDrop(playerId, wager, bucket, called);
             }
 
             @Override
             protected void onCancel() {
-                refund(wager);
+                settleDrop(playerId, wager, bucket, called);
             }
         }.run();
     }
 
     /** Pays a drop whose bounces were drawn when the ball started falling. */
-    private void settleDrop(UUID playerId, Wager wager, int bucket) {
+    private void settleDrop(UUID playerId, Wager wager, int bucket, int called) {
+        double multiplier = payoutFor(bucket);
         Player online = plugin.getServer().getPlayer(playerId);
         if (online == null) {
-            refund(wager);
+            // Gone before the end: the result was already drawn, so it is paid as drawn.
+            // Refunding here would let anybody cancel a round they saw coming out badly.
+            settleOffline(playerId, wager, multiplier);
             return;
         }
         int rows = rows();
-        double multiplier = payoutFor(bucket);
         double payout = settle(online, wager, multiplier);
         announceResult(online, payout > wager.amount(),
                 plugin.messages().forSender(online, "panel.plinko.bucket-subtitle",
@@ -150,31 +186,31 @@ public final class PlinkoGame extends AbstractSoloGame {
                 "multiplier", Text.multiplier(multiplier));
         message(online, "panel.plinko.chance",
                 "percent", Text.percent(PlinkoTable.bucketChance(rows, bucket)));
-        showResult(online, wager.amount(), payout);
+        if (called >= 0) {
+            // The call is told apart from the payout on purpose: the money came from the
+            // table, the call is the player's own guess and is only ever acknowledged.
+            message(online, called == bucket ? "panel.plinko.call-hit" : "panel.plinko.call-miss",
+                    "bucket", bucket, "called", called);
+        }
+        showResult(online, wager, payout);
         sound(online, payout > wager.amount() ? Sound.ENTITY_PLAYER_LEVELUP : Sound.ENTITY_VILLAGER_NO,
                 0.9f, payout > wager.amount() ? 1.3f : 0.9f);
         offerReplay(online);
     }
 
-    /** Counts the bounces to the right: that is the final bucket. */
-    private static int bucketFor(double[] rolls) {
-        int bucket = 0;
-        for (double roll : rolls) {
-            if (roll < 0.5) {
-                bucket++;
-            }
-        }
-        return bucket;
-    }
-
     private final class PlinkoGui extends Gui {
+
+        /** Columns inside the frame, where the buckets go. */
+        private static final int PER_ROW = 7;
 
         private final PlinkoGame game;
         private final Wager wager;
         private boolean armed;
+        /** Bucket the player called, or -1 while they have not picked one. */
+        private int called = -1;
 
         PlinkoGui(MultiverseGamblingPlugin plugin, Player player, PlinkoGame game, Wager wager) {
-            super(plugin, player, 5, plugin.messages().forSender(player, "panel.plinko.title",
+            super(plugin, player, 6, plugin.messages().forSender(player, "panel.plinko.title",
                     "game", displayName(player)));
             this.game = game;
             this.wager = wager;
@@ -184,54 +220,103 @@ public final class PlinkoGame extends AbstractSoloGame {
         protected void render() {
             clearActions();
             fill(Items.of(Material.BLACK_STAINED_GLASS_PANE).name(" ").build());
+            ItemStack frame = Items.of(Material.LIGHT_BLUE_STAINED_GLASS_PANE).name(" ").build();
+            for (int slot : new int[]{0, 1, 2, 3, 5, 6, 7, 8, 9, 17, 18, 26, 27, 35, 36, 44, 46, 47, 48, 50, 51, 52}) {
+                set(slot, frame);
+            }
 
             int rows = game.rows();
             double[] table = game.table();
             set(4, Items.of(Material.SNOWBALL)
                     .name(label(player(), "panel.plinko.table", "rows", rows))
                     .lore(
-                            label(player(), "panel.common.bet",
-                                    "bet", plugin.economy().format(wager.amount())),
+                            label(player(), "panel.common.bet", "bet", stakeText(wager, wager.amount())),
                             label(player(), "panel.plinko.buckets", "count", rows + 1),
-                            label(player(), "panel.plinko.edges"),
-                            label(player(), "panel.plinko.middle"),
                             label(player(), "panel.plinko.rtp",
-                                    "percent", Text.percent(PlinkoTable.rtp(table, rows, 0))))
+                                    "percent", Text.percent(PlinkoTable.rtp(table, rows, 0))),
+                            "",
+                            called >= 0
+                                    ? label(player(), "panel.plinko.called", "bucket", called)
+                                    : label(player(), "panel.plinko.call-bucket"))
                     .glow(true)
                     .build());
 
-            // The 9 most representative buckets, centred.
-            int shown = Math.min(9, rows + 1);
-            int offset = (rows + 1 - shown) / 2;
-            for (int i = 0; i < shown; i++) {
-                int bucket = offset + i;
-                int slot = 19 + i + (9 - shown) / 2;
-                set(slot, Items.of(bucket == 0 || bucket == rows ? Material.GOLD_BLOCK : Material.LIGHT_GRAY_STAINED_GLASS_PANE)
-                        .name(label(player(), "panel.plinko.bucket-name",
-                                "bucket", bucket, "multiplier", Text.multiplier(table[bucket])))
-                        .lore(label(player(), "panel.plinko.bucket-chance",
-                                "percent", Text.percent(PlinkoTable.bucketChance(rows, bucket))))
-                        .glow(bucket == 0 || bucket == rows)
-                        .build());
+            // Every bucket, left to right, in rows of seven centred in the frame and
+            // centred vertically between the header and the buttons.
+            int buckets = rows + 1;
+            int lines = (buckets + PER_ROW - 1) / PER_ROW;
+            int firstLine = lines >= 3 ? 1 : lines == 2 ? 2 : 2;
+            for (int bucket = 0; bucket < buckets; bucket++) {
+                int line = bucket / PER_ROW;
+                int inLine = Math.min(PER_ROW, buckets - line * PER_ROW);
+                int column = 1 + (PER_ROW - inLine) / 2 + bucket % PER_ROW;
+                int slot = (firstLine + line) * 9 + column;
+                set(slot, bucketItem(bucket, table[bucket], rows), e -> {
+                    called = called == bucketOf(e.getSlot()) ? -1 : bucketOf(e.getSlot());
+                    game.sound(player(), Sound.BLOCK_NOTE_BLOCK_PLING, 0.6f, 1.4f);
+                    refresh();
+                });
             }
 
-            set(40, Items.of(Material.EMERALD_BLOCK)
+            set(45, Items.of(Material.BARRIER)
+                    .name(label(player(), "panel.common.cancel"))
+                    .lore(label(player(), "panel.common.refund-lore"))
+                    .build(), e -> close());
+            set(49, Items.of(Material.EMERALD_BLOCK)
                     .name(label(player(), "panel.plinko.drop"))
                     .lore(label(player(), "panel.plinko.will-stake",
-                                    "bet", plugin.economy().format(wager.amount())),
-                            label(player(), "panel.plinko.falls-alone"), "",
+                                    "bet", stakeText(wager, wager.amount())),
+                            called >= 0 ? label(player(), "panel.plinko.called", "bucket", called)
+                                    : label(player(), "panel.plinko.falls-alone"),
+                            "",
                             label(player(), "panel.plinko.click-drop"))
                     .glow(true)
                     .build(), e -> {
                 armed = true;
                 close();
-                game.drop(player(), wager);
+                game.drop(player(), wager, called);
             });
+            set(53, Items.of(Material.BOOK)
+                    .name(label(player(), "panel.plinko.how"))
+                    .lore(label(player(), "panel.plinko.edges"),
+                            label(player(), "panel.plinko.middle"),
+                            label(player(), "panel.plinko.call-free"))
+                    .build());
+        }
 
-            set(36, Items.of(Material.BARRIER)
-                    .name(label(player(), "panel.common.cancel"))
-                    .lore(label(player(), "panel.common.refund-lore"))
-                    .build(), e -> close());
+        private ItemStack bucketItem(int bucket, double multiplier, int rows) {
+            boolean calledBucket = bucket == called;
+            Material material = calledBucket ? Material.LIME_CONCRETE
+                    : multiplier >= 10 ? Material.GOLD_BLOCK
+                    : multiplier >= 2 ? Material.ORANGE_CONCRETE
+                    : multiplier >= 1 ? Material.YELLOW_CONCRETE
+                    : Material.GRAY_CONCRETE;
+            return Items.of(material)
+                    .name((calledBucket ? "&a\u25B6 " : "")
+                            + label(player(), "panel.plinko.bucket-name",
+                            "bucket", bucket, "multiplier", Text.multiplier(multiplier)))
+                    .lore(label(player(), "panel.plinko.bucket-chance",
+                                    "percent", Text.percent(PlinkoTable.bucketChance(rows, bucket))),
+                            label(player(), "panel.lucky-wheel.pays",
+                                    "prize", stakeText(wager, wager.amount() * multiplier)),
+                            "",
+                            calledBucket ? label(player(), "panel.plinko.call-cancel")
+                                    : label(player(), "panel.plinko.call-hint"))
+                    .glow(calledBucket || multiplier >= 10)
+                    .build();
+        }
+
+        /**
+         * Bucket drawn on a slot of the menu, the reverse of the layout in render.
+         */
+        private int bucketOf(int slot) {
+            int buckets = game.rows() + 1;
+            int lines = (buckets + PER_ROW - 1) / PER_ROW;
+            int firstLine = lines >= 3 ? 1 : 2;
+            int line = slot / 9 - firstLine;
+            int inLine = Math.min(PER_ROW, buckets - line * PER_ROW);
+            int column = slot % 9 - 1 - (PER_ROW - inLine) / 2;
+            return line * PER_ROW + column;
         }
 
         @Override

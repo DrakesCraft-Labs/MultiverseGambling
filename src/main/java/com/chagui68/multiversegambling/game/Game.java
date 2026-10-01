@@ -30,6 +30,14 @@ public interface Game {
         return meta().category();
     }
 
+    /**
+     * True when one player alone can play it against the house: every solo game, and
+     * the group games that seat the dealer when the room is empty.
+     */
+    default boolean playableAgainstHouse() {
+        return category() == GameCategory.SOLO;
+    }
+
     default Material icon() {
         return meta().icon();
     }

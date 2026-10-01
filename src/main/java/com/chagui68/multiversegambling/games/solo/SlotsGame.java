@@ -8,9 +8,7 @@ import com.chagui68.multiversegambling.economy.Wager;
 import com.chagui68.multiversegambling.game.AbstractSoloGame;
 import com.chagui68.multiversegambling.game.GameCategory;
 import com.chagui68.multiversegambling.game.GameMeta;
-import com.chagui68.multiversegambling.gui.Gui;
 import com.chagui68.multiversegambling.session.TimedSession;
-import com.chagui68.multiversegambling.util.Items;
 import com.chagui68.multiversegambling.util.Text;
 import com.chagui68.multiversegambling.world.anim.ArenaStage;
 import com.chagui68.multiversegambling.world.anim.SlotReelsShow;
@@ -33,6 +31,11 @@ import org.bukkit.entity.Player;
  */
 public final class SlotsGame extends AbstractSoloGame {
 
+    /** Stake of the last spin of every player, for "spin again". */
+    private final java.util.Map<UUID, Double> lastStakes = new java.util.HashMap<>();
+    /** True while settling a spin staked with items. */
+    private boolean lastWasItems;
+
     public SlotsGame(MultiverseGamblingPlugin plugin) {
         super(plugin, GameMeta.builder("slots", "Slots", GameCategory.SOLO, Material.LEVER)
                 .desc("&7Three reels, seven symbols and a",
@@ -43,6 +46,34 @@ public final class SlotsGame extends AbstractSoloGame {
 
     private SlotsTable table() {
         return SlotsTable.defaults();
+    }
+
+    @Override
+    public boolean supportsItemBets() {
+        return true;
+    }
+
+    /** Three of every symbol, best first, and the cherry pair. */
+    @Override
+    public List<com.chagui68.multiversegambling.game.ItemOutcome> itemOutcomes(Player viewer) {
+        SlotsTable table = table();
+        List<Symbol> symbols = new ArrayList<>(table.symbols());
+        symbols.sort((a, b) -> Double.compare(b.triple(), a.triple()));
+        List<com.chagui68.multiversegambling.game.ItemOutcome> out = new ArrayList<>();
+        for (Symbol symbol : symbols) {
+            double reel = table.chanceOf(symbol.id());
+            out.add(new com.chagui68.multiversegambling.game.ItemOutcome(
+                    plugin.messages().forSender(viewer, "items.outcome.slots-triple",
+                            "symbol", symbol.glyph(), "name", Text.strip(symbolName(viewer, symbol))),
+                    symbol.triple(), reel * reel * reel));
+            if (symbol.pair() > 0) {
+                out.add(new com.chagui68.multiversegambling.game.ItemOutcome(
+                        plugin.messages().forSender(viewer, "items.outcome.slots-pair",
+                                "symbol", symbol.glyph(), "name", Text.strip(symbolName(viewer, symbol))),
+                        symbol.pair(), -1));
+            }
+        }
+        return out;
     }
 
     @Override
@@ -66,7 +97,9 @@ public final class SlotsGame extends AbstractSoloGame {
         ArenaStage stage = arenaFor(player);
         if (stage != null) {
             SlotReelsShow show = new SlotReelsShow(plugin, stage,
-                    blocks(result), blocks(table.symbols()), total);
+                    icons(result), icons(table.symbols()), total,
+                    Text.strip(displayName(player)).toUpperCase(java.util.Locale.ROOT))
+                    .paytable(paytable(player));
             new TimedSession(plugin, player, id(), total) {
 
                 @Override
@@ -81,14 +114,16 @@ public final class SlotsGame extends AbstractSoloGame {
 
                 @Override
                 protected void onFinish() {
+                    // Settled first, so the replay buttons are up before the show decides
+                    // how long to stay standing.
+                    settleSpin(playerId, wager, result, show);
                     show.settle();
-                    settleSpin(playerId, wager, result);
                 }
 
                 @Override
                 protected void onCancel() {
                     show.cancel();
-                    refund(wager);
+                    settleSpin(playerId, wager, result, null);
                 }
             }.run();
             return;
@@ -117,12 +152,12 @@ public final class SlotsGame extends AbstractSoloGame {
 
             @Override
             protected void onFinish() {
-                settleSpin(playerId, wager, result);
+                settleSpin(playerId, wager, result, null);
             }
 
             @Override
             protected void onCancel() {
-                refund(wager);
+                settleSpin(playerId, wager, result, null);
             }
         }.run();
     }
@@ -130,14 +165,16 @@ public final class SlotsGame extends AbstractSoloGame {
     /**
      * Pays a spin whose reels came from the provably fair generator.
      */
-    private void settleSpin(UUID playerId, Wager wager, List<Symbol> result) {
-        Player online = plugin.getServer().getPlayer(playerId);
-        if (online == null) {
-            refund(wager);
-            return;
-        }
+    private void settleSpin(UUID playerId, Wager wager, List<Symbol> result, SlotReelsShow show) {
         SlotsTable table = table();
         double multiplier = table.payout(result);
+        Player online = plugin.getServer().getPlayer(playerId);
+        if (online == null) {
+            // Gone before the end: the result was already drawn, so it is paid as drawn.
+            // Refunding here would let anybody cancel a round they saw coming out badly.
+            settleOffline(playerId, wager, multiplier);
+            return;
+        }
         double payout = settle(online, wager, multiplier);
         String reels = "&8[ &r" + glyph(online, result.get(0)) + " &8| &r"
                 + glyph(online, result.get(1)) + " &8| &r" + glyph(online, result.get(2))
@@ -153,37 +190,126 @@ public final class SlotsGame extends AbstractSoloGame {
             message(online, "panel.slots.winning-combination",
                     "multiplier", Text.multiplier(multiplier));
         }
-        showResult(online, wager.amount(), payout);
+        showResult(online, wager, payout);
         sound(online, payout > wager.amount() ? Sound.ENTITY_PLAYER_LEVELUP : Sound.ENTITY_VILLAGER_NO,
                 0.9f, payout > wager.amount() ? 1.3f : 0.9f);
-
-        new SlotsGui(plugin, online, SlotsGame.this, result, payout).show();
+        lastWasItems = wager instanceof com.chagui68.multiversegambling.economy.ItemWager;
+        offerSpinAgain(online, wager.amount(), show);
     }
 
-    /**
-     * Block that stands for a reel symbol in the arena.
-     */
-    static Material blockOf(String id) {
-        return switch (id) {
-            case "cherry" -> Material.RED_CONCRETE;
-            case "lemon" -> Material.YELLOW_CONCRETE;
-            case "bell" -> Material.YELLOW_GLAZED_TERRACOTTA;
-            case "diamond" -> Material.DIAMOND_BLOCK;
-            case "seven" -> Material.REDSTONE_BLOCK;
-            case "star" -> Material.SEA_LANTERN;
-            default -> Material.GOLD_BLOCK;
-        };
-    }
+    // ------------------------------------------------------------------- replay
 
     /**
-     * Same mapping, for a whole combination or for the whole table.
+     * After a spin: spin again with the same stake, or pick another one. On the slot
+     * machine of the pavilion these are two floating buttons; anywhere else (and always,
+     * as a fallback) two buttons in the chat.
      */
-    static List<Material> blocks(List<Symbol> symbols) {
-        List<Material> blocks = new ArrayList<>(symbols.size());
-        for (Symbol symbol : symbols) {
-            blocks.add(blockOf(symbol.id()));
+    private void offerSpinAgain(Player player, double stake, SlotReelsShow show) {
+        if (lastWasItems) {
+            // Items cannot be staked again from a button: they have to be placed in the
+            // item menu, so only the usual "play again" is offered.
+            offerReplay(player);
+            return;
         }
-        return blocks;
+        lastStakes.put(player.getUniqueId(), stake);
+        String amount = plugin.economy().format(stake);
+        if (show != null) {
+            show.offerReplay(player.getUniqueId(),
+                    Text.c(plugin.messages().forSender(player, "panel.slots.button-again", "bet", amount)),
+                    Text.c(plugin.messages().forSender(player, "panel.slots.button-change")),
+                    this::spinAgain,
+                    clicker -> plugin.guis().openBetSelector(clicker, this, begin(clicker)));
+        }
+        player.sendMessage(Text.c(plugin.messages().forSender(player, "panel.slots.again-prompt"))
+                .append(Text.c(" "))
+                .append(Text.button(plugin.messages().forSender(player, "panel.slots.chat-again", "bet", amount),
+                        "/mvgam action spin",
+                        plugin.messages().forSender(player, "panel.slots.chat-again-hover", "bet", amount)))
+                .append(Text.c(" "))
+                .append(Text.button(plugin.messages().forSender(player, "panel.slots.chat-change"),
+                        "/mvgam play " + id(),
+                        plugin.messages().forSender(player, "panel.slots.chat-change-hover"))));
+    }
+
+    /**
+     * Spins again with the stake of the last spin, through the same checks as a new game.
+     */
+    void spinAgain(Player player) {
+        Double stake = lastStakes.get(player.getUniqueId());
+        if (stake == null) {
+            open(player);
+            return;
+        }
+        if (!enabled()) {
+            message(player, "games.disabled", "game", name());
+            return;
+        }
+        if (!player.hasPermission(permission())) {
+            message(player, "general.no-permission");
+            return;
+        }
+        if (plugin.sessions().busy(player.getUniqueId())) {
+            message(player, "games.already-playing");
+            return;
+        }
+        double bet = Math.max(minBet(), Math.min(maxBet(), stake));
+        Wager wager = stake(player, bet);
+        if (wager != null) {
+            spin(player, wager);
+        }
+    }
+
+    @Override
+    public void handleAction(Player player, String action, String[] args) {
+        if ("spin".equals(action)) {
+            spinAgain(player);
+            return;
+        }
+        super.handleAction(player, action, args);
+    }
+
+    /**
+     * The prize table, written on a sign beside the slot machine.
+     */
+    private List<String> paytable(Player viewer) {
+        List<String> lines = new ArrayList<>();
+        lines.add(plugin.messages().forSender(viewer, "panel.slots.prize-table"));
+        for (Symbol symbol : table().symbols()) {
+            String line = symbol.glyph() + " &f" + Text.strip(symbolName(viewer, symbol)) + "  &e"
+                    + Text.multiplier(symbol.triple());
+            if (symbol.pair() > 0) {
+                line += plugin.messages().forSender(viewer, "panel.slots.pair-suffix",
+                        "multiplier", Text.multiplier(symbol.pair()));
+            }
+            lines.add(line);
+        }
+        return lines;
+    }
+
+    /**
+     * Symbols as the drums of the slot machine in the arena show them.
+     */
+    static List<Material> icons(List<Symbol> symbols) {
+        List<Material> icons = new ArrayList<>(symbols.size());
+        for (Symbol symbol : symbols) {
+            icons.add(reelIconOf(symbol.id()));
+        }
+        return icons;
+    }
+
+    /**
+     * Item drawn on a drum for each symbol: round fruit, a bell, a gem, a gold bar...
+     */
+    static Material reelIconOf(String id) {
+        return switch (id) {
+            case "cherry" -> Material.SWEET_BERRIES;
+            case "lemon" -> Material.YELLOW_DYE;
+            case "bell" -> Material.BELL;
+            case "diamond" -> Material.DIAMOND;
+            case "seven" -> Material.GOLD_INGOT;
+            case "star" -> Material.NETHER_STAR;
+            default -> Material.EMERALD;
+        };
     }
 
     /**
@@ -199,113 +325,5 @@ public final class SlotsGame extends AbstractSoloGame {
 
     private String symbolName(CommandSender viewer, Symbol symbol) {
         return symbolName(plugin.messages(), viewer, symbol);
-    }
-
-    private static Material iconOf(String id) {
-        return switch (id) {
-            case "cherry" -> Material.RED_DYE;
-            case "lemon" -> Material.YELLOW_DYE;
-            case "bell" -> Material.BELL;
-            case "diamond" -> Material.DIAMOND;
-            case "seven" -> Material.GOLD_INGOT;
-            case "star" -> Material.NETHER_STAR;
-            default -> Material.EMERALD;
-        };
-    }
-
-    /**
-     * Machine panel: shows the reels and lets you spin again.
-     */
-    private final class SlotsGui extends Gui {
-
-        private final SlotsGame game;
-        private final List<Symbol> reels;
-        private final double lastPayout;
-
-        SlotsGui(MultiverseGamblingPlugin plugin, Player player, SlotsGame game, List<Symbol> reels, double lastPayout) {
-            super(plugin, player, 5, plugin.messages().forSender(player, "panel.slots.title"));
-            this.game = game;
-            this.reels = reels;
-            this.lastPayout = lastPayout;
-        }
-
-        @Override
-        protected void render() {
-            clearActions();
-            fill(Items.of(Material.BLACK_STAINED_GLASS_PANE).name(" ").build());
-
-            int[] slots = {21, 23, 25};
-            for (int i = 0; i < 3; i++) {
-                Symbol symbol = reels == null ? null : reels.get(i);
-                set(slots[i], Items.of(symbol == null ? Material.GRAY_DYE : iconOf(symbol.id()))
-                        .name(symbol == null
-                                ? label(player(), "panel.slots.hidden")
-                                : label(player(), "panel.slots.symbol", "symbol", symbol.glyph(),
-                                "name", symbolName(player(), symbol)))
-                        .lore(symbol == null
-                                ? label(player(), "panel.slots.click-spin")
-                                : label(player(), "panel.slots.triple-lore",
-                                "multiplier", Text.multiplier(symbol.triple())))
-                        .glow(symbol != null)
-                        .build());
-            }
-
-            double bet = Math.min(game.maxBet(), Math.max(game.minBet(), plugin.config().minBet() * 10));
-            double balance = plugin.economy().balance(player().getUniqueId());
-            boolean afford = balance >= game.minBet();
-
-            set(4, Items.of(Material.PAPER)
-                    .name(label(player(), "panel.slots.prize-table"))
-                    .lore(game.table().symbols().stream()
-                            .map(s -> label(player(), "panel.slots.table-line",
-                                    "symbol", s.glyph(), "name", symbolName(player(), s),
-                                    "multiplier", Text.multiplier(s.triple()),
-                                    "chance", Text.percent(game.table().chanceOf(s.id()))))
-                            .toList())
-                    .build());
-
-            set(40, Items.of(afford ? Material.EMERALD_BLOCK : Material.RED_CONCRETE)
-                    .name(label(player(), afford ? "panel.slots.spin" : "panel.common.not-enough"))
-                    .lore(
-                            label(player(), "panel.slots.will-stake", "bet",
-                                    plugin.economy().format(bet)),
-                            label(player(), "panel.common.balance", "balance",
-                                    plugin.economy().format(balance)),
-                            lastPayout > 0
-                                    ? label(player(), "panel.slots.last-prize", "prize",
-                                    plugin.economy().format(lastPayout))
-                                    : "",
-                            "",
-                            afford ? label(player(), "panel.common.click-to-spin")
-                                    : label(player(), "panel.slots.need-money"))
-                    .glow(afford)
-                    .build(), e -> {
-                if (!afford) {
-                    return;
-                }
-                Wager wager = game.stake(player(), bet);
-                if (wager == null) {
-                    return;
-                }
-                close();
-                game.spin(player(), wager);
-            });
-
-            set(36, Items.of(Material.BARRIER)
-                    .name(label(player(), "panel.common.close"))
-                    .build(), e -> close());
-
-            set(44, Items.of(Material.ARROW)
-                    .name(label(player(), "panel.common.change-bet"))
-                    .build(), e -> {
-                close();
-                plugin.guis().openBetSelector(player(), game, amount -> game.start(player(), amount));
-            });
-        }
-
-        @Override
-        public String sessionId() {
-            return "slots";
-        }
     }
 }

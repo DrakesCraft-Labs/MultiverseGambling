@@ -7,6 +7,7 @@ import com.chagui68.multiversegambling.fair.FairnessService;
 import com.chagui68.multiversegambling.game.AbstractGroupGame;
 import com.chagui68.multiversegambling.game.GameCategory;
 import com.chagui68.multiversegambling.game.GameMeta;
+import com.chagui68.multiversegambling.util.Text;
 import com.chagui68.multiversegambling.world.anim.ArenaShow;
 import com.chagui68.multiversegambling.world.anim.ArenaStage;
 import com.chagui68.multiversegambling.world.anim.WheelShow;
@@ -17,6 +18,7 @@ import java.util.UUID;
 
 import org.bukkit.Material;
 import org.bukkit.Sound;
+import org.bukkit.entity.Player;
 
 /**
  * Shared jackpot.
@@ -51,8 +53,29 @@ public final class JackpotGame extends AbstractGroupGame {
     }
 
     @Override
+    protected boolean houseDuelAvailable() {
+        return true;
+    }
+
+    /**
+     * Against the house, the house matches the stake: half of the pot each, so a win pays
+     * the pot minus the house edge.
+     */
+    @Override
+    protected double houseDuelMultiplier(Player player) {
+        return fairDuelMultiplier(0.5);
+    }
+
+    @Override
     protected void onRoundStart() {
         timer = 0;
+        if (houseDuelActive()) {
+            broadcastRoundHeader();
+            broadcastPlain("group.jackpot.duel-intro",
+                    "amount", plugin.economy().format(pot.amountOf(houseDuelPlayer())),
+                    "multiplier", Text.multiplier(houseDuelMultiplier(null)));
+            return;
+        }
         broadcastRoundHeader();
         broadcastPlain("group.jackpot.total-pot",
                 "pot", plugin.economy().format(pot.total()));
@@ -87,6 +110,10 @@ public final class JackpotGame extends AbstractGroupGame {
             // on the ticket that really won.
             WeightedTable<UUID> draw = new WeightedTable<>();
             pot.participants().forEach(id -> draw.add(id, Math.max(0.0001, pot.amountOf(id))));
+            if (houseDuelActive()) {
+                // The house puts in as much as the player: one even draw.
+                draw.add(FairnessService.HOUSE, Math.max(0.0001, pot.amountOf(houseDuelPlayer())));
+            }
             winner = draw.isEmpty() ? null : draw.roll(plugin.fair().roll(FairnessService.HOUSE));
             show = startWheelShow(winner);
         }
@@ -114,6 +141,11 @@ public final class JackpotGame extends AbstractGroupGame {
         }
         if (winner == null) {
             endRound();
+            return;
+        }
+        if (houseDuelActive()) {
+            broadcastPlain("group.jackpot.duel-winner", "player", playerName(winner));
+            settleHouseDuel(isHouse(winner) ? -1 : 1, houseDuelMultiplier(null));
             return;
         }
         double total = pot.total();
@@ -146,12 +178,24 @@ public final class JackpotGame extends AbstractGroupGame {
             return null;
         }
         List<UUID> pool = new ArrayList<>(pot.participants());
+        if (houseDuelActive()) {
+            pool.add(FairnessService.HOUSE);
+        }
         List<Material> sectors = new ArrayList<>(pool.size());
+        List<String> names = new ArrayList<>(pool.size());
+        double[] stakes = new double[pool.size()];
         for (int index = 0; index < pool.size(); index++) {
-            sectors.add(SECTOR_COLOURS[index % SECTOR_COLOURS.length]);
+            UUID id = pool.get(index);
+            sectors.add(isHouse(id) ? Material.BLACK_CONCRETE : SECTOR_COLOURS[index % SECTOR_COLOURS.length]);
+            names.add(playerName(id));
+            stakes[index] = Math.max(0.0001, isHouse(id) ? pot.amountOf(houseDuelPlayer()) : pot.amountOf(id));
         }
         int landing = winner == null ? 0 : Math.max(0, pool.indexOf(winner));
-        WheelShow wheel = new WheelShow(plugin, stage, sectors, landing, SPIN_TICKS);
+        // A bigger stake is a bigger slice, exactly like the draw.
+        WheelShow wheel = new WheelShow(plugin, stage, sectors, landing, SPIN_TICKS)
+                .style(WheelShow.Style.FORTUNE)
+                .labels(names)
+                .weights(stakes);
         wheel.start();
         return wheel;
     }

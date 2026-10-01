@@ -46,6 +46,28 @@ public final class ClassicRouletteGame extends AbstractSoloGame {
     }
 
     @Override
+    public boolean supportsItemBets() {
+        return true;
+    }
+
+    /** The three kinds of bet of the board and what each pays. */
+    @Override
+    public List<com.chagui68.multiversegambling.game.ItemOutcome> itemOutcomes(Player viewer) {
+        int pockets = table().pocketCount();
+        List<com.chagui68.multiversegambling.game.ItemOutcome> out = new ArrayList<>();
+        out.add(new com.chagui68.multiversegambling.game.ItemOutcome(
+                plugin.messages().forSender(viewer, "items.outcome.roulette-even"),
+                Bet.COLOR.payout(), 18.0 / pockets));
+        out.add(new com.chagui68.multiversegambling.game.ItemOutcome(
+                plugin.messages().forSender(viewer, "items.outcome.roulette-dozen"),
+                Bet.DOZEN.payout(), 12.0 / pockets));
+        out.add(new com.chagui68.multiversegambling.game.ItemOutcome(
+                plugin.messages().forSender(viewer, "items.outcome.roulette-number"),
+                Bet.NUMBER.payout(), 1.0 / pockets));
+        return out;
+    }
+
+    @Override
     protected void start(Player player, double bet) {
         Wager wager = stake(player, bet);
         if (wager == null) {
@@ -65,13 +87,9 @@ public final class ClassicRouletteGame extends AbstractSoloGame {
      * Refunds the board bet and asks for a new one to go straight to a number.
      */
     void betOnPocket(Player player, Wager previous, int pocket) {
-        refund(previous);
-        plugin.guis().openBetSelector(player, this, bet -> {
-            Wager wager = stake(player, bet);
-            if (wager != null) {
-                spin(player, wager, Bet.NUMBER, pocket);
-            }
-        });
+        // The stake already on the table goes on the number: no second payment, and a
+        // bet staked with items keeps its items.
+        spin(player, previous, Bet.NUMBER, pocket);
     }
 
     /**
@@ -85,10 +103,12 @@ public final class ClassicRouletteGame extends AbstractSoloGame {
         // shown in the arena only paints the result, it decides nothing.
         int result = wheel.pockets().get(plugin.fair().rollInt(playerId, wheel.pocketCount()));
 
-        ArenaStage stage = arenaFor(player);
+        ArenaStage stage = arenaFor(player, ArenaStage.BOARD_PITCH);
         if (stage != null) {
             WheelShow show = new WheelShow(plugin, stage,
-                    sectors(wheel), wheel.pockets().indexOf(result), total);
+                    sectors(wheel), wheel.pockets().indexOf(result), total)
+                    .style(WheelShow.Style.ROULETTE)
+                    .labels(labels(wheel));
             new TimedSession(plugin, player, id(), total) {
 
                 @Override
@@ -110,7 +130,7 @@ public final class ClassicRouletteGame extends AbstractSoloGame {
                 @Override
                 protected void onCancel() {
                     show.cancel();
-                    refund(wager);
+                    settleSpin(playerId, wager, type, selection, result);
                 }
             }.run();
             return;
@@ -150,7 +170,7 @@ public final class ClassicRouletteGame extends AbstractSoloGame {
 
             @Override
             protected void onCancel() {
-                refund(wager);
+                settleSpin(playerId, wager, type, selection, result);
             }
         }.run();
     }
@@ -159,12 +179,14 @@ public final class ClassicRouletteGame extends AbstractSoloGame {
      * Pays a spin whose pocket was drawn when the round started.
      */
     private void settleSpin(UUID playerId, Wager wager, Bet type, int selection, int result) {
+        double multiplier = RouletteTable.payoutOf(type, selection, result);
         Player online = plugin.getServer().getPlayer(playerId);
         if (online == null) {
-            refund(wager);
+            // Gone before the end: the result was already drawn, so it is paid as drawn.
+            // Refunding here would let anybody cancel a round they saw coming out badly.
+            settleOffline(playerId, wager, multiplier);
             return;
         }
-        double multiplier = RouletteTable.payoutOf(type, selection, result);
         double payout = settle(online, wager, multiplier);
 
         String colour = colourCode(result);
@@ -179,10 +201,21 @@ public final class ClassicRouletteGame extends AbstractSoloGame {
                 "colour", colour,
                 "number", RouletteTable.label(result),
                 "name", colourName(online, result));
-        showResult(online, wager.amount(), payout);
+        showResult(online, wager, payout);
         sound(online, payout > wager.amount() ? Sound.ENTITY_PLAYER_LEVELUP : Sound.ENTITY_VILLAGER_NO,
                 0.9f, payout > wager.amount() ? 1.2f : 0.9f);
         offerReplay(online);
+    }
+
+    /**
+     * Number of each pocket, in the order the wheel paints them on the table.
+     */
+    static List<String> labels(RouletteTable wheel) {
+        List<String> labels = new ArrayList<>(wheel.pocketCount());
+        for (int pocket : wheel.pockets()) {
+            labels.add(RouletteTable.label(pocket));
+        }
+        return labels;
     }
 
     /**
@@ -282,11 +315,11 @@ public final class ClassicRouletteGame extends AbstractSoloGame {
         @Override
         protected void render() {
             clearActions();
-            fill(filler());
+            frame(Material.RED_STAINED_GLASS_PANE);
 
             set(4, Items.of(Material.GOLD_INGOT)
                     .name(label(player(), "panel.common.bet",
-                            "bet", plugin.economy().format(wager.amount())))
+                            "bet", stakeText(wager, wager.amount())))
                     .lore(
                             label(player(), "panel.roulette.point",
                                     "spot", game.betName(player(), type, selection)),
@@ -297,9 +330,9 @@ public final class ClassicRouletteGame extends AbstractSoloGame {
                     .glow(true)
                     .build());
 
-            set(10, spot(Material.RED_WOOL, Bet.COLOR, 0));
-            set(11, spot(Material.BLACK_WOOL, Bet.COLOR, 1));
-            set(12, spot(Material.GREEN_WOOL, Bet.NUMBER, 0));
+            set(10, spot(Material.RED_WOOL, Bet.COLOR, 0), e -> pick(Bet.COLOR, 0));
+            set(11, spot(Material.BLACK_WOOL, Bet.COLOR, 1), e -> pick(Bet.COLOR, 1));
+            set(12, spot(Material.GREEN_WOOL, Bet.NUMBER, 0), e -> pick(Bet.NUMBER, 0));
             set(14, Items.of(Material.PAPER)
                     .name(label(player(), "panel.roulette.pick-exact"))
                     .lore(label(player(), "panel.roulette.exact-lore"),
@@ -310,23 +343,23 @@ public final class ClassicRouletteGame extends AbstractSoloGame {
                 new NumberGrid(plugin, player(), game, wager).show();
             });
 
-            set(19, spot(Material.LIGHT_BLUE_DYE, Bet.PARITY, 0));
-            set(20, spot(Material.ORANGE_DYE, Bet.PARITY, 1));
-            set(21, spot(Material.LIME_DYE, Bet.HALF, 0));
-            set(22, spot(Material.MAGENTA_DYE, Bet.HALF, 1));
+            set(19, spot(Material.LIGHT_BLUE_DYE, Bet.PARITY, 0), e -> pick(Bet.PARITY, 0));
+            set(20, spot(Material.ORANGE_DYE, Bet.PARITY, 1), e -> pick(Bet.PARITY, 1));
+            set(21, spot(Material.LIME_DYE, Bet.HALF, 0), e -> pick(Bet.HALF, 0));
+            set(22, spot(Material.MAGENTA_DYE, Bet.HALF, 1), e -> pick(Bet.HALF, 1));
 
-            set(24, spot(Material.YELLOW_WOOL, Bet.DOZEN, 0));
-            set(25, spot(Material.YELLOW_WOOL, Bet.DOZEN, 1));
-            set(26, spot(Material.YELLOW_WOOL, Bet.DOZEN, 2));
-            set(29, spot(Material.CYAN_WOOL, Bet.COLUMN, 0));
-            set(30, spot(Material.CYAN_WOOL, Bet.COLUMN, 1));
-            set(31, spot(Material.CYAN_WOOL, Bet.COLUMN, 2));
+            set(24, spot(Material.YELLOW_WOOL, Bet.DOZEN, 0), e -> pick(Bet.DOZEN, 0));
+            set(25, spot(Material.YELLOW_WOOL, Bet.DOZEN, 1), e -> pick(Bet.DOZEN, 1));
+            set(26, spot(Material.YELLOW_WOOL, Bet.DOZEN, 2), e -> pick(Bet.DOZEN, 2));
+            set(29, spot(Material.CYAN_WOOL, Bet.COLUMN, 0), e -> pick(Bet.COLUMN, 0));
+            set(30, spot(Material.CYAN_WOOL, Bet.COLUMN, 1), e -> pick(Bet.COLUMN, 1));
+            set(31, spot(Material.CYAN_WOOL, Bet.COLUMN, 2), e -> pick(Bet.COLUMN, 2));
 
             set(40, Items.of(Material.EMERALD_BLOCK)
                     .name(label(player(), "panel.roulette.spin"))
                     .lore(
                             label(player(), "panel.roulette.spin-bet",
-                                    "bet", plugin.economy().format(wager.amount())),
+                                    "bet", stakeText(wager, wager.amount())),
                             label(player(), "panel.roulette.spin-point",
                                     "spot", game.betDescription(player(), type, selection)),
                             label(player(), "panel.roulette.spin-hit",
@@ -343,7 +376,7 @@ public final class ClassicRouletteGame extends AbstractSoloGame {
             set(49, Items.of(Material.BARRIER)
                     .name(label(player(), "panel.common.cancel"))
                     .lore(label(player(), "panel.roulette.cancel-lore",
-                            "bet", plugin.economy().format(wager.amount())))
+                            "bet", stakeText(wager, wager.amount())))
                     .build(), e -> close());
         }
 
@@ -396,7 +429,7 @@ public final class ClassicRouletteGame extends AbstractSoloGame {
         @Override
         protected void render() {
             clearActions();
-            fill(filler());
+            frame(Material.RED_STAINED_GLASS_PANE);
             set(4, Items.of(Material.PAPER)
                     .name(label(player(), "panel.roulette.straight"))
                     .lore(label(player(), "panel.roulette.straight-lore"),

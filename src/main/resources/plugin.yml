@@ -20,5 +20,5 @@ permissions:
     description: Allows viewing the server ranking.
     default: true
   mvgam_admin:
-    description: Reload, build the casino world, give or take balance and cancel running games.
+    description: Reload, build or inspect the casino world, give or take balance and cancel running games.
     default: op

@@ -25,14 +25,25 @@ public final class BetSelectorGui extends Gui {
 
     private final Game game;
     private final DoubleConsumer onConfirm;
+    private final DoubleConsumer onHouse;
     private double bet;
 
     public BetSelectorGui(MultiverseGamblingPlugin plugin, Player player, Game game,
                           double initial, DoubleConsumer onConfirm) {
+        this(plugin, player, game, initial, onConfirm, null);
+    }
+
+    /**
+     * @param onHouse what betting against the house does, or {@code null} when the game
+     *                does not offer it right now
+     */
+    public BetSelectorGui(MultiverseGamblingPlugin plugin, Player player, Game game,
+                          double initial, DoubleConsumer onConfirm, DoubleConsumer onHouse) {
         super(plugin, player, 5, plugin.messages().forSender(player, "gui.bet.title",
                 "game", game.displayName(player)));
         this.game = game;
         this.onConfirm = onConfirm;
+        this.onHouse = onHouse;
         this.bet = clamp(initial);
     }
 
@@ -66,7 +77,7 @@ public final class BetSelectorGui extends Gui {
     @Override
     protected void render() {
         clearActions();
-        fill(FILLER);
+        frame(Material.YELLOW_STAINED_GLASS_PANE);
         Player viewer = player();
 
         double balance = balance();
@@ -100,14 +111,35 @@ public final class BetSelectorGui extends Gui {
                         "limit", plugin.economy().format(limit)))
                 .build());
 
+        boolean itemOption = game instanceof com.chagui68.multiversegambling.game.AbstractSoloGame itemGame
+                && itemGame.supportsItemBets() && plugin.config().itemBetsEnabled();
+        if (itemOption && game instanceof com.chagui68.multiversegambling.game.AbstractSoloGame solo) {
+            set(42, Items.of(Material.CHEST)
+                    .name(messages().forSender(viewer, "gui.bet.items"))
+                    .lore(messages().loreFor(viewer, "gui.bet.items-lore"))
+                    .glow(true)
+                    .build(), e -> {
+                close();
+                plugin.getServer().getScheduler().runTask(plugin,
+                        () -> new ItemStakeGui(plugin, viewer, solo).show());
+            });
+        }
+        if (afford && onHouse != null) {
+            set(42, Items.of(Material.GOLD_BLOCK)
+                    .name(messages().forSender(viewer, "gui.bet.house"))
+                    .lore(messages().loreFor(viewer, "gui.bet.house-lore",
+                            "bet", plugin.economy().format(bet)))
+                    .glow(true)
+                    .build(), e -> confirm(onHouse));
+        }
         if (afford) {
-            set(40, Items.of(Material.LIME_CONCRETE)
+            set(onHouse != null || itemOption ? 38 : 40, Items.of(Material.LIME_CONCRETE)
                     .name(messages().forSender(viewer, "gui.bet.confirm"))
                     .lore(messages().loreFor(viewer, "gui.bet.confirm-lore",
                             "bet", plugin.economy().format(bet),
                             "game", game.displayName(viewer)))
                     .glow(true)
-                    .build(), this::confirm);
+                    .build(), e -> confirm(onConfirm));
         } else {
             set(40, Items.of(Material.RED_CONCRETE)
                     .name(messages().forSender(viewer, "gui.bet.no-funds"))
@@ -139,10 +171,13 @@ public final class BetSelectorGui extends Gui {
         set(slot, item, action);
     }
 
-    private void confirm(InventoryClickEvent event) {
+    private void confirm(DoubleConsumer action) {
         double amount = bet;
         close();
-        onConfirm.accept(amount);
+        // The game opens its own menu right after this, and a menu opened in the same
+        // tick as the closing of another one left some clients looking at an inventory
+        // that never took a click. One tick apart, the new menu always wins.
+        plugin.getServer().getScheduler().runTask(plugin, () -> action.accept(amount));
     }
 
     @Override
@@ -153,5 +188,10 @@ public final class BetSelectorGui extends Gui {
     @Override
     protected void onClose() {
         // Closing the selector without confirming costs nothing: nothing was charged yet.
+    }
+
+    @Override
+    protected boolean holdsRound() {
+        return false;
     }
 }

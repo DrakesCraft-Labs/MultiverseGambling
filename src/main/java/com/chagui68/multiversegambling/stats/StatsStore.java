@@ -1,17 +1,13 @@
 package com.chagui68.multiversegambling.stats;
 
 import com.chagui68.multiversegambling.MultiverseGamblingPlugin;
+import com.chagui68.multiversegambling.util.JsonStore;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.Reader;
-import java.io.Writer;
 import java.lang.reflect.Type;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -21,6 +17,9 @@ import java.util.UUID;
 
 /**
  * Record of everything that happens in the casino, stored in {@code stats.json}.
+ *
+ * <p>A stats.json that cannot be parsed never stops the plugin: {@link JsonStore} moves
+ * it aside and the history starts empty.</p>
  */
 public final class StatsStore {
 
@@ -113,40 +112,23 @@ public final class StatsStore {
     }
 
     private void load() {
-        if (!file.exists()) {
+        Map<String, PlayerStats> raw = JsonStore.read(plugin.getLogger(), file, gson, MAP_TYPE);
+        if (raw == null) {
             return;
         }
-        try (Reader reader = Files.newBufferedReader(file.toPath(), StandardCharsets.UTF_8)) {
-            Map<String, PlayerStats> raw = gson.fromJson(reader, MAP_TYPE);
-            if (raw == null) {
-                return;
+        raw.forEach((key, value) -> {
+            try {
+                stats.put(UUID.fromString(key), value == null ? new PlayerStats() : value);
+            } catch (IllegalArgumentException ignored) {
+                plugin.getLogger().warning("Invalid UUID in stats.json: " + key);
             }
-            raw.forEach((key, value) -> {
-                try {
-                    stats.put(UUID.fromString(key), value == null ? new PlayerStats() : value);
-                } catch (IllegalArgumentException ignored) {
-                    plugin.getLogger().warning("Invalid UUID in stats.json: " + key);
-                }
-            });
-        } catch (IOException e) {
-            plugin.getLogger().warning("Could not read stats.json: " + e.getMessage());
-        }
+        });
     }
 
     public void save() {
         Map<String, PlayerStats> raw = new HashMap<>();
         stats.forEach((id, value) -> raw.put(id.toString(), value));
-        try {
-            File parent = file.getParentFile();
-            if (parent != null && !parent.exists() && !parent.mkdirs()) {
-                plugin.getLogger().warning("Could not create the plugin data folder");
-            }
-            try (Writer writer = Files.newBufferedWriter(file.toPath(), StandardCharsets.UTF_8)) {
-                gson.toJson(raw, MAP_TYPE, writer);
-            }
-        } catch (IOException e) {
-            plugin.getLogger().warning("Could not save stats.json: " + e.getMessage());
-        }
+        JsonStore.write(plugin.getLogger(), file, gson, MAP_TYPE, raw);
     }
 
     public void saveAsync() {

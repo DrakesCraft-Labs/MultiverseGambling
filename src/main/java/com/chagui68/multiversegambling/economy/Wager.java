@@ -9,7 +9,7 @@ import java.util.UUID;
  * All the money of a round goes through here, and settling twice does nothing the
  * second time.</p>
  */
-public final class Wager {
+public class Wager {
 
     private final EconomyManager economy;
     private final UUID playerId;
@@ -60,7 +60,14 @@ public final class Wager {
             return false;
         }
         settled = true;
-        return economy.provider().deposit(playerId, Math.max(0, payout));
+        return deliver(Math.max(0, payout));
+    }
+
+    /**
+     * Hands the payout over: money by default, items for a bet staked with items.
+     */
+    protected boolean deliver(double payout) {
+        return economy.provider().deposit(playerId, payout);
     }
 
     /**

@@ -27,14 +27,16 @@ public final class SlotsTable {
      * tuned by hand for an RTP close to 95%, which is what a real slot machine does.
      * {@link #rtp()} proves it and the test pins it.
      */
+    // The glyphs are characters Minecraft can draw (emoji outside the basic plane render
+    // as empty boxes), coloured like the symbol they stand for.
     public static final List<Symbol> DEFAULT = List.of(
-            new Symbol("cherry", "\uD83C\uDF52", 30, 7.0, 1.55),
-            Symbol.of("lemon", "\uD83C\uDF4B", 25, 10.5),
-            Symbol.of("bell", "\uD83D\uDD14", 18, 21.0),
-            Symbol.of("diamond", "\uD83D\uDC8E", 12, 46.0),
-            Symbol.of("seven", "7\uFE0F\u20E3", 8, 105.0),
-            Symbol.of("star", "\u2B50", 4, 265.0),
-            Symbol.of("crown", "\uD83D\uDC51", 2, 600.0));
+            new Symbol("cherry", "&c\u25CF", 30, 7.0, 1.55),
+            Symbol.of("lemon", "&e\u25CF", 25, 10.5),
+            Symbol.of("bell", "&6\u266B", 18, 21.0),
+            Symbol.of("diamond", "&b\u25C6", 12, 46.0),
+            Symbol.of("seven", "&c&l7", 8, 105.0),
+            Symbol.of("star", "&e\u2605", 4, 265.0),
+            Symbol.of("crown", "&6\u265B", 2, 600.0));
 
     private final List<Symbol> symbols;
     private final Map<String, Symbol> byId = new LinkedHashMap<>();

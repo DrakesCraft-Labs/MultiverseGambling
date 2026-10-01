@@ -50,10 +50,19 @@ public final class BoardListener implements Listener {
         if (!(game instanceof BoardGame)) {
             return;
         }
+        ArenaBoard board = ArenaBoard.of(game.id());
+        // Only the stage in the middle of the pavilion is the board: the bleachers, the
+        // walls and the gates stay ordinary blocks.
+        int dx = block.getX() - arena.centerX();
+        int dz = block.getZ() - arena.centerZ();
+        int reach = CasinoLayout.STAGE_RADIUS + 1;
+        boolean onStage = dx * dx + dz * dz <= reach * reach;
+        if (!onStage && (board == null || board.cellAt(block) < 0)) {
+            return;
+        }
         // The click opens or drives the game; it never places a block.
         event.setCancelled(true);
         Player player = event.getPlayer();
-        ArenaBoard board = ArenaBoard.of(game.id());
         if (board == null) {
             game.open(player);
             return;

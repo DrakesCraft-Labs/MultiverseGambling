@@ -56,9 +56,35 @@ language:
   follow-client: true
 
 # ---------------------------------------------------------------------------
-#  The dedicated casino world: a flat stage of "size" x "size" blocks with the
-#  plaza, the road grid and one arena per game. The plugin creates the world on
-#  first start; point world.name at an existing world to reuse it.
+#  Bets staked with items. Plinko, the lucky wheel, the classic roulette, the
+#  coin flip, the dice and the slots accept items as well as money: the bet menu
+#  has an "Item bet" button that opens a chest where the items are placed, and it
+#  tells how many of them come back for every possible result. Winnings are paid
+#  in copies of the same item (custom items keep all their data); a fraction of an
+#  item is paid by chance, so the average payout is exact.
+# ---------------------------------------------------------------------------
+item-bets:
+  enabled: true
+  # Most items one bet can stake (1728 = 27 stacks of 64).
+  max-items: 1728
+  # Items that can never be staked: an exact name (DIAMOND), every name ending in
+  # something (*_SHULKER_BOX) or starting with something (NETHERITE_*). Containers
+  # are blocked by default, so nobody multiplies the contents of a box.
+  blocked:
+    - '*SHULKER_BOX'
+    - '*BUNDLE'
+
+# ---------------------------------------------------------------------------
+#  The dedicated casino world: a flat stage of "size" x "size" blocks with a
+#  marble plaza and a fountain at spawn, a grid of boulevards with lamps and
+#  trees, and one walled pavilion per game. The plugin creates the world on first
+#  start; point world.name at an existing world to reuse it.
+#
+#  The 21 games of the catalogue fill 408 x 408 blocks, so 500 leaves a green
+#  belt round the edge. The world grows by itself when more games are added.
+#  The casino is rebuilt on its own whenever its design changes (a plugin update,
+#  a new game, a bigger board): the rebuild clears the surface of this world, so
+#  keep your own builds in other worlds.
 # ---------------------------------------------------------------------------
 world:
   # Create (or load) the casino world when the plugin starts.
@@ -66,23 +92,28 @@ world:
   name: 'mvgam_casino'
   # Side of the square in blocks; the world border is centred on spawn.
   size: 500
-  # Build the plaza, the arenas and the roads the first time the world is used.
+  # Build the plaza, the pavilions and the boulevards when they are missing or out
+  # of date. The build runs in the background, a few chunks per tick.
   build-structures: true
   # Send players to the casino world when they join the server.
   teleport-on-join: false
+  # Hour the casino world is frozen at, in ticks: 6000 noon, 13000 dusk (the lamps
+  # and the pavilions glow), 18000 midnight. -1 keeps the normal day cycle.
+  time: 13000
 
-  # In world shows. Instead of only counting numbers in the action bar, the games
-  # paint the result on their arena: the roulette grows a table with a ball that
-  # spins and settles on the winning pocket, and the rest of the catalogue gets its
-  # own prop as it is added. The scenery is temporary and removed as the round ends.
+  # In world shows. Instead of only counting numbers in the action bar, every game
+  # stages its round on its pavilion with display entities: a roulette wheel and its
+  # ball, a slot machine with rolling drums, a rocket for crash, a plinko wall, a
+  # coin toss, a card table, a horse race and more. The scenery is temporary and
+  # removed a moment after the result.
   animations:
     enabled: true
-    # Move the player to their arena so they see the show. With this off a round is
-    # only animated for players who are already in the casino world; everybody else
-    # keeps the action bar of the old days.
+    # Move the player to their pavilion so they see the show. With this off a round
+    # is only animated for players who are already in the casino world; everybody
+    # else keeps the action bar of the old days.
     teleport-players: true
-    # Blocks between the centre of an arena and the spot the watcher stands on.
-    view-distance: 11
+    # Blocks between the centre of a pavilion and the spot the watcher stands on.
+    view-distance: 14
 
 # ---------------------------------------------------------------------------
 #  Group games: values shared by all of them
@@ -129,16 +160,18 @@ games:
   roulette:
     enabled: true
     american: false
-    spin-ticks: 60
+    spin-ticks: 100
 
   slots:
     enabled: true
-    spin-ticks: 40
+    spin-ticks: 60
 
   crash:
     enabled: true
     double-every-seconds: 10.0
     max-multiplier: 1000.0
+    # Seconds the multiplier climbs before the round can bust.
+    countdown: 5
 
   mines:
     enabled: true
@@ -149,8 +182,9 @@ games:
   towers:
     enabled: true
     levels: 9
-    tiles: 4
-    bombs: 1
+    # Difficulty highlighted in the menu: easy (4 doors, 1 bomb), medium (3, 1),
+    # hard (2, 1), expert (3, 2) or master (4, 3). The player picks one every round.
+    default-difficulty: medium
 
   blackjack:
     enabled: true

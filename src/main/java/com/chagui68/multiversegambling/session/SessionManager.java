@@ -82,7 +82,7 @@ public final class SessionManager {
                 session.tick();
             } catch (RuntimeException error) {
                 plugin.getLogger().severe("Error in the session " + session.sessionId()
-                        + " de " + session.playerId() + ": " + error);
+                        + " of " + session.playerId() + ": " + error);
                 error.printStackTrace();
                 session.cancel();
                 sessions.remove(session.playerId());
@@ -103,8 +103,15 @@ public final class SessionManager {
             task.cancel();
             task = null;
         }
+        // One round that cannot be closed must not leave the others holding a bet:
+        // every session is cancelled on its own.
         for (SoloSession session : new ArrayList<>(sessions.values())) {
-            session.cancel();
+            try {
+                session.cancel();
+            } catch (RuntimeException error) {
+                plugin.getLogger().severe("Could not close the session " + session.sessionId()
+                        + " of " + session.playerId() + ": " + error);
+            }
         }
         sessions.clear();
         tickers.clear();

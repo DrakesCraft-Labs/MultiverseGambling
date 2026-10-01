@@ -1,17 +1,13 @@
 package com.chagui68.multiversegambling.economy;
 
 import com.chagui68.multiversegambling.MultiverseGamblingPlugin;
+import com.chagui68.multiversegambling.util.JsonStore;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.Reader;
-import java.io.Writer;
 import java.lang.reflect.Type;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -25,6 +21,9 @@ import org.bukkit.Bukkit;
  * <p>It is used when the server has no Vault. Every write happens in memory and the
  * dump to disk is asynchronous, because the main thread cannot afford to touch the
  * disk in the middle of a roll.</p>
+ *
+ * <p>A balances.json that cannot be parsed never stops the plugin: {@link JsonStore}
+ * moves it aside and the wallet starts empty.</p>
  */
 public final class InternalEconomy implements EconomyProvider {
 
@@ -95,24 +94,17 @@ public final class InternalEconomy implements EconomyProvider {
     }
 
     private void load() {
-        if (!file.exists()) {
+        Map<String, Double> raw = JsonStore.read(plugin.getLogger(), file, gson, MAP_TYPE);
+        if (raw == null) {
             return;
         }
-        try (Reader reader = Files.newBufferedReader(file.toPath(), StandardCharsets.UTF_8)) {
-            Map<String, Double> raw = gson.fromJson(reader, MAP_TYPE);
-            if (raw == null) {
-                return;
+        raw.forEach((key, value) -> {
+            try {
+                balances.put(UUID.fromString(key), value == null ? 0.0 : value);
+            } catch (IllegalArgumentException ignored) {
+                plugin.getLogger().warning("Invalid UUID in balances.json: " + key);
             }
-            raw.forEach((key, value) -> {
-                try {
-                    balances.put(UUID.fromString(key), value == null ? 0.0 : value);
-                } catch (IllegalArgumentException ignored) {
-                    plugin.getLogger().warning("Invalid UUID in balances.json: " + key);
-                }
-            });
-        } catch (IOException e) {
-            plugin.getLogger().warning("Could not read balances.json: " + e.getMessage());
-        }
+        });
     }
 
     /**
@@ -121,17 +113,7 @@ public final class InternalEconomy implements EconomyProvider {
     public void save() {
         Map<String, Double> raw = new HashMap<>();
         balances.forEach((id, value) -> raw.put(id.toString(), value));
-        try {
-            File parent = file.getParentFile();
-            if (parent != null && !parent.exists() && !parent.mkdirs()) {
-                plugin.getLogger().warning("Could not create the plugin data folder");
-            }
-            try (Writer writer = Files.newBufferedWriter(file.toPath(), StandardCharsets.UTF_8)) {
-                gson.toJson(raw, MAP_TYPE, writer);
-            }
-        } catch (IOException e) {
-            plugin.getLogger().warning("Could not save balances.json: " + e.getMessage());
-        }
+        JsonStore.write(plugin.getLogger(), file, gson, MAP_TYPE, raw);
     }
 
     public void saveAsync() {
