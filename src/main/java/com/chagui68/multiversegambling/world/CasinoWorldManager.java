@@ -200,6 +200,12 @@ public final class CasinoWorldManager {
     private void applyRules() {
         try {
             world.setGameRule(GameRules.SPAWN_MOBS, false);
+            world.setGameRule(GameRules.SPAWN_MONSTERS, false);
+            world.setGameRule(GameRules.SPAWN_WARDENS, false);
+            world.setGameRule(GameRules.SPAWNER_BLOCKS_WORK, false);
+            world.setGameRule(GameRules.TNT_EXPLODES, false);
+            world.setGameRule(GameRules.PROJECTILES_CAN_BREAK_BLOCKS, false);
+            world.setGameRule(GameRules.SPREAD_VINES, false);
             world.setGameRule(GameRules.SPAWN_PHANTOMS, false);
             world.setGameRule(GameRules.SPAWN_PATROLS, false);
             world.setGameRule(GameRules.SPAWN_WANDERING_TRADERS, false);
@@ -214,7 +220,7 @@ public final class CasinoWorldManager {
             if (time >= 0) {
                 world.setTime(time);
             }
-        } catch (RuntimeException error) {
+        } catch (RuntimeException | LinkageError error) {
             // A server that renamed a rule must not lose the casino over it.
             plugin.getLogger().warning("Could not apply the casino world rules: " + error.getMessage());
         }

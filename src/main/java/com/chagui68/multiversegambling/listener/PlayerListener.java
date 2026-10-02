@@ -1,7 +1,6 @@
 package com.chagui68.multiversegambling.listener;
 
 import com.chagui68.multiversegambling.MultiverseGamblingPlugin;
-import com.chagui68.multiversegambling.game.AbstractGroupGame;
 import com.chagui68.multiversegambling.game.Game;
 
 import java.util.UUID;
@@ -44,11 +43,9 @@ public final class PlayerListener implements Listener {
         UUID id = event.getPlayer().getUniqueId();
         // Close the single player game first: it refunds whatever is left over.
         plugin.sessions().cancel(id);
-        // Then pull the player out of any open room.
+        // Then pull the player out of any open room or table.
         for (Game game : plugin.games().all()) {
-            if (game instanceof AbstractGroupGame group) {
-                group.handleQuit(id);
-            }
+            game.handleQuit(id);
         }
     }
 }

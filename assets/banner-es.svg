@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 240" width="920" height="240" role="img" aria-label="MultiverseGambling - mundo casino, 21 juegos, azar verificable. Por Chagui68 para Drakes Labs.">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 240" width="920" height="240" role="img" aria-label="MultiverseGambling - mundo casino, 22 juegos, azar verificable. Por Chagui68 para Drakes Labs.">
   <title>MultiverseGambling</title>
   <defs>
     <linearGradient id="bFondo" x1="0" y1="0" x2="1" y2="1">
@@ -80,7 +80,7 @@
   <rect x="300" y="132" width="60" height="26" fill="url(#shine)" opacity="0.18">
     <animate attributeName="x" values="250;620;620" keyTimes="0;0.5;1" dur="5s" repeatCount="indefinite"/>
   </rect>
-  <text x="460" y="184" text-anchor="middle" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-weight="700" font-size="12" fill="#C084FC" letter-spacing="3">MUNDO CASINO · 21 JUEGOS · APUESTAS CON ÍTEMS · AZAR VERIFICABLE
+  <text x="460" y="184" text-anchor="middle" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-weight="700" font-size="12" fill="#C084FC" letter-spacing="3">MUNDO CASINO · 22 JUEGOS · APUESTAS CON ÍTEMS · AZAR VERIFICABLE
     <animate attributeName="opacity" values="0.75;1;0.75" dur="3s" repeatCount="indefinite"/>
   </text>
 

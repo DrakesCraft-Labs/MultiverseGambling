@@ -25,6 +25,7 @@ they watch the show. Colour roulette also accepts `/mvgam action color red`, `bl
 | **Duel 1v1** | `duel` | Challenge somebody for a stake; both put the same in and a coin decides | 2 | 100% − commission |
 | **Raffle** | `raffle` | Tickets at a fixed price and a draw of three prizes: 70%, 20% and 10% of the pot (with two players the two prizes share the whole pot). Only whole tickets are charged | 2-24 | 100% − commission |
 | **Dice Poker** | `dice-poker` | Five dice each; the best hand wins and ties split the pot | 2-16 | 100% − commission |
+| **Poker** | `poker` | Texas hold'em at a table with private cards, hologram buttons and side pots; see [Poker](Poker) | 2-8 | 100% − rake |
 
 ## Playing alone against the house
 

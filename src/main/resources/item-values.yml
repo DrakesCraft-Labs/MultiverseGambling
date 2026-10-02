@@ -1,0 +1,849 @@
+# ---------------------------------------------------------------------------
+#  MultiverseGambling - reference value of items, in coins
+# ---------------------------------------------------------------------------
+#
+#  Used by the poker table to turn items into chips. A diamond is worth 100 coins
+#  and every other value follows from that anchor:
+#
+#  * vanilla: how hard the item is to obtain, against the diamond.
+#  * slimefun: generated from the recipes of Slimefun itself. An item is worth
+#    what its ingredients are worth, times what its machine or ritual adds
+#    (enhanced crafting table x1.05, smeltery x1.08, magic workbench x1.15,
+#    heated pressure chamber x1.15, ancient altar x1.40...), plus 0.5 coins per
+#    experience level of its research, divided by how many the recipe makes.
+#    Resources found in the world (sifted ore, uranium, oil...) have a fixed value.
+#  * multiversecreatures: a drop is worth how hard its creature is to beat divided
+#    by its drop chance; a crafted item is worth its ingredients x1.10 (x1.65 for
+#    the legendary weapons, armour and relics); a merchant item is worth its trade.
+#  * slimefun addons: every item of every installed addon is valued on each start
+#    from its registered recipe with the same rule (see item-values-addons.yml).
+#
+#  Edit any number freely, or change "scale" to make every item worth more or less
+#  in your economy. A vanilla or MultiverseCreatures item that is not listed has no
+#  value and cannot be used.
+#  /mvgam reload applies the changes.
+# ---------------------------------------------------------------------------
+
+# Multiplies every value below (0.5 = half price, 2 = double).
+scale: 1.0
+
+# Damaged tools and armour are worth their remaining durability.
+scale-by-durability: true
+
+vanilla:
+  AMETHYST_SHARD: 3
+  ANCIENT_DEBRIS: 120
+  ANVIL: 155
+  APPLE: 2
+  BEACON: 1700
+  BEETROOT: 1
+  BLACK_DYE: 1
+  BLACK_WOOL: 2.2
+  BLAZE_POWDER: 6
+  BLAZE_ROD: 12
+  BLUE_DYE: 1
+  BLUE_ICE: 81
+  BLUE_STAINED_GLASS: 1.2
+  BONE: 1
+  BONE_MEAL: 0.3
+  BOOK: 4
+  BOOKSHELF: 14
+  BOW: 4
+  BOWL: 0.5
+  BREWING_STAND: 15
+  BROWN_DYE: 1
+  BUCKET: 15
+  CACTUS: 1
+  CALCITE: 1
+  CAMPFIRE: 6
+  CARROT: 1
+  CAULDRON: 35
+  CHAIN: 7
+  CHARCOAL: 0.5
+  CHEST: 8
+  CLOCK: 33
+  COAL: 0.6
+  COAL_BLOCK: 5.4
+  COBBLESTONE: 0.2
+  COCOA_BEANS: 1
+  COD: 1.5
+  COMPASS: 22
+  CONDUIT: 900
+  COOKED_BEEF: 3
+  COOKED_CHICKEN: 3
+  COOKED_COD: 2
+  COOKED_MUTTON: 3
+  COOKED_PORKCHOP: 3
+  COOKED_RABBIT: 3
+  COOKIE: 1
+  COPPER_BLOCK: 13.5
+  COPPER_INGOT: 1.5
+  CRAFTING_TABLE: 4
+  CRYING_OBSIDIAN: 25
+  CYAN_DYE: 1
+  DIAMOND: 100
+  DIAMOND_AXE: 301
+  DIAMOND_BLOCK: 900
+  DIAMOND_BOOTS: 400
+  DIAMOND_CHESTPLATE: 800
+  DIAMOND_HELMET: 500
+  DIAMOND_HOE: 201
+  DIAMOND_LEGGINGS: 700
+  DIAMOND_PICKAXE: 301
+  DIAMOND_SHOVEL: 101
+  DIAMOND_SWORD: 201
+  DIRT: 0.1
+  DISPENSER: 10
+  DRAGON_BREATH: 30
+  DRAGON_EGG: 10000
+  DRIED_KELP: 0.5
+  ECHO_SHARD: 60
+  EGG: 1
+  ELYTRA: 3000
+  EMERALD: 40
+  EMERALD_BLOCK: 360
+  EMERALD_ORE: 40
+  ENCHANTED_BOOK: 50
+  ENCHANTED_GOLDEN_APPLE: 2000
+  ENCHANTING_TABLE: 220
+  ENDER_EYE: 20
+  ENDER_PEARL: 15
+  END_CRYSTAL: 55
+  EXPERIENCE_BOTTLE: 5
+  FEATHER: 1
+  FIRE_CHARGE: 4
+  FISHING_ROD: 3
+  FLINT: 1
+  FLINT_AND_STEEL: 6
+  FURNACE: 4
+  GHAST_TEAR: 25
+  GLASS: 1
+  GLASS_BOTTLE: 1
+  GLASS_PANE: 0.4
+  GLOWSTONE: 6
+  GLOWSTONE_DUST: 1.5
+  GLOW_BERRIES: 2
+  GOLDEN_APPLE: 75
+  GOLDEN_PICKAXE: 25
+  GOLD_BLOCK: 72
+  GOLD_INGOT: 8
+  GOLD_NUGGET: 0.9
+  GOLD_ORE: 8
+  GRAVEL: 0.3
+  GRAY_DYE: 1
+  GREEN_DYE: 1
+  GREEN_WOOL: 2.2
+  GUNPOWDER: 3
+  HAY_BLOCK: 9
+  HEART_OF_THE_SEA: 500
+  HONEYCOMB_BLOCK: 16
+  HONEY_BLOCK: 20
+  HOPPER: 45
+  ICE: 1
+  INK_SAC: 1
+  IRON_BLOCK: 45
+  IRON_CHAIN: 7
+  IRON_INGOT: 5
+  IRON_NUGGET: 0.55
+  IRON_ORE: 6
+  IRON_PICKAXE: 16
+  IRON_SWORD: 11
+  KELP: 0.5
+  LAPIS_BLOCK: 18
+  LAPIS_LAZULI: 2
+  LAVA_BUCKET: 16
+  LEATHER: 3
+  LEATHER_HELMET: 15
+  LIGHT_BLUE_DYE: 1
+  LIGHT_GRAY_DYE: 1
+  LILY_PAD: 2
+  LIME_DYE: 1
+  LIME_STAINED_GLASS_PANE: 0.5
+  MAGENTA_DYE: 1
+  MAGMA_BLOCK: 4
+  MAGMA_CREAM: 8
+  MELON: 9
+  MELON_SLICE: 1
+  MILK_BUCKET: 16
+  NAME_TAG: 30
+  NAUTILUS_SHELL: 40
+  NETHERITE_AXE: 801
+  NETHERITE_BLOCK: 4500
+  NETHERITE_BOOTS: 900
+  NETHERITE_CHESTPLATE: 1300
+  NETHERITE_HELMET: 1000
+  NETHERITE_HOE: 701
+  NETHERITE_INGOT: 500
+  NETHERITE_LEGGINGS: 1200
+  NETHERITE_PICKAXE: 801
+  NETHERITE_SCRAP: 120
+  NETHERITE_SHOVEL: 601
+  NETHERITE_SWORD: 701
+  NETHERRACK: 0.2
+  NETHER_BRICK: 0.5
+  NETHER_BRICKS: 2
+  NETHER_STAR: 1500
+  NETHER_WART: 2
+  OAK_LOG: 1
+  OAK_SLAB: 0.25
+  OBSERVER: 8
+  OBSIDIAN: 15
+  ORANGE_DYE: 1
+  ORANGE_STAINED_GLASS: 1.2
+  ORANGE_WOOL: 2.2
+  PACKED_ICE: 9
+  PAPER: 1
+  PHANTOM_MEMBRANE: 10
+  PINK_DYE: 1
+  PISTON: 10
+  POPPY: 0.5
+  POTATO: 1
+  PUMPKIN: 2
+  PURPLE_DYE: 1
+  QUARTZ: 2
+  QUARTZ_BLOCK: 8
+  RABBIT_HIDE: 1
+  RAW_GOLD: 8
+  RAW_IRON: 5
+  REDSTONE: 1
+  REDSTONE_BLOCK: 9
+  RED_DYE: 1
+  RED_MUSHROOM: 1
+  RED_STAINED_GLASS: 1.2
+  RED_WOOL: 2.2
+  ROTTEN_FLESH: 0.5
+  SALMON: 1.5
+  SAND: 0.3
+  SEAGRASS: 0.5
+  SHIELD: 11
+  SHULKER_SHELL: 60
+  SLIME_BALL: 4
+  SMOKER: 8
+  SOUL_SAND: 1
+  SOUL_SOIL: 1
+  SPAWNER: 2000
+  SPIDER_EYE: 2
+  STICK: 0.25
+  STICKY_PISTON: 14
+  STONE: 0.5
+  STONE_PRESSURE_PLATE: 1
+  STRING: 1
+  SUGAR: 1
+  SWEET_BERRIES: 1
+  TERRACOTTA: 1.5
+  TNT: 17
+  TOTEM_OF_UNDYING: 800
+  TRIDENT: 600
+  TURTLE_HELMET: 50
+  WATER_BUCKET: 15
+  WHEAT: 1
+  WHEAT_SEEDS: 0.2
+  WHITE_CONCRETE: 1.5
+  WHITE_DYE: 1
+  WHITE_GLAZED_TERRACOTTA: 2
+  WHITE_STAINED_GLASS: 1.2
+  WHITE_STAINED_GLASS_PANE: 0.5
+  WHITE_TERRACOTTA: 1.6
+  WHITE_WOOL: 2
+  WITHER_ROSE: 40
+  WITHER_SKELETON_SKULL: 300
+  WRITABLE_BOOK: 6
+  YELLOW_DYE: 1
+  YELLOW_WOOL: 2.2
+
+# Slimefun items by their Slimefun id (514 items).
+slimefun:
+  ADVANCED_CIRCUIT_BOARD: 199.8    # Advanced Circuit Board, enhanced_crafting_table
+  AIR_RUNE: 36.44    # Ancient Rune [Air], ancient_altar
+  ALUMINUM_BRASS_INGOT: 36.74    # Aluminum Brass Ingot, smeltery
+  ALUMINUM_BRONZE_INGOT: 34.58    # Aluminum Bronze Ingot, smeltery
+  ALUMINUM_DUST: 3    # Aluminum Dust, ore_washer
+  ALUMINUM_INGOT: 6.24    # Aluminum Ingot, smeltery
+  ANCIENT_ALTAR: 476.65    # Ancient Altar, magic_workbench
+  ANCIENT_PEDESTAL: 42.25    # Ancient Pedestal, magic_workbench
+  ANDROID_INTERFACE_FUEL: 195.56    # Android Interface (Fuel), enhanced_crafting_table
+  ANDROID_INTERFACE_ITEMS: 195.56    # Android Interface (Items), enhanced_crafting_table
+  ANDROID_MEMORY_CORE: 1214    # Android Memory Core, enhanced_crafting_table
+  ANIMAL_GROWTH_ACCELERATOR: 7521    # Animal Growth Accelerator, enhanced_crafting_table
+  APPLE_FERTILIZER: 18.48    # Content: Apple, composter, organic food
+  APPLE_JUICE: 16.54    # Apple Juice, juicer
+  APPLE_ORGANIC_FOOD: 17.6    # Content: Apple, food fabricator, 8 x APPLE
+  ARMORED_JETBOOTS: 3762    # Armored Jet Boots, enhanced_crafting_table
+  ARMORED_JETPACK: 4267    # Armored Jetpack, enhanced_crafting_table
+  ARMOR_AUTO_CRAFTER: 4938    # Auto-Crafter (Armor Forge), enhanced_crafting_table
+  AUTO_ANVIL: 1816    # Auto Anvil, enhanced_crafting_table
+  AUTO_ANVIL_2: 2906    # Auto Anvil Mk.II, enhanced_crafting_table
+  AUTO_BREEDER: 1943    # Auto-Breeder, enhanced_crafting_table
+  AUTO_BREWER: 10902    # Auto Brewer, enhanced_crafting_table
+  AUTO_DISENCHANTER: 5417    # Auto Disenchanter, enhanced_crafting_table
+  AUTO_DISENCHANTER_2: 25875    # Auto Disenchanter - II, enhanced_crafting_table
+  AUTO_DRIER: 692.16    # Auto Drier, enhanced_crafting_table
+  AUTO_ENCHANTER: 2809    # Auto Enchanter, enhanced_crafting_table
+  AUTO_ENCHANTER_2: 23403    # Auto Enchanter - II, enhanced_crafting_table
+  BACKPACK_LARGE: 453.85    # Large Backpack, enhanced_crafting_table
+  BACKPACK_MEDIUM: 229.46    # Backpack, enhanced_crafting_table
+  BACKPACK_SMALL: 85.43    # Small Backpack, enhanced_crafting_table
+  BANDAGE: 2.15    # Bandage, enhanced_crafting_table
+  BASIC_CIRCUIT_BOARD: 60    # Basic Circuit Board, raw resource
+  BATTERY: 51.7    # Battery, enhanced_crafting_table
+  BEEF_JERKY: 6.25    # Beef Jerky, enhanced_crafting_table
+  BEETROOT_FERTILIZER: 9.24    # Content: Beetroot, composter, organic food
+  BEETROOT_ORGANIC_FOOD: 8.8    # Content: Beetroot, food fabricator, 8 x BEETROOT
+  BEE_BOOTS: 137.94    # Bee Boots, armor_forge
+  BEE_HELMET: 150.54    # Bee Helmet, armor_forge
+  BEE_LEGGINGS: 184.14    # Bee Leggings, armor_forge
+  BEE_WINGS: 3364    # Bee Wings, armor_forge
+  BIG_CAPACITOR: 2035    # Big Energy Capacitor, enhanced_crafting_table
+  BILLON_INGOT: 19.22    # Billon Ingot, smeltery
+  BILLON_JETBOOTS: 2603    # Jet Boots - III, enhanced_crafting_table
+  BILLON_JETPACK: 2642    # Electric Jetpack - III, enhanced_crafting_table
+  BILLON_MULTI_TOOL: 787.7    # Multi Tool - III, enhanced_crafting_table
+  BIO_REACTOR: 1111    # Bio Reactor, enhanced_crafting_table
+  BLADE_OF_VAMPIRES: 716.8    # Blade of Vampires, magic_workbench
+  BLANK_RUNE: 41.21    # Blank Rune, ancient_altar
+  BLISTERING_INGOT: 392.68    # Blistering Ingot (33%), heated_pressure_chamber
+  BLISTERING_INGOT_2: 1537    # Blistering Ingot (66%), heated_pressure_chamber
+  BLISTERING_INGOT_3: 3511    # Blistering Ingot, heated_pressure_chamber
+  BLOCK_PLACER: 366.26    # Block Placer, enhanced_crafting_table
+  BOOK_BINDER: 1189    # Book Binder, enhanced_crafting_table
+  BOOSTED_URANIUM: 797    # Boosted Uranium, heated_pressure_chamber
+  BOOTS_OF_THE_STOMPER: 35.12    # Boots of the Stomper, armor_forge
+  BOUND_BACKPACK: 5796    # Soulbound Backpack, magic_workbench
+  BRASS_INGOT: 19.22    # Brass Ingot, smeltery
+  BROKEN_SPAWNER: 2107    # Broken Spawner, enhanced_crafting_table
+  BRONZE_INGOT: 17.22    # Bronze Ingot, smeltery
+  BUTTER: 14.73    # Butter, enhanced_crafting_table
+  CACTUS_BOOTS: 6.7    # Cactus Boots, armor_forge
+  CACTUS_CHESTPLATE: 10.9    # Cactus Chestplate, armor_forge
+  CACTUS_HELMET: 7.75    # Cactus Helmet, armor_forge
+  CACTUS_LEGGINGS: 9.85    # Cactus Leggings, armor_forge
+  CARBON: 9.54    # Carbon, compressor
+  CARBONADO: 926.94    # Carbonado, pressure_chamber
+  CARBONADO_EDGED_CAPACITOR: 9826    # Carbonado Edged Energy Capacitor, enhanced_crafting_table
+  CARBONADO_EDGED_FURNACE: 19701    # Carbonado Edged Furnace, enhanced_crafting_table
+  CARBONADO_JETBOOTS: 9214    # Jet Boots - VII, enhanced_crafting_table
+  CARBONADO_JETPACK: 10021    # Electric Jetpack - VII, enhanced_crafting_table
+  CARBONADO_MULTI_TOOL: 10261    # Multi Tool - VII, enhanced_crafting_table
+  CARBON_CHUNK: 384.64    # Carbon Chunk, enhanced_crafting_table
+  CARBON_PRESS: 2666    # Carbon Press, enhanced_crafting_table
+  CARBON_PRESS_2: 5947    # Carbon Press - II, enhanced_crafting_table
+  CARBON_PRESS_3: 10596    # Carbon Press - III, enhanced_crafting_table
+  CARGO_CONNECTOR_NODE: 166.32    # Cargo Node (Connector), enhanced_crafting_table
+  CARGO_INPUT_NODE: 162.25    # Cargo Node (Input), enhanced_crafting_table
+  CARGO_MANAGER: 12514    # Cargo Manager, enhanced_crafting_table
+  CARGO_MOTOR: 525.48    # Cargo Motor, enhanced_crafting_table
+  CARGO_OUTPUT_NODE: 162.25    # Cargo Node (Output), enhanced_crafting_table
+  CARGO_OUTPUT_NODE_2: 1363    # Advanced Cargo Node (Output), enhanced_crafting_table
+  CARROT_FERTILIZER: 9.24    # Content: Carrots, composter, organic food
+  CARROT_JUICE: 15.52    # Carrot Juice, juicer
+  CARROT_ORGANIC_FOOD: 8.8    # Content: Carrots, food fabricator, 8 x CARROT
+  CHAIN: 11.89    # Chain, enhanced_crafting_table
+  CHARGING_BENCH: 1019    # Charging Bench, enhanced_crafting_table
+  CHEESE: 21.4    # Cheese, enhanced_crafting_table
+  CHICKEN_JERKY: 6.25    # Chicken Jerky, enhanced_crafting_table
+  CHRISTMAS_APPLE_CIDER: 9.21    # Apple Cider, enhanced_crafting_table
+  CHRISTMAS_APPLE_PIE: 2.1    # Apple Pie, enhanced_crafting_table
+  CHRISTMAS_CAKE: 5.65    # Christmas Cake, enhanced_crafting_table
+  CHRISTMAS_CARAMEL: 0.54    # Caramel, smeltery
+  CHRISTMAS_CARAMEL_APPLE: 1.46    # Caramel Apple, enhanced_crafting_table
+  CHRISTMAS_CHOCOLATE_APPLE: 1.71    # Chocolate Apple, enhanced_crafting_table
+  CHRISTMAS_CHOCOLATE_MILK: 2.87    # Chocolate Milk, enhanced_crafting_table
+  CHRISTMAS_COOKIE: 0.5    # Christmas Cookie, enhanced_crafting_table
+  CHRISTMAS_EGG_NOG: 2.87    # Egg Nog, enhanced_crafting_table
+  CHRISTMAS_FRUIT_CAKE: 3.41    # Fruit Cake, enhanced_crafting_table
+  CHRISTMAS_HOT_CHOCOLATE: 3.1    # Hot Chocolate, smeltery
+  CHRISTMAS_MILK: 4.46    # Glass of Milk, enhanced_crafting_table
+  CHRISTMAS_PRESENT: 49.68    # Christmas Present, magic_workbench
+  CLIMBING_PICK: 261.6    # Climbing Pick, enhanced_crafting_table
+  CLOTH: 0.5    # Cloth, enhanced_crafting_table
+  COAL_GENERATOR: 1020    # Coal Generator, enhanced_crafting_table
+  COAL_GENERATOR_2: 2086    # Coal Generator (II), enhanced_crafting_table
+  COBALT_INGOT: 36.72    # Cobalt Ingot, smeltery
+  COBALT_PICKAXE: 165.19    # Cobalt Pickaxe, enhanced_crafting_table
+  COCOA_FERTILIZER: 9.24    # Content: Cocoa beans, composter, organic food
+  COCOA_ORGANIC_FOOD: 8.8    # Content: Cocoa Beans, food fabricator, 8 x COCOA_BEANS
+  COMBUSTION_REACTOR: 1080    # Combustion Reactor, enhanced_crafting_table
+  COMMON_TALISMAN: 186.01    # Common Talisman, magic_workbench
+  COMPOSTER: 39.83    # Composter, enhanced_crafting_table
+  COMPRESSED_CARBON: 45.07    # Compressed Carbon, compressor
+  COOLER: 367.59    # Cooler, enhanced_crafting_table
+  COOLING_UNIT: 305.96    # Cooling Unit, enhanced_crafting_table
+  COPPER_DUST: 3    # Copper Dust, ore_washer
+  COPPER_INGOT: 6.24    # Copper Ingot, smeltery
+  COPPER_WIRE: 3.39    # Copper Wire, enhanced_crafting_table
+  CORINTHIAN_BRONZE_INGOT: 39.89    # Corinthian Bronze Ingot, smeltery
+  CRAFTING_MOTOR: 4245    # Crafting Motor, enhanced_crafting_table
+  CROP_GROWTH_ACCELERATOR: 16327    # Crop Growth Accelerator, enhanced_crafting_table
+  CROP_GROWTH_ACCELERATOR_2: 22059    # Crop Growth Accelerator (II), enhanced_crafting_table
+  CRUCIBLE: 22.25    # Crucible, enhanced_crafting_table
+  CRUSHED_ORE: 15.56    # Crushed Ore, ore_crusher
+  DAMASCUS_STEEL_BOOTS: 264.57    # Damascus Steel Boots, armor_forge
+  DAMASCUS_STEEL_CHESTPLATE: 520.14    # Damascus Steel Chestplate, armor_forge
+  DAMASCUS_STEEL_HELMET: 328.46    # Damascus Steel Helmet, armor_forge
+  DAMASCUS_STEEL_INGOT: 60.85    # Damascus Steel Ingot, smeltery
+  DAMASCUS_STEEL_JETBOOTS: 2691    # Jet Boots - V, enhanced_crafting_table
+  DAMASCUS_STEEL_JETPACK: 2817    # Electric Jetpack - V, enhanced_crafting_table
+  DAMASCUS_STEEL_LEGGINGS: 456.25    # Damascus Steel Leggings, armor_forge
+  DAMASCUS_STEEL_MULTI_TOOL: 1006    # Multi Tool - V, enhanced_crafting_table
+  DIET_COOKIE: 1448    # Diet Cookie, magic_workbench
+  DUCT_TAPE: 15.05    # Duct Tape, enhanced_crafting_table
+  DURALUMIN_INGOT: 19.22    # Duralumin Ingot, smeltery
+  DURALUMIN_JETBOOTS: 2603    # Jet Boots - I, enhanced_crafting_table
+  DURALUMIN_JETPACK: 2642    # Electric Jetpack - I, enhanced_crafting_table
+  DURALUMIN_MULTI_TOOL: 787.7    # Multi Tool - I, enhanced_crafting_table
+  EARTH_RUNE: 28.46    # Ancient Rune [Earth], ancient_altar
+  EASTER_APPLE_PIE: 2.1    # Apple Pie, enhanced_crafting_table
+  EASTER_CARROT_PIE: 1.58    # Carrot Pie, enhanced_crafting_table
+  EASTER_EGG: 1.58    # Easter Egg, enhanced_crafting_table
+  ELECTRIC_DUST_WASHER: 819.45    # Electric Dust Washer, enhanced_crafting_table
+  ELECTRIC_DUST_WASHER_2: 1529    # Electric Dust Washer (II), enhanced_crafting_table
+  ELECTRIC_DUST_WASHER_3: 5855    # Electric Dust Washer (III), enhanced_crafting_table
+  ELECTRIC_FURNACE: 1602    # Electric Furnace, enhanced_crafting_table
+  ELECTRIC_FURNACE_2: 3282    # Electric Furnace - II, enhanced_crafting_table
+  ELECTRIC_FURNACE_3: 4614    # Electric Furnace - III, enhanced_crafting_table
+  ELECTRIC_GOLD_PAN: 311.24    # Electric Gold Pan, enhanced_crafting_table
+  ELECTRIC_GOLD_PAN_2: 416.28    # Electric Gold Pan (II), enhanced_crafting_table
+  ELECTRIC_GOLD_PAN_3: 4772    # Electric Gold Pan (III), enhanced_crafting_table
+  ELECTRIC_INGOT_FACTORY: 1948    # Electric Ingot Factory, enhanced_crafting_table
+  ELECTRIC_INGOT_FACTORY_2: 3539    # Electric Ingot Factory (II), enhanced_crafting_table
+  ELECTRIC_INGOT_FACTORY_3: 8626    # Electric Ingot Factory (III), enhanced_crafting_table
+  ELECTRIC_INGOT_PULVERIZER: 3754    # Electric Ingot Pulverizer, enhanced_crafting_table
+  ELECTRIC_MOTOR: 261.48    # Electric Motor, enhanced_crafting_table
+  ELECTRIC_ORE_GRINDER: 1916    # Electric Ore Grinder, enhanced_crafting_table
+  ELECTRIC_ORE_GRINDER_2: 7187    # Electric Ore Grinder (II), enhanced_crafting_table
+  ELECTRIC_ORE_GRINDER_3: 32107    # Electric Ore Grinder (III), enhanced_crafting_table
+  ELECTRIC_PRESS: 1866    # Electric Press, enhanced_crafting_table
+  ELECTRIC_PRESS_2: 4452    # Electric Press - II, enhanced_crafting_table
+  ELECTRIC_SMELTERY: 3773    # Electric Smeltery, enhanced_crafting_table
+  ELECTRIC_SMELTERY_2: 6095    # Electric Smeltery - II, enhanced_crafting_table
+  ELECTRIFIED_CRUCIBLE: 5908    # Electrified Crucible, enhanced_crafting_table
+  ELECTRIFIED_CRUCIBLE_2: 7052    # Electrified Crucible - II, enhanced_crafting_table
+  ELECTRIFIED_CRUCIBLE_3: 8586    # Electrified Crucible - III, enhanced_crafting_table
+  ELECTRO_MAGNET: 213.45    # Electromagnet, enhanced_crafting_table
+  ELEVATOR_PLATE: 209.77    # Elevator Plate, enhanced_crafting_table
+  ELYTRA_CAP: 4006    # Elytra Cap, armor_forge
+  ELYTRA_SCALE: 1257    # Elytra Scale, ancient_altar
+  ENCHANTMENT_RUNE: 1641    # Ancient Rune [Enchantment], ancient_altar
+  ENDER_BACKPACK: 243.45    # Ender Backpack, magic_workbench
+  ENDER_BOOTS: 56.49    # Ender Boots, armor_forge
+  ENDER_CHESTPLATE: 124.75    # Ender Chestplate, armor_forge
+  ENDER_HELMET: 77.5    # Ender Helmet, armor_forge
+  ENDER_LEGGINGS: 109    # Ender Leggings, armor_forge
+  ENDER_LUMP_1: 10.95    # Ender Lump - I, grind_stone
+  ENDER_LUMP_2: 47.49    # Ender Lump - II, enhanced_crafting_table
+  ENDER_LUMP_3: 200.96    # Ender Lump - III, enhanced_crafting_table
+  ENDER_RUNE: 128.23    # Ancient Rune [Ender], ancient_altar
+  ENERGIZED_CAPACITOR: 17913    # Energized Energy Capacitor, enhanced_crafting_table
+  ENERGY_CONNECTOR: 8.72    # Energy Connector, enhanced_crafting_table
+  ENERGY_REGULATOR: 559.33    # Energy Regulator, enhanced_crafting_table
+  ENHANCED_AUTO_CRAFTER: 5042    # Auto-Crafter (Enhanced), enhanced_crafting_table
+  ENHANCED_FURNACE: 709.44    # Enhanced Furnace - I, enhanced_crafting_table
+  ENHANCED_FURNACE_10: 8947    # Enhanced Furnace - X, enhanced_crafting_table
+  ENHANCED_FURNACE_11: 10110    # Enhanced Furnace - XI, enhanced_crafting_table
+  ENHANCED_FURNACE_2: 1450    # Enhanced Furnace - II, enhanced_crafting_table
+  ENHANCED_FURNACE_3: 2233    # Enhanced Furnace - III, enhanced_crafting_table
+  ENHANCED_FURNACE_4: 3056    # Enhanced Furnace - IV, enhanced_crafting_table
+  ENHANCED_FURNACE_5: 3919    # Enhanced Furnace - V, enhanced_crafting_table
+  ENHANCED_FURNACE_6: 4826    # Enhanced Furnace - VI, enhanced_crafting_table
+  ENHANCED_FURNACE_7: 5778    # Enhanced Furnace - VII, enhanced_crafting_table
+  ENHANCED_FURNACE_8: 6783    # Enhanced Furnace - VIII, enhanced_crafting_table
+  ENHANCED_FURNACE_9: 7839    # Enhanced Furnace - IX, enhanced_crafting_table
+  ENRICHED_NETHER_ICE: 175.25    # Enriched Nether Ice, heated_pressure_chamber
+  ESSENCE_OF_AFTERLIFE: 2060    # Essence of Afterlife, ancient_altar
+  EXPLOSIVE_BOW: 595.27    # Explosive Bow, enhanced_crafting_table
+  EXPLOSIVE_PICKAXE: 602.09    # Explosive Pickaxe, magic_workbench
+  EXPLOSIVE_SHOVEL: 543.64    # Explosive Shovel, magic_workbench
+  EXP_COLLECTOR: 7231    # EXP Collector, enhanced_crafting_table
+  FARMER_SHOES: 39.8    # Farmer Shoes, armor_forge
+  FERROSILICON: 33.82    # Ferrosilicon, smeltery
+  FILLED_FLASK_OF_KNOWLEDGE: 50    # Flask of Knowledge, raw resource
+  FIRE_RUNE: 27.89    # Ancient Rune [Fire], ancient_altar
+  FISH_JERKY: 5.2    # Fish Jerky, enhanced_crafting_table
+  FLASK_OF_KNOWLEDGE: 4.72    # Flask of Knowledge, magic_workbench
+  FLUID_PUMP: 3851    # Fluid Pump, enhanced_crafting_table
+  FOOD_COMPOSTER: 2882    # Food Composter, enhanced_crafting_table
+  FOOD_COMPOSTER_2: 4809    # Food Composter (II), enhanced_crafting_table
+  FOOD_FABRICATOR: 1026    # Food Fabricator, enhanced_crafting_table
+  FOOD_FABRICATOR_2: 2860    # Food Fabricator (II), enhanced_crafting_table
+  FORTUNE_COOKIE: 2.6    # Fortune Cookie, enhanced_crafting_table
+  FREEZER: 2588    # Freezer, enhanced_crafting_table
+  FREEZER_2: 3868    # Freezer (II), enhanced_crafting_table
+  FREEZER_3: 7318    # Freezer (III), enhanced_crafting_table
+  FUEL_BUCKET: 61    # Bucket of Fuel, refinery
+  GEO_MINER: 5392    # GEO Miner, enhanced_crafting_table
+  GILDED_BACKPACK: 1522    # Gilded Backpack, enhanced_crafting_table
+  GILDED_IRON: 233.44    # Gilded Iron, smeltery
+  GILDED_IRON_BOOTS: 988.45    # Gilded Iron Boots, armor_forge
+  GILDED_IRON_CHESTPLATE: 1969    # Gilded Iron Chestplate, armor_forge
+  GILDED_IRON_HELMET: 1234    # Gilded Iron Helmet, armor_forge
+  GILDED_IRON_LEGGINGS: 1724    # Gilded Iron Leggings, armor_forge
+  GLOWSTONE_BOOTS: 26.7    # Glowstone Boots, armor_forge
+  GLOWSTONE_CHESTPLATE: 51.9    # Glowstone Chestplate, armor_forge
+  GLOWSTONE_HELMET: 33    # Glowstone Helmet, armor_forge
+  GLOWSTONE_LEGGINGS: 45.6    # Glowstone Leggings, armor_forge
+  GLOW_BERRY_JUICE: 16.54    # Glow Berry Juice, juicer
+  GOLDEN_APPLE_JUICE: 88.5    # Golden Apple Juice, juicer
+  GOLDEN_BOOTS_12K: 309.87    # Golden Boots (12-Carat), armor_forge
+  GOLDEN_CHESTPLATE_12K: 613.23    # Golden Chestplate (12-Carat), armor_forge
+  GOLDEN_HELMET_12K: 385.71    # Golden Helmet (12-Carat), armor_forge
+  GOLDEN_LEGGINGS_12K: 537.39    # Golden Leggings (12-Carat), armor_forge
+  GOLD_10K: 55.48    # Gold Ingot (10-Carat), smeltery
+  GOLD_12K: 72.23    # Gold Ingot (12-Carat), smeltery
+  GOLD_14K: 90.32    # Gold Ingot (14-Carat), smeltery
+  GOLD_16K: 109.86    # Gold Ingot (16-Carat), smeltery
+  GOLD_18K: 130.96    # Gold Ingot (18-Carat), smeltery
+  GOLD_20K: 153.75    # Gold Ingot (20-Carat), smeltery
+  GOLD_22K: 178.36    # Gold Ingot (22-Carat), smeltery
+  GOLD_24K: 204.94    # Gold Ingot (24-Carat), smeltery
+  GOLD_24K_BLOCK: 1946    # Gold Block (24-Carat), enhanced_crafting_table
+  GOLD_4K: 12.31    # Gold Ingot (4-Carat), smeltery
+  GOLD_6K: 25.61    # Gold Ingot (6-Carat), smeltery
+  GOLD_8K: 39.97    # Gold Ingot (8-Carat), smeltery
+  GOLD_DUST: 8.16    # Gold Dust, ore_crusher
+  GOLD_PAN: 5.65    # Gold Pan, enhanced_crafting_table
+  GPS_ACTIVATION_DEVICE_PERSONAL: 1119    # GPS Activation Device (Personal), enhanced_crafting_table
+  GPS_ACTIVATION_DEVICE_SHARED: 962.93    # GPS Activation Device (Shared), enhanced_crafting_table
+  GPS_CONTROL_PANEL: 640.76    # GPS Control Panel, enhanced_crafting_table
+  GPS_EMERGENCY_TRANSMITTER: 3284    # GPS Emergency Transmitter, enhanced_crafting_table
+  GPS_GEO_SCANNER: 1020    # GPS Geo-Scanner, enhanced_crafting_table
+  GPS_MARKER_TOOL: 573.61    # GPS Marker Tool, enhanced_crafting_table
+  GPS_TELEPORTATION_MATRIX: 2565    # GPS Teleporter Matrix, enhanced_crafting_table
+  GPS_TELEPORTER_PYLON: 48.3    # GPS Teleporter Pylon, enhanced_crafting_table
+  GPS_TRANSMITTER: 839.27    # GPS Transmitter, enhanced_crafting_table
+  GPS_TRANSMITTER_2: 3625    # Advanced GPS Transmitter, enhanced_crafting_table
+  GPS_TRANSMITTER_3: 16385    # Carbonado GPS Transmitter, enhanced_crafting_table
+  GPS_TRANSMITTER_4: 77228    # Energized GPS Transmitter, enhanced_crafting_table
+  GRANDMAS_WALKING_STICK: 3.65    # Grandmas Walking Stick, enhanced_crafting_table
+  GRANDPAS_WALKING_STICK: 9.95    # Grandpas Walking Stick, enhanced_crafting_table
+  GRAPPLING_HOOK: 132.32    # Grappling Hook, enhanced_crafting_table
+  HARDENED_GLASS: 321.67    # Hardened Glass, enhanced_crafting_table
+  HARDENED_METAL_INGOT: 183.5    # Hardened Metal, smeltery
+  HAZMAT_BOOTS: 48.01    # Hazmat Boots, armor_forge
+  HAZMAT_CHESTPLATE: 52.63    # Hazmat Suit, armor_forge
+  HAZMAT_LEGGINGS: 56.23    # Hazmat Suit Leggings, armor_forge
+  HEATED_PRESSURE_CHAMBER: 660.9    # Heated Pressure Chamber, enhanced_crafting_table
+  HEATED_PRESSURE_CHAMBER_2: 2559    # Heated Pressure Chamber - II, enhanced_crafting_table
+  HEATING_COIL: 319.03    # Heating Coil, enhanced_crafting_table
+  HEAVY_CREAM: 9.65    # Heavy Cream, enhanced_crafting_table
+  HOLOGRAM_PROJECTOR: 321.75    # Hologram Projector, enhanced_crafting_table
+  HOOK: 95.1    # Hook, enhanced_crafting_table
+  ICY_BOW: 526.35    # Icy Bow, enhanced_crafting_table
+  IGNITION_CHAMBER: 104.7    # Automatic Ignition Chamber, enhanced_crafting_table
+  INFERNAL_BONEMEAL: 11.36    # Infernal Bonemeal, ancient_altar
+  INFUSED_ELYTRA: 7774    # Infused Elytra, ancient_altar
+  INFUSED_HOPPER: 1162    # Infused Hopper, ancient_altar
+  INFUSED_MAGNET: 388.96    # Infused Magnet, magic_workbench
+  IRON_DUST: 6.12    # Iron Dust, ore_crusher
+  IRON_GOLEM_ASSEMBLER: 20169    # Iron Golem Assembler, enhanced_crafting_table
+  KELP_COOKIE: 2.58    # Kelp Cookie, enhanced_crafting_table
+  KELP_FERTILIZER: 4.62    # Content: Dried Kelp, composter, organic food
+  KELP_ORGANIC_FOOD: 4.4    # Content: Dried Kelp, food fabricator, 8 x DRIED_KELP
+  LARGE_CAPACITOR: 5126    # Large Energy Capacitor, enhanced_crafting_table
+  LAVA_CRYSTAL: 68.92    # Lava Crystal, enhanced_crafting_table
+  LAVA_GENERATOR: 1260    # Lava Generator, enhanced_crafting_table
+  LAVA_GENERATOR_2: 2272    # Lava Generator (II), enhanced_crafting_table
+  LEAD_DUST: 3    # Lead Dust, ore_washer
+  LEAD_INGOT: 6.24    # Lead Ingot, smeltery
+  LIGHTNING_RUNE: 65.57    # Ancient Rune [Lightning], ancient_altar
+  LUMBER_AXE: 1536    # Lumber Axe, magic_workbench
+  MAGICAL_BOOK_COVER: 44.21    # Magical Book Cover, enhanced_crafting_table
+  MAGICAL_GLASS: 235.42    # Magical Glass, magic_workbench
+  MAGICAL_ZOMBIE_PILLS: 42.22    # Magical Zombie Pills, magic_workbench
+  MAGIC_EYE_OF_ENDER: 312.45    # Magic Eye of Ender, magic_workbench
+  MAGIC_LUMP_1: 1.77    # Magical Lump - I, grind_stone
+  MAGIC_LUMP_2: 8.93    # Magical Lump - II, enhanced_crafting_table
+  MAGIC_LUMP_3: 39.01    # Magical Lump - III, enhanced_crafting_table
+  MAGIC_SUGAR: 5.68    # Magic Sugar, enhanced_crafting_table
+  MAGNESIUM_DUST: 3    # Magnesium, ore_washer
+  MAGNESIUM_GENERATOR: 455.49    # Magnesium-powered Generator, enhanced_crafting_table
+  MAGNESIUM_INGOT: 6.24    # Magnesium Ingot, smeltery
+  MAGNESIUM_SALT: 15.75    # Magnesium Salt, heated_pressure_chamber
+  MAGNET: 79.38    # Magnet, smeltery
+  MEDICINE: 25    # Medicine, enhanced_crafting_table
+  MEDIUM_CAPACITOR: 1305    # Medium Energy Capacitor, enhanced_crafting_table
+  MELON_FERTILIZER: 9.24    # Content: Melon, composter, organic food
+  MELON_JUICE: 15.52    # Melon Juice, juicer
+  MELON_ORGANIC_FOOD: 8.8    # Content: Melon, food fabricator, 8 x MELON_SLICE
+  MONSTER_JERKY: 5.12    # Monster Jerky, enhanced_crafting_table
+  MULTIMETER: 311.18    # Multimeter, enhanced_crafting_table
+  MUTTON_JERKY: 6.25    # Mutton Jerky, enhanced_crafting_table
+  NECROTIC_SKULL: 533.95    # Necrotic Skull, magic_workbench
+  NEPTUNIUM: 260    # Neptunium, raw resource
+  NETHER_GOLD_PAN: 12.56    # Nether Gold Pan, enhanced_crafting_table
+  NETHER_ICE: 30    # Nether Ice, raw resource
+  NETHER_ICE_COOLANT_CELL: 28    # Nether Ice Coolant Cell, heated_pressure_chamber
+  NETHER_STAR_REACTOR: 29072    # Nether Star Reactor, enhanced_crafting_table
+  NICKEL_INGOT: 20.25    # Nickel Ingot, smeltery
+  NIGHT_VISION_GOGGLES: 40.07    # Night Vision Goggles, armor_forge
+  NUCLEAR_REACTOR: 33441    # Nuclear Reactor, enhanced_crafting_table
+  OIL_BUCKET: 40    # Bucket of Oil, raw resource
+  OIL_PUMP: 1793    # Oil Pump, enhanced_crafting_table
+  OUTPUT_CHEST: 98.41    # Output Chest, enhanced_crafting_table
+  PARACHUTE: 34.04    # Parachute, enhanced_crafting_table
+  PICKAXE_OF_CONTAINMENT: 660.59    # Pickaxe of Containment, magic_workbench
+  PICKAXE_OF_THE_SEEKER: 608.09    # Pickaxe of the Seeker, magic_workbench
+  PICKAXE_OF_VEIN_MINING: 1114    # Pickaxe of Vein Mining, magic_workbench
+  PLASTIC_SHEET: 7.31    # Plastic Sheet, heated_pressure_chamber
+  PLUTONIUM: 560    # Plutonium, raw resource
+  PORK_JERKY: 6.25    # Pork Jerky, enhanced_crafting_table
+  PORTABLE_CRAFTER: 8.9    # Portable Crafter, enhanced_crafting_table
+  PORTABLE_DUSTBIN: 43    # Portable Dustbin, enhanced_crafting_table
+  PORTABLE_GEO_SCANNER: 1462    # Portable Geo-Scanner, enhanced_crafting_table
+  PORTABLE_TELEPORTER: 39372    # Portable Teleporter, enhanced_crafting_table
+  POTATO_FERTILIZER: 9.24    # Content: Potatoes, composter, organic food
+  POTATO_ORGANIC_FOOD: 8.8    # Content: Potatoes, food fabricator, 8 x POTATO
+  POWER_CRYSTAL: 530.44    # Power Crystal, enhanced_crafting_table
+  PRODUCE_COLLECTOR: 1773    # Produce Collector, enhanced_crafting_table
+  PROGRAMMABLE_ANDROID: 2692    # Programmable Android (Normal), enhanced_crafting_table
+  PROGRAMMABLE_ANDROID_2: 5862    # Advanced Programmable Android (Normal), enhanced_crafting_table
+  PROGRAMMABLE_ANDROID_2_BUTCHER: 7748    # Advanced Programmable Android (Butcher), enhanced_crafting_table
+  PROGRAMMABLE_ANDROID_2_FARMER: 7748    # Advanced Programmable Android (Farmer), enhanced_crafting_table
+  PROGRAMMABLE_ANDROID_2_FISHERMAN: 6451    # Advanced Programmable Android (Fisherman), enhanced_crafting_table
+  PROGRAMMABLE_ANDROID_3: 50527    # Empowered Programmable Android (Normal), enhanced_crafting_table
+  PROGRAMMABLE_ANDROID_3_BUTCHER: 70970    # Empowered Programmable Android (Butcher), enhanced_crafting_table
+  PROGRAMMABLE_ANDROID_3_FISHERMAN: 53350    # Empowered Programmable Android (Fisherman), enhanced_crafting_table
+  PROGRAMMABLE_ANDROID_BUTCHER: 4420    # Programmable Android (Butcher), enhanced_crafting_table
+  PROGRAMMABLE_ANDROID_FARMER: 3548    # Programmable Android (Farmer), enhanced_crafting_table
+  PROGRAMMABLE_ANDROID_FISHERMAN: 3132    # Programmable Android (Fisherman), enhanced_crafting_table
+  PROGRAMMABLE_ANDROID_MINER: 3758    # Programmable Android (Miner), enhanced_crafting_table
+  PROGRAMMABLE_ANDROID_WOODCUTTER: 3758    # Programmable Android (Woodcutter), enhanced_crafting_table
+  PULVERIZED_ORE: 28.37    # Pulverized Ore, ore_crusher
+  PUMPKIN_JUICE: 16.54    # Pumpkin Juice, juicer
+  PURE_ORE_CLUSTER: 40.87    # Pure Ore Cluster, ore_washer
+  RABBIT_JERKY: 6.25    # Rabbit Jerky, enhanced_crafting_table
+  RADIANT_BACKPACK: 2477    # Radiant Backpack, enhanced_crafting_table
+  RAG: 3.12    # Rag, enhanced_crafting_table
+  RAINBOW_BOOTS: 954.07    # Rainbow Boots, armor_forge
+  RAINBOW_CHESTPLATE: 1897    # Rainbow Chestplate, armor_forge
+  RAINBOW_CLAY: 97.48    # Rainbow Clay, ancient_altar
+  RAINBOW_CLAY_HALLOWEEN: 382.82    # Rainbow Clay (Halloween), ancient_altar
+  RAINBOW_CLAY_VALENTINE: 380.72    # Rainbow Clay (Valentine's Day), ancient_altar
+  RAINBOW_CLAY_XMAS: 380.72    # Rainbow Clay (Christmas), ancient_altar
+  RAINBOW_CONCRETE: 97.34    # Rainbow Concrete, ancient_altar
+  RAINBOW_CONCRETE_HALLOWEEN: 382.68    # Rainbow Concrete (Halloween), ancient_altar
+  RAINBOW_CONCRETE_VALENTINE: 380.58    # Rainbow Concrete (Valentine's Day), ancient_altar
+  RAINBOW_CONCRETE_XMAS: 380.58    # Rainbow Concrete (Christmas), ancient_altar
+  RAINBOW_GLASS: 96.92    # Rainbow Glass, ancient_altar
+  RAINBOW_GLASS_HALLOWEEN: 382.26    # Rainbow Glass (Halloween), ancient_altar
+  RAINBOW_GLASS_PANE: 95.94    # Rainbow Glass Pane, ancient_altar
+  RAINBOW_GLASS_PANE_HALLOWEEN: 381.28    # Rainbow Glass Pane (Halloween), ancient_altar
+  RAINBOW_GLASS_PANE_VALENTINE: 379.18    # Rainbow Glass Pane (Valentine's Day), ancient_altar
+  RAINBOW_GLASS_PANE_XMAS: 379.18    # Rainbow Glass Pane (Christmas), ancient_altar
+  RAINBOW_GLASS_VALENTINE: 380.16    # Rainbow Glass (Valentine's Day), ancient_altar
+  RAINBOW_GLASS_XMAS: 380.16    # Rainbow Glass (Christmas), ancient_altar
+  RAINBOW_GLAZED_TERRACOTTA: 98.04    # Rainbow Glazed Terracotta, ancient_altar
+  RAINBOW_GLAZED_TERRACOTTA_HALLOWEEN: 383.38    # Rainbow Glazed Terracotta (Halloween), ancient_altar
+  RAINBOW_GLAZED_TERRACOTTA_VALENTINE: 381.28    # Rainbow Glazed Terracotta (Valentine's Day), ancient_altar
+  RAINBOW_GLAZED_TERRACOTTA_XMAS: 381.28    # Rainbow Glazed Terracotta (Christmas), ancient_altar
+  RAINBOW_HELMET: 1190    # Rainbow Helmet, armor_forge
+  RAINBOW_LEATHER: 224.54    # Rainbow Leather, ancient_altar
+  RAINBOW_LEGGINGS: 1661    # Rainbow Leggings, armor_forge
+  RAINBOW_RUNE: 535.68    # Ancient Rune [Rainbow], ancient_altar
+  RAINBOW_WOOL: 98.04    # Rainbow Wool, ancient_altar
+  RAINBOW_WOOL_HALLOWEEN: 383.38    # Rainbow Wool (Halloween), ancient_altar
+  RAINBOW_WOOL_VALENTINE: 381.28    # Rainbow Wool (Valentine's Day), ancient_altar
+  RAINBOW_WOOL_XMAS: 381.28    # Rainbow Wool (Christmas), ancient_altar
+  RAW_CARBONADO: 870.42    # Raw Carbonado, smeltery
+  REACTOR_ACCESS_PORT: 4535    # Reactor Access Port, enhanced_crafting_table
+  REACTOR_COOLANT_CELL: 103.05    # Reactor Coolant Cell, freezer
+  REDSTONE_ALLOY: 253.51    # Redstone Alloy Ingot, smeltery
+  REFINERY: 2194    # Refinery, enhanced_crafting_table
+  REINFORCED_ALLOY_BOOTS: 2452    # Reinforced Boots, armor_forge
+  REINFORCED_ALLOY_CHESTPLATE: 4892    # Reinforced Chestplate, armor_forge
+  REINFORCED_ALLOY_HELMET: 3062    # Reinforced Helmet, armor_forge
+  REINFORCED_ALLOY_INGOT: 580.83    # Reinforced Alloy Ingot, smeltery
+  REINFORCED_ALLOY_JETBOOTS: 4475    # Jet Boots - VI, enhanced_crafting_table
+  REINFORCED_ALLOY_JETPACK: 5694    # Electric Jetpack - VI, enhanced_crafting_table
+  REINFORCED_ALLOY_LEGGINGS: 4282    # Reinforced Leggings, armor_forge
+  REINFORCED_ALLOY_MULTI_TOOL: 4429    # Multi Tool - VI, enhanced_crafting_table
+  REINFORCED_CLOTH: 7.83    # Reinforced Cloth, enhanced_crafting_table
+  REINFORCED_FURNACE: 14079    # Reinforced Furnace, enhanced_crafting_table
+  REINFORCED_PLATE: 4886    # Reinforced Plate, compressor
+  REPAIRED_SPAWNER: 9365    # Reinforced Spawner, ancient_altar
+  SALT: 2    # Salt, raw resource
+  SCROLL_OF_DIMENSIONAL_TELEPOSITION: 1713    # Scroll of Dimensional Teleposition, magic_workbench
+  SCUBA_HELMET: 40.2    # Scuba Helmet, armor_forge
+  SEAGRASS_FERTILIZER: 4.62    # Content: Seagrass, composter, organic food
+  SEAGRASS_ORGANIC_FOOD: 4.4    # Content: Seagrass, food fabricator, 8 x SEAGRASS
+  SEEDS_FERTILIZER: 1.85    # Content: Seeds, composter, organic food
+  SEEDS_ORGANIC_FOOD: 1.76    # Content: Seeds, food fabricator, 8 x WHEAT_SEEDS
+  SEISMIC_AXE: 1108    # Seismic Axe, magic_workbench
+  SIFTED_ORE: 3    # Sifted Ore, raw resource
+  SILICON: 14.64    # Silicon, smeltery
+  SILVER_DUST: 3    # Silver Dust, ore_washer
+  SILVER_INGOT: 6.24    # Silver Ingot, smeltery
+  SLIME_BOOTS: 21.4    # Slime Boots, armor_forge
+  SLIME_BOOTS_STEEL: 282.93    # Slime Boots, armor_forge
+  SLIME_CHESTPLATE: 40.3    # Slime Chestplate, armor_forge
+  SLIME_CHESTPLATE_STEEL: 295.53    # Slime Chestplate, armor_forge
+  SLIME_HELMET: 26.65    # Slime Helmet, armor_forge
+  SLIME_HELMET_STEEL: 282.93    # Slime Helmet, armor_forge
+  SLIME_LEGGINGS: 37.15    # Slime Leggings, armor_forge
+  SLIME_LEGGINGS_STEEL: 291.33    # Slime Leggings, armor_forge
+  SMALL_CAPACITOR: 645.52    # Small Energy Capacitor, enhanced_crafting_table
+  SMALL_URANIUM: 550.72    # Small Chunk of Uranium, enhanced_crafting_table
+  SMELTERS_PICKAXE: 296.62    # Smelter's Pickaxe, enhanced_crafting_table
+  SOLAR_GENERATOR: 818.76    # Solar Generator, enhanced_crafting_table
+  SOLAR_GENERATOR_2: 3480    # Advanced Solar Generator, enhanced_crafting_table
+  SOLAR_GENERATOR_3: 15630    # Carbonado Solar Generator, enhanced_crafting_table
+  SOLAR_GENERATOR_4: 80637    # Energized Solar Generator, enhanced_crafting_table
+  SOLAR_HELMET: 5362    # Solar Helmet, enhanced_crafting_table
+  SOLAR_PANEL: 164.3    # Photovoltaic Cell, enhanced_crafting_table
+  SOLDER_INGOT: 19.22    # Solder Ingot, smeltery
+  SOLDER_JETBOOTS: 2603    # Jet Boots - II, enhanced_crafting_table
+  SOLDER_JETPACK: 2642    # Electric Jetpack - II, enhanced_crafting_table
+  SOLDER_MULTI_TOOL: 787.7    # Multi Tool - II, enhanced_crafting_table
+  SOULBOUND_AXE: 5099    # Soulbound Axe, magic_workbench
+  SOULBOUND_BOOTS: 5213    # Soulbound Boots, magic_workbench
+  SOULBOUND_BOW: 4758    # Soulbound Bow, magic_workbench
+  SOULBOUND_CHESTPLATE: 5673    # Soulbound Chestplate, magic_workbench
+  SOULBOUND_ELYTRA: 13529    # Soulbound Elytra, ancient_altar
+  SOULBOUND_HELMET: 5328    # Soulbound Helmet, magic_workbench
+  SOULBOUND_HOE: 4984    # Soulbound Hoe, magic_workbench
+  SOULBOUND_LEGGINGS: 5558    # Soulbound Leggings, magic_workbench
+  SOULBOUND_PICKAXE: 5099    # Soulbound Pickaxe, magic_workbench
+  SOULBOUND_RUNE: 6760    # Ancient Rune [Soulbound], ancient_altar
+  SOULBOUND_SHOVEL: 4869    # Soulbound Shovel, magic_workbench
+  SOULBOUND_SWORD: 4984    # Soulbound Sword, magic_workbench
+  SOULBOUND_TRIDENT: 5443    # Soulbound Trident, magic_workbench
+  SPLINT: 3.07    # Splint, enhanced_crafting_table
+  STAFF_ELEMENTAL: 200.19    # Elemental Staff, magic_workbench
+  STAFF_FIRE: 540.69    # Elemental Staff - Fire, magic_workbench
+  STAFF_STORM: 2607    # Elemental Staff - Storm, ancient_altar
+  STAFF_WATER: 479.31    # Elemental Staff - Water, magic_workbench
+  STAFF_WIND: 702.34    # Elemental Staff - Wind, magic_workbench
+  STEEL_INGOT: 27.81    # Steel Ingot, smeltery
+  STEEL_JETBOOTS: 2621    # Jet Boots - IV, enhanced_crafting_table
+  STEEL_JETPACK: 2678    # Electric Jetpack - IV, enhanced_crafting_table
+  STEEL_MULTI_TOOL: 832.8    # Multi Tool - IV, enhanced_crafting_table
+  STEEL_PLATE: 240.6    # Steel Plate, compressor
+  STEEL_THRUSTER: 626.44    # Steel Thruster, enhanced_crafting_table
+  STONE_CHUNK: 5.5    # Stone Chunk, ore_washer
+  STRANGE_NETHER_GOO: 25    # Strange Nether Goo, raw resource
+  SULFATE: 9.26    # Sulfate, ore_crusher
+  SWEET_BERRIES_FERTILIZER: 9.24    # Content: Sweet Berries, composter, organic food
+  SWEET_BERRIES_ORGANIC_FOOD: 8.8    # Content: Sweet Berries, food fabricator, 8 x SWEET_BERRIES
+  SWEET_BERRY_JUICE: 15.52    # Sweet Berry Juice, juicer
+  SWORD_OF_BEHEADING: 118.35    # Sword of Beheading, enhanced_crafting_table
+  SYNTHETIC_DIAMOND: 408.87    # Synthetic Diamond, pressure_chamber
+  SYNTHETIC_EMERALD: 42.29    # Synthetic Emerald, smeltery
+  SYNTHETIC_SAPPHIRE: 21.65    # Synthetic Sapphire, smeltery
+  SYNTHETIC_SHULKER_SHELL: 15252    # Synthetic Shulker Shell, ancient_altar
+  TALISMAN_ANGEL: 404.66    # Talisman of the Angel, magic_workbench
+  TALISMAN_ANVIL: 758.86    # Talisman of the Anvil, magic_workbench
+  TALISMAN_CAVEMAN: 746.23    # Talisman of the Caveman, magic_workbench
+  TALISMAN_FARMER: 864.66    # Talisman of the Farmer, magic_workbench
+  TALISMAN_FIRE: 560.87    # Talisman of the Firefighter, magic_workbench
+  TALISMAN_HUNTER: 433.14    # Talisman of the Hunter, magic_workbench
+  TALISMAN_KNIGHT: 2727    # Talisman of the Knight, magic_workbench
+  TALISMAN_LAVA: 500.02    # Talisman of the Lava Walker, magic_workbench
+  TALISMAN_MAGICIAN: 1511    # Talisman of the Magician, enhanced_crafting_table
+  TALISMAN_MINER: 430.7    # Talisman of the Miner, magic_workbench
+  TALISMAN_TRAVELLER: 2270    # Talisman of the Traveller, magic_workbench
+  TALISMAN_WARRIOR: 1739    # Talisman of the Warrior, magic_workbench
+  TALISMAN_WATER: 423.06    # Talisman of the Water Breather, magic_workbench
+  TALISMAN_WHIRLWIND: 4415    # Talisman of the Whirlwind, magic_workbench
+  TALISMAN_WISE: 2584    # Talisman of the Wise, magic_workbench
+  TALISMAN_WIZARD: 3392    # Talisman of the Wizard, magic_workbench
+  TAPE_MEASURE: 299.98    # 180d5c43a6cf5bb7769fd0c8240e1e70d2ae38ef9d78a1db401aca6a2cb36f65, enhanced_crafting_table
+  TINY_URANIUM: 56.69    # Tiny Pile of Uranium, ore_crusher
+  TIN_CAN: 6.68    # Tin Can, enhanced_crafting_table
+  TIN_DUST: 3    # Tin Dust, ore_washer
+  TIN_INGOT: 6.24    # Tin Ingot, smeltery
+  TOME_OF_KNOWLEDGE_SHARING: 76.19    # Tome of Knowledge Sharing, magic_workbench
+  TRASH_CAN: 633.66    # Trash Can, enhanced_crafting_table
+  TREE_GROWTH_ACCELERATOR: 4017    # Tree Growth Accelerator, enhanced_crafting_table
+  URANIUM: 120    # Uranium, raw resource
+  VANILLA_AUTO_CRAFTER: 5306    # Auto-Crafter (Vanilla), enhanced_crafting_table
+  VILLAGER_RUNE: 320.15    # Ancient Rune [Villagers], ancient_altar
+  VITAMINS: 12.21    # Vitamins, enhanced_crafting_table
+  WATER_RUNE: 34.31    # Ancient Rune [Water], ancient_altar
+  WHEAT_FERTILIZER: 9.24    # Content: Wheat, composter, organic food
+  WHEAT_FLOUR: 3.52    # Wheat Flour, grind_stone
+  WHEAT_ORGANIC_FOOD: 8.8    # Content: Wheat, food fabricator, 8 x WHEAT
+  WITHER_ASSEMBLER: 21672    # Wither Assembler, enhanced_crafting_table
+  WITHER_PROOF_GLASS: 208.33    # Wither-Proof Glass, enhanced_crafting_table
+  WITHER_PROOF_OBSIDIAN: 109.37    # Wither-Proof Obsidian, enhanced_crafting_table
+  WOVEN_BACKPACK: 719.37    # Woven Backpack, enhanced_crafting_table
+  ZINC_DUST: 3    # Zinc Dust, ore_washer
+  ZINC_INGOT: 6.24    # Zinc Ingot, smeltery
+
+# MultiverseCreatures items by their msc_ key (65 items).
+multiversecreatures:
+  msc_aether_pullshot: 6842    # crafted legendary (x1.5)
+  msc_architect_deployer: 26506    # crafted legendary (x1.5)
+  msc_architect_kernel: 15000    # drop of Jack Star (boss), 100%
+  msc_bearer_elixir: 9728    # brewed
+  msc_bone_marrow: 352    # crafted
+  msc_chaos_core: 14864    # crafted
+  msc_chaos_forge: 2986    # crafted legendary (x1.5)
+  msc_chaos_fragment: 2753    # crafted
+  msc_chaos_orb: 250    # drop of Chaos Mage, 60%
+  msc_chaos_powder: 281.6    # crafted
+  msc_cinder_greatsword: 3034    # crafted legendary (x1.5)
+  msc_compressed_gold_block: 712.8    # crafted
+  msc_condensed_chaos_orb: 68150    # crafted
+  msc_eight_handled_wheel: 283913    # crafted legendary (x1.5)
+  msc_ender_core: 3050    # crafted
+  msc_ender_fragment: 218.18    # drop of Ender Knight, 55%
+  msc_excalibur_sword: 422560    # Multiverse Merchant trade
+  msc_executioner_edge: 6667    # drop of NIX (boss), 1-2 per kill, 135%
+  msc_executioner_guillotine: 23950    # crafted legendary (x1.5)
+  msc_executioner_warrant: 374    # crafted
+  msc_frost_heart: 200    # drop of Frost Golem, 75%
+  msc_frost_heart_offhand: 1162    # crafted legendary (x1.5)
+  msc_head_slime_gelatin: 70.4    # crafted
+  msc_head_slime_heart: 40    # drop of Head Slime, 100%
+  msc_ice_crown: 77184    # Multiverse Merchant trade
+  msc_magma_core: 166.67    # drop of Flame Elemental, 60%
+  msc_mantis_claws: 88    # Multiverse Merchant trade
+  msc_marrow_aegis: 19799    # crafted legendary (x1.5)
+  msc_military_component: 166.67    # drop of Zombie Horse Trap unit, 30%
+  msc_military_mine: 950.05    # crafted
+  msc_molten_marrow: 1746    # smelted
+  msc_molten_netherite: 118772    # smelted
+  msc_molten_wheel_core: 21290    # smelted
+  msc_multiversal_core: 631515    # crafted
+  msc_nullshear_edge: 9035    # crafted legendary (x1.5)
+  msc_obsidian_bastion_boots: 187573    # crafted legendary (x1.5)
+  msc_obsidian_bastion_chest: 189757    # crafted legendary (x1.5)
+  msc_obsidian_bastion_helmet: 187573    # crafted legendary (x1.5)
+  msc_obsidian_bastion_legs: 188039    # crafted legendary (x1.5)
+  msc_obsidian_shard: 141.18    # drop of Obsidian Guard, 85%
+  msc_ossified_plate: 1663    # crafted
+  msc_reaper_core: 2534    # crafted
+  msc_reaper_essence: 200    # drop of Soul Reaper, 60%
+  msc_refined_netherite: 113116    # crafted
+  msc_refined_wheel_core: 154069    # crafted
+  msc_reinforced_bone: 75    # drop of Bone Shield, 80%
+  msc_reinforced_bone_block: 742.5    # crafted
+  msc_scooby_cookie: 400    # Multiverse Merchant trade
+  msc_sentinel_core: 20000    # drop of The Obsidian Sentinel (final boss), 100%
+  msc_sentinel_grimoire: 2117012    # crafted legendary (x1.5)
+  msc_shadow_cloak: 200    # drop of Shadow Rogue, 50%
+  msc_skyfire_talisman: 1579    # crafted legendary (x1.5)
+  msc_soulreap_scythe: 9191    # crafted legendary (x1.5)
+  msc_star_core: 25410    # crafted
+  msc_storm_crystal: 166.67    # drop of Storm Caller, 60%
+  msc_sword_mold: 225.5    # crafted
+  msc_unstable_blood: 8803    # brewed
+  msc_vampire_blood: 8000    # drop of DIO (boss), 1-2 per kill, 150%
+  msc_veilwalker_mantle: 4270    # crafted legendary (x1.5)
+  msc_venom_gland: 133.33    # drop of Venom Witch, 60%
+  msc_venomfang: 1710    # crafted legendary (x1.5)
+  msc_void_essence: 240    # drop of Void Crawler, 50%
+  msc_wheel_core: 20277    # crafted
+  msc_wheel_essence: 3333    # drop of Mahoraga (boss), 75%
+  msc_wirts_lantern: 48    # Multiverse Merchant trade
+
+# Slimefun addons (DynaTech, Supreme, Galactifun, ExoticGarden, Networks...).
+# Every addon item is valued on its own when the server starts, from the recipes
+# Slimefun really registered, and written to item-values-addons.yml in the plugin
+# folder for you to review. To change one, copy its line here, under its addon:
+#
+#   addons:
+#     DynaTech:
+#       STAINLESS_STEEL: 40
+#
+# A value here always wins over the computed one.
+addons: {}

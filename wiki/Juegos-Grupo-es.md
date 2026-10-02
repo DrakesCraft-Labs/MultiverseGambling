@@ -26,6 +26,7 @@ la ruleta.
 | **Duelo 1v1** | `duel` | Retas a alguien por una cantidad; los dos ponen lo mismo y una moneda decide | 2 | 100% − comisión |
 | **Rifa** | `raffle` | Boletas a precio fijo y sorteo de tres premios: 70%, 20% y 10% del bote (con dos jugadores los dos premios se reparten el bote entero). Solo se cobran boletos enteros | 2-24 | 100% − comisión |
 | **Póker de Dados** | `dice-poker` | Cinco dados cada uno; gana la mejor mano y los empates reparten el bote | 2-16 | 100% − comisión |
+| **Póker** | `poker` | Texas hold'em en una mesa con cartas privadas, botones holográficos y botes secundarios; ver [Póker](Poker-es) | 2-8 | 100% − rake |
 
 ## Jugar solo contra la casa
 

@@ -4,7 +4,7 @@
 
 [English](Home) · **Español**
 
-Motor de azar y apuestas para **Paper 1.21.11** con **21 minijuegos**, su propio **mundo
+Motor de azar y apuestas para **Paper 1.21.11** con **22 minijuegos**, su propio **mundo
 casino** y **traducción dentro del juego** al inglés o al español.
 
 | | |
@@ -28,7 +28,8 @@ casino** y **traducción dentro del juego** al inglés o al español.
 | [Mundo](Mundo-Casino-es) | El mundo aparte, la plaza, las arenas y las carreteras |
 | [Idiomas](Idiomas-es) | La autotraducción, `/mvgam language` y añadir un idioma |
 | [Juegos en solitario](Juegos-Solo-es) | Los 12 juegos contra la casa |
-| [Juegos en grupo](Juegos-Grupo-es) | Los 9 juegos con rondas automáticas, también contra la casa |
+| [Juegos en grupo](Juegos-Grupo-es) | Los 10 juegos con rondas automáticas, también contra la casa |
+| [Póker](Poker-es) | La mesa de Texas hold'em, fichas por ítems y cómo se valoran |
 | [Apuestas con ítems](Apuestas-Items-es) | Apostar ítems vanilla o custom y cuántos vuelven |
 | [Azar verificable](Justicia-es) | Tiradas verificables y `/mvgam verify` |
 | [Economía](Economia-es) | sBank, Vault o el monedero interno, y los archivos de datos |

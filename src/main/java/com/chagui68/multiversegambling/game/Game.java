@@ -113,6 +113,12 @@ public interface Game {
     }
 
     /**
+     * A player left the server: whatever they were doing in this game is closed.
+     */
+    default void handleQuit(UUID playerId) {
+    }
+
+    /**
      * Orderly shutdown: refunds the money of unfinished games.
      */
     default void shutdown() {

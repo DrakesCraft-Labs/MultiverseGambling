@@ -393,6 +393,27 @@ public abstract class ArenaShow {
      */
     public final java.util.List<HoloButton> addControlRow(double y, java.util.UUID owner,
                                                          java.util.List<HoloButton.Spec> specs) {
+        return addControlRowAt(0, plugin.config().worldAnimationsViewDistance(), 0, -1, BUTTON_REACH, y, owner,
+                false, specs);
+    }
+
+    /**
+     * A row of floating buttons on an arc round any spot of the stage: the middle of the
+     * row sits {@code reach} blocks from the spot along {@code (forwardX, forwardZ)}.
+     * Used by a table, where every seat has its own row in front of it.
+     *
+     * @param onlyOwner true to make the buttons exist for their owner alone
+     */
+    public final java.util.List<HoloButton> addControlRowAt(double originX, double originZ, double forwardX,
+                                                           double forwardZ, double reachWanted, double y,
+                                                           java.util.UUID owner, boolean onlyOwner,
+                                                           java.util.List<HoloButton.Spec> specs) {
+        double norm = Math.hypot(forwardX, forwardZ);
+        double fx = norm == 0 ? 0 : forwardX / norm;
+        double fz = norm == 0 ? -1 : forwardZ / norm;
+        // Right hand of somebody looking along the forward direction.
+        double rx = -fz;
+        double rz = fx;
         int count = specs.size();
         double[] widths = new double[count];
         double length = BUTTON_GAP * Math.max(0, count - 1);
@@ -401,9 +422,8 @@ public abstract class ArenaShow {
             length += widths[i];
         }
         double maxArc = 2 * MAX_ROW_ANGLE;
-        double reach = Math.min(3.3, Math.max(BUTTON_REACH, length / maxArc));
+        double reach = Math.min(3.3, Math.max(reachWanted, length / maxArc));
         double shrink = Math.min(1.0, reach * maxArc / length);
-        double watcher = plugin.config().worldAnimationsViewDistance();
         java.util.List<HoloButton> made = new java.util.ArrayList<>(count);
         double along = -length * shrink / 2;
         for (int i = 0; i < count; i++) {
@@ -411,10 +431,12 @@ public abstract class ArenaShow {
             double width = widths[i] * shrink;
             double angle = (along + width / 2) / reach;
             along += width + BUTTON_GAP * shrink;
-            double x = Math.sin(angle) * reach;
-            double z = watcher - Math.cos(angle) * reach;
-            made.add(addButton(x, y, z, spec.text(), spec.background(), (float) (spec.scale() * shrink),
-                    owner, spec.action()));
+            double along2 = Math.sin(angle) * reach;
+            double ahead = Math.cos(angle) * reach;
+            double x = originX + fx * ahead + rx * along2;
+            double z = originZ + fz * ahead + rz * along2;
+            made.add(HoloButton.create(this, local(x, y, z), spec.text(), spec.background(),
+                    (float) (spec.scale() * shrink), owner, onlyOwner, spec.action()));
         }
         return made;
     }

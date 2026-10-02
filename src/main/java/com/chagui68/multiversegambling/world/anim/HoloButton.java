@@ -65,7 +65,22 @@ public final class HoloButton {
      */
     static HoloButton create(ArenaShow show, Location spot, Component text, Color background, float scale,
                              UUID owner, Consumer<Player> action) {
+        return create(show, spot, text, background, scale, owner, false, action);
+    }
+
+    /**
+     * Places a button that, when {@code onlyOwner} is set, exists for its owner alone:
+     * nobody else sees it or can click it, which lets every player at a table have their
+     * own controls in the same space without getting in each other's way.
+     */
+    static HoloButton create(ArenaShow show, Location spot, Component text, Color background, float scale,
+                             UUID owner, boolean onlyOwner, Consumer<Player> action) {
+        boolean hidden = onlyOwner && owner != null;
+        Player viewer = hidden ? org.bukkit.Bukkit.getPlayer(owner) : null;
         TextDisplay label = show.spawn(spot, TextDisplay.class, display -> {
+            if (hidden) {
+                privateTo(show, display, viewer);
+            }
             display.text(text);
             display.setBillboard(Display.Billboard.VERTICAL);
             display.setBackgroundColor(background);
@@ -78,6 +93,9 @@ public final class HoloButton {
         float width = widthOf(text, scale);
         float height = heightOf(text, scale);
         Interaction hitbox = show.spawn(spot.clone().add(0, -0.04, 0), Interaction.class, entity -> {
+            if (hidden) {
+                privateTo(show, entity, viewer);
+            }
             entity.setInteractionWidth(width);
             entity.setInteractionHeight(height);
             entity.setResponsive(true);
@@ -87,6 +105,16 @@ public final class HoloButton {
         BY_HITBOX.put(hitbox.getUniqueId(), button);
         show.track(button);
         return button;
+    }
+
+    /**
+     * Makes an entity that is about to be spawned visible to one player only.
+     */
+    static void privateTo(ArenaShow show, Entity entity, Player viewer) {
+        entity.setVisibleByDefault(false);
+        if (viewer != null && viewer.isOnline()) {
+            viewer.showEntity(show.plugin(), entity);
+        }
     }
 
     /**

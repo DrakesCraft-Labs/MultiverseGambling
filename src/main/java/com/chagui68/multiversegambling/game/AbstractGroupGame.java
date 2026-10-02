@@ -30,7 +30,7 @@ import org.bukkit.entity.Player;
  * stays in the pot and somebody else can win it. If they leave before the round
  * starts, it is refunded in full.</p>
  */
-public abstract class AbstractGroupGame extends AbstractGame {
+public abstract class AbstractGroupGame extends AbstractGame implements Ticking {
 
     public enum Phase {
         WAITING, BETTING, IN_GAME
@@ -324,6 +324,7 @@ public abstract class AbstractGroupGame extends AbstractGame {
     // ---------------------------------------------------------------- life cycle
 
     /** Called once per tick by the game registry. */
+    @Override
     public final void tick() {
         switch (phase) {
             case WAITING -> {
@@ -465,6 +466,7 @@ public abstract class AbstractGroupGame extends AbstractGame {
     // ------------------------------------------------------------------ salidas
 
     /** Handles a player disconnecting. */
+    @Override
     public final void handleQuit(UUID playerId) {
         waiting.remove(playerId);
         if (!pot.contains(playerId)) {

@@ -1,12 +1,12 @@
 <p align="center">
-  <img src="assets/banner.svg" alt="MultiverseGambling - casino world, 21 games, item bets, provably fair" width="100%"/>
+  <img src="assets/banner.svg" alt="MultiverseGambling - casino world, 22 games, item bets, provably fair" width="100%"/>
 </p>
 
 <p align="center">
   <a href="https://papermc.io"><img src="https://img.shields.io/badge/Paper-1.21.11-1E293B?style=for-the-badge&labelColor=8B5CF6" alt="Paper 1.21.11"/></a>
   <a href="https://adoptium.net"><img src="https://img.shields.io/badge/Java-21-1E293B?style=for-the-badge&labelColor=8B5CF6" alt="Java 21"/></a>
   <img src="https://img.shields.io/badge/Version-1.0.4-1E293B?style=for-the-badge&labelColor=8B5CF6" alt="Version 1.0.4"/>
-  <img src="https://img.shields.io/badge/Games-21-1E293B?style=for-the-badge&labelColor=C084FC" alt="21 games"/>
+  <img src="https://img.shields.io/badge/Games-22-1E293B?style=for-the-badge&labelColor=C084FC" alt="22 games"/>
   <img src="https://img.shields.io/badge/Provably-fair-1E293B?style=for-the-badge&labelColor=16A34A" alt="Provably fair"/>
 </p>
 
@@ -19,7 +19,7 @@
 ---
 
 **MultiverseGambling** is a chance and betting engine for **Paper 1.21.11** with
-**21 minigames**: 12 solo games against the house and 9 group games with automatic rounds
+**22 minigames**: 12 solo games against the house and 10 group games with automatic rounds
 (every one of them also playable **against the house** when nobody else is around). They all
 live inside a dedicated **casino world** where the rounds are staged with display entities,
 and every message reads in **English or Spanish**.
@@ -30,7 +30,7 @@ is **pinned by tests**.
 
 | | |
 |---|---|
-| 🎰 **21 games** | Roulette, slots, crash, mines, towers, blackjack, plinko, horse race, jackpot... |
+| 🎰 **22 games** | Roulette, slots, crash, mines, towers, blackjack, plinko, horse race, jackpot... |
 | 🏛️ **Casino world** | A 500 × 500 world built on its own: plaza, boulevards and one pavilion per game |
 | ✨ **Live shows** | Spinning wheels, falling balls, rockets and cards built with block and item displays |
 | 🔘 **Hologram buttons** | Cash out, hit, stand or pick a side by clicking floating buttons in the arena |
@@ -50,6 +50,7 @@ mvn package      →  target/MultiverseGambling-1.0.4.jar
 - [Installation](#installation)
 - [The casino world](#the-casino-world)
 - [Item bets](#item-bets)
+- [The poker table](#the-poker-table)
 - [Languages](#languages)
 - [The catalogue](#the-catalogue)
 - [Real returns](#real-returns)
@@ -123,6 +124,8 @@ Data files it creates:
 | `fairness.json` | Client seeds and the server secret for the audit |
 | `languages.json` | The language each player picked |
 | `pending-items.yml` | Item winnings waiting for a player that left mid round |
+| `poker-table.yml` | Who sits at the poker table, so a crash pays everybody back |
+| `item-values.yml` | Reference value of every item that can buy poker chips |
 
 ---
 
@@ -138,7 +141,8 @@ nothing has to be pasted by hand and the playable world stays clean.
 ```
 
 By default it creates a **flat 500 × 500 block world** named `mvgam_casino` with a
-centred world border, frozen at dusk, and lays out:
+centred world border, always at noon, with no creatures and blocks only administrators can
+change, and lays out:
 
 - a **marble plaza** (radius 36) with a lit fountain, gold rings, grand lamps and flower
   planters, a giant golden coin spinning over the fountain and a welcome board at spawn;
@@ -149,7 +153,7 @@ centred world border, frozen at dusk, and lays out:
 - **seven block wide boulevards** along every row and column of the grid and a ring road
   round the casino, with lamp posts and avenues of trees; unused cells become gardens.
 
-The 21 games fill 408 × 408 blocks, so the default world keeps a green belt round the edge.
+The 22 games fill 408 × 408 blocks, so the default world keeps a green belt round the edge.
 The build runs **in the background, a few chunks per tick**, and the casino is rebuilt on its
 own whenever its design changes (an update, a new game, a bigger board).
 
@@ -162,7 +166,8 @@ world:
   size: 500                # side of the square, in blocks (200-2000)
   build-structures: true   # plaza, pavilions and boulevards, rebuilt when out of date
   teleport-on-join: false  # send every player here when they join
-  time: 13000              # frozen hour (13000 dusk); -1 keeps the day cycle
+  always-day: true         # always noon; false uses "time"
+  time: 13000              # frozen hour when always-day is off; -1 keeps the day cycle
 ```
 
 ### In-world shows
@@ -224,7 +229,7 @@ world:
 Notes worth knowing:
 
 - The **geometry is pure classes** (`CasinoLayout`, `StageFrame`, `CrashCurve`, `WheelMath`)
-  with no Bukkit, so it is unit tested: the suite checks that 21 games fit in 500 blocks,
+  with no Bukkit, so it is unit tested: the suite checks that 22 games fit in 500 blocks,
   that no two pavilions overlap, that nothing covers spawn, that every pavilion sits on the
   boulevard network and that shows turn to the main gate without being mirrored. The boards
   use the same idea: `BoardGrid` maps a click on a block to the cell of a round.
@@ -274,6 +279,50 @@ item-bets:
     - '*SHULKER_BOX'
     - '*BUNDLE'
 ```
+
+---
+
+## The poker table
+
+**Texas hold'em for up to 8 players** (`/mvgam play poker`), at a big oval table lying flat
+in the middle of its pavilion, with a dealer standing behind the shoe.
+
+- **Sit down**: walk up to a free chair and click its **✚ SIT** hologram, pick your buy-in
+  (in big blinds) and you are seated on the chair. Sneak or press **⏏ Leave** to stand up.
+- **Private cards**: your two cards lie face down for the whole room; only you see them
+  face up, plus a larger copy floating in front of you. Nobody can read your hand by walking
+  round the table.
+- **Your own buttons**: on your turn floating buttons appear in front of your chair, for
+  you alone: **Fold**, **Check / Call**, **All in**, and **◀ Raise to ▶** to size the raise
+  (minimum, a third of the pot, half, three quarters, pot...). The same moves come as chat
+  buttons. You have `action-seconds` (30) to act; after that the table checks or folds for you.
+- **The dealer** shuffles with the provably fair generator, deals the cards flying from the
+  shoe, burns before every street, moves the dealer button and pushes the pot to the winner.
+- **Real rules**: blinds, heads-up with the button on the small blind, minimum raises,
+  all-ins that do not reopen the betting, uncalled bets returned, **side pots**, split pots
+  with the odd chip left of the button.
+- **Against the house**: alone at the table, press **⚑ Play the house** and the house sits
+  down with as many chips as you. It plays by estimating its odds and comparing them with
+  the pot, and keeps `house-rake` (5%) of each pot after the flop while it plays.
+
+### Chips for items
+
+Poker is played with money, but you can **buy chips with items**: vanilla, **Slimefun** and
+**MultiverseCreatures** items and the items of **every Slimefun addon**, mixed in one chest. Each one is worth its value in
+[item-values.yml](src/main/resources/item-values.yml), and when you stand up you get your
+items back first (the most valuable ones first, as long as your chips still cover them) and
+the rest as money. How the values were set:
+
+| Source | How it is valued |
+|---|---|
+| Vanilla | Against the anchor **1 diamond = 100 coins**: how hard the item is to get |
+| Slimefun (514 items) | Generated from the Slimefun recipes: its ingredients, times what the machine or ritual adds (enhanced crafting table ×1.05, smeltery ×1.08, magic workbench ×1.15, heated pressure chamber ×1.15, ancient altar ×1.40), plus 0.5 coins per research level, divided by how many the recipe makes. World resources (sifted ore, uranium, oil) have fixed values |
+| MultiverseCreatures (59 items) | A drop is worth how hard its creature is divided by its drop chance (Chaos Orb: 150 / 60% = 250); crafted items are worth their ingredients ×1.10, the legendary weapons, armour and relics ×1.65; merchant items are worth their trade (Excalibur: 16 Star Cores + 32 netherite) |
+| Slimefun addons (all installed) | Valued on every server start from the recipes Slimefun really registered, with the same rule: DynaTech, Supreme, Galactifun, ExoticGarden, Networks, LiteXpansion, FluffyMachines and any other addon. Found items (drops, GEO resources) and items without a recipe start at 25 coins. The result is written to `plugins/MultiverseGambling/item-values-addons.yml`, grouped by addon; copy a line under `addons:` in item-values.yml to change it |
+
+An item is recognised by the id its plugin stores in it, never by its name, so a renamed
+item cannot pass for a custom one; a vanilla or MultiverseCreatures item that is not in the file is refused. Edit any
+value, or `scale` to resize them all, and `/mvgam reload`.
 
 ---
 
@@ -342,7 +391,7 @@ Details, including how to add a third language, are in the [Languages](wiki/Lang
 | **Lucky Wheel** | `lucky-wheel` | 12 equally likely segments, most of them empty and a couple of big hits. | up to 4x |
 | **Coin Flip** | `coin-flip` | Pick heads or tails. Fair payout, trimmed (not a fixed 2x: that would give the house no edge). | ~1.96x |
 
-### Group (9)
+### Group (10)
 
 All of them run in automatic rounds: whoever wants joins, bets during the window, the
 round plays itself and the next one starts without anybody typing a command. When you
@@ -361,6 +410,7 @@ empty.
 | **Duel 1v1** | `duel` | You challenge somebody for a stake; both put the same in and a coin decides. If they do not accept in time you get your money back. | 2 |
 | **Raffle** | `raffle` | Tickets at a fixed price and a draw of **three prizes**: 70%, 20% and 10% of the pot. | 2-24 |
 | **Dice Poker** | `dice-poker` | Five dice each; the best hand wins. Ties split the pot. | 2-16 |
+| **Poker** | `poker` | Texas hold'em at a real table: private cards, your own hologram buttons, side pots, all in. Chips can be bought with items. | 2-8 |
 
 Game ids are stable and `/mvgam play` takes exactly that id, never a name or a partial
 match: `/mvgam play lucky-wheel` works, `/mvgam play lucky` does not. Tab completion lists
@@ -471,6 +521,7 @@ com.chagui68.multiversegambling
 │   ├── RouletteTable, ColorWheel, PrizeWheel, SlotsTable, ScratchCardTable
 │   ├── MinesTable, CrashTable, DiceTable, PlinkoTable
 │   ├── Card.Deck, BlackjackHand, DicePoker, HorseOdds
+│   ├── PokerHand, PokerTable, PokerBot
 ├── economy/       ← EconomyProvider (sBank | Vault | internal), Wager, Pot, EconomyManager
 ├── fair/          ← FairnessService: server secret, seeds, nonces
 ├── i18n/          ← Language, LanguageStore (per player choice)
@@ -480,7 +531,7 @@ com.chagui68.multiversegambling
 ├── session/       ← SessionManager (one clock), SoloSession, TimedSession
 ├── gui/           ← Gui, GuiListener, HubGui, BetSelectorGui, StatsGui
 ├── games/solo/    ← the 12 solo games
-├── games/group/   ← the 9 group games
+├── games/group/   ← the 10 group games
 ├── stats/         ← PlayerStats, StatsStore
 ├── config/        ← MultiverseGamblingConfig, Messages (locale aware)
 ├── command/  listener/  util/
@@ -550,7 +601,7 @@ exploited**:
 - **Simulated distributions.** The Plinko ball follows the binomial, each horse wins as
   often as its strength, each wheel colour comes up as often as its pockets and the jackpot
   winner is drawn with the probability they deserve.
-- **Casino world geometry.** 21 games fit in 500 blocks, pavilions never overlap or cover
+- **Casino world geometry.** 22 games fit in 500 blocks, pavilions never overlap or cover
   spawn, entrances face the plaza, every pavilion sits on two boulevards tied to the plaza,
   unused cells become gardens, too small a world is rejected and a single game still gets a
   ring pavilion. Shows turn to the main gate without mirroring and the crash rocket never

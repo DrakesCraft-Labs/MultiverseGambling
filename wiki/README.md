@@ -7,8 +7,8 @@ versioned next to the code and read straight from the repository:
 
 | Language | Pages |
 |---|---|
-| English | `Home.md`, `Installation.md`, `Commands.md`, `Permissions.md`, `Configuration.md`, `Casino-World.md`, `Languages.md`, `Games-Solo.md`, `Games-Group.md`, `Item-Bets.md`, `Fairness.md`, `Economy.md`, `Troubleshooting.md`, `Development.md`, `_Sidebar.md` |
-| Español | `Home-es.md`, `Instalacion-es.md`, `Comandos-es.md`, `Permisos-es.md`, `Configuracion-es.md`, `Mundo-Casino-es.md`, `Idiomas-es.md`, `Juegos-Solo-es.md`, `Juegos-Grupo-es.md`, `Apuestas-Items-es.md`, `Justicia-es.md`, `Economia-es.md`, `Problemas-es.md`, `Desarrollo-es.md`, `_Sidebar-es.md` |
+| English | `Home.md`, `Installation.md`, `Commands.md`, `Permissions.md`, `Configuration.md`, `Casino-World.md`, `Languages.md`, `Games-Solo.md`, `Games-Group.md`, `Item-Bets.md`, `Poker.md`, `Fairness.md`, `Economy.md`, `Troubleshooting.md`, `Development.md`, `_Sidebar.md` |
+| Español | `Home-es.md`, `Instalacion-es.md`, `Comandos-es.md`, `Permisos-es.md`, `Configuracion-es.md`, `Mundo-Casino-es.md`, `Idiomas-es.md`, `Juegos-Solo-es.md`, `Juegos-Grupo-es.md`, `Apuestas-Items-es.md`, `Poker-es.md`, `Justicia-es.md`, `Economia-es.md`, `Problemas-es.md`, `Desarrollo-es.md`, `_Sidebar-es.md` |
 
 The filenames are exactly the page names GitHub wants: pushing this folder to the wiki
 repository creates one page per file, and `_Sidebar.md` / `_Sidebar-es.md` become the

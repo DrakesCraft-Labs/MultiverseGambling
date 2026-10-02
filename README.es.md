@@ -1,12 +1,12 @@
 <p align="center">
-  <img src="assets/banner-es.svg" alt="MultiverseGambling - mundo casino, 21 juegos, apuestas con ítems, azar verificable" width="100%"/>
+  <img src="assets/banner-es.svg" alt="MultiverseGambling - mundo casino, 22 juegos, apuestas con ítems, azar verificable" width="100%"/>
 </p>
 
 <p align="center">
   <a href="https://papermc.io"><img src="https://img.shields.io/badge/Paper-1.21.11-1E293B?style=for-the-badge&labelColor=8B5CF6" alt="Paper 1.21.11"/></a>
   <a href="https://adoptium.net"><img src="https://img.shields.io/badge/Java-21-1E293B?style=for-the-badge&labelColor=8B5CF6" alt="Java 21"/></a>
   <img src="https://img.shields.io/badge/Versi%C3%B3n-1.0.4-1E293B?style=for-the-badge&labelColor=8B5CF6" alt="Versión 1.0.4"/>
-  <img src="https://img.shields.io/badge/Juegos-21-1E293B?style=for-the-badge&labelColor=C084FC" alt="21 juegos"/>
+  <img src="https://img.shields.io/badge/Juegos-22-1E293B?style=for-the-badge&labelColor=C084FC" alt="22 juegos"/>
   <img src="https://img.shields.io/badge/Azar-verificable-1E293B?style=for-the-badge&labelColor=16A34A" alt="Azar verificable"/>
 </p>
 
@@ -19,7 +19,7 @@
 ---
 
 **MultiverseGambling** es un motor de azar y apuestas para **Paper 1.21.11** con
-**21 minijuegos**: 12 en solitario contra la casa y 9 en grupo con rondas automáticas (todos
+**22 minijuegos**: 12 en solitario contra la casa y 10 en grupo con rondas automáticas (todos
 ellos jugables también **contra la casa** cuando no hay nadie más). Viven dentro de un
 **mundo casino** propio donde las rondas se representan con display entities, y cada mensaje
 se lee en **inglés o español**.
@@ -30,7 +30,7 @@ sitio, cada tirada de dinero sale de un **azar verificable** y cada tabla de pre
 
 | | |
 |---|---|
-| 🎰 **21 juegos** | Ruleta, tragaperras, crash, minas, torres, blackjack, plinko, carreras, bote... |
+| 🎰 **22 juegos** | Ruleta, tragaperras, crash, minas, torres, blackjack, plinko, carreras, bote... |
 | 🏛️ **Mundo casino** | Un mundo de 500 × 500 que se construye solo: plaza, bulevares y un pabellón por juego |
 | ✨ **Espectáculos en vivo** | Ruletas que giran, bolas que caen, cohetes y cartas hechos con block e item displays |
 | 🔘 **Botones holográficos** | Retirarse, pedir carta, plantarse o elegir lado con botones flotantes en la arena |
@@ -50,6 +50,7 @@ mvn package      →  target/MultiverseGambling-1.0.4.jar
 - [Instalación](#instalación)
 - [El mundo casino](#el-mundo-casino)
 - [Apuestas con ítems](#apuestas-con-ítems)
+- [La mesa de póker](#la-mesa-de-póker)
 - [Idiomas](#idiomas)
 - [El catálogo](#el-catálogo)
 - [Retornos reales](#retornos-reales)
@@ -125,6 +126,8 @@ Archivos de datos que crea:
 | `fairness.json` | Semillas de cliente y secreto del servidor para la auditoría |
 | `languages.json` | El idioma que eligió cada jugador |
 | `pending-items.yml` | Premios en ítems de jugadores que salieron a mitad de ronda |
+| `poker-table.yml` | Quién está sentado en la mesa de póker, para devolverlo todo tras un fallo |
+| `item-values.yml` | Valor de referencia de cada ítem que puede comprar fichas de póker |
 
 ---
 
@@ -140,7 +143,8 @@ no hay que pegar nada a mano y el mundo de juego queda limpio.
 ```
 
 Por defecto crea un **mundo plano de 500 × 500 bloques** llamado `mvgam_casino` con borde
-centrado y la hora fijada al atardecer, y levanta:
+centrado, siempre a mediodía, sin criaturas y con bloques que solo los administradores pueden
+cambiar, y levanta:
 
 - una **plaza de mármol** (radio 36) con una fuente iluminada, anillos de oro, farolas grandes
   y jardineras, una moneda de oro gigante girando sobre la fuente y un cartel de bienvenida en
@@ -152,7 +156,7 @@ centrado y la hora fijada al atardecer, y levanta:
 - **bulevares de siete bloques** por cada fila y columna de la rejilla y una ronda que rodea el
   casino, con farolas y avenidas de árboles; las casillas sin juego se convierten en jardines.
 
-Los 21 juegos ocupan 408 × 408 bloques, así que el mundo por defecto deja un cinturón verde
+Los 22 juegos ocupan 408 × 408 bloques, así que el mundo por defecto deja un cinturón verde
 alrededor. La construcción va **en segundo plano, unos pocos chunks por tick**, y el casino se
 reconstruye solo cuando cambia su diseño (una actualización, un juego nuevo, un tablero más
 grande).
@@ -166,7 +170,8 @@ world:
   size: 500                # lado del cuadrado, en bloques (200-2000)
   build-structures: true   # plaza, pabellones y bulevares, reconstruidos si cambian
   teleport-on-join: false  # mandar aquí a cada jugador al entrar
-  time: 13000              # hora fija (13000 atardecer); -1 mantiene el ciclo de día
+  always-day: true         # siempre mediodía; false usa "time"
+  time: 13000              # hora fija si always-day está apagado; -1 mantiene el ciclo
 ```
 
 ### Animaciones en el mundo
@@ -230,7 +235,7 @@ world:
 Cosas que conviene saber:
 
 - La **geometría son clases puras** (`CasinoLayout`, `StageFrame`, `CrashCurve`, `WheelMath`)
-  sin Bukkit, así que está testeada: la suite comprueba que los 21 juegos caben en 500
+  sin Bukkit, así que está testeada: la suite comprueba que los 22 juegos caben en 500
   bloques, que ningún pabellón se solapa, que nada tapa el spawn, que cada pabellón está en la
   red de bulevares y que los espectáculos miran a la puerta principal sin quedar en espejo. Los
   tableros usan la misma idea: `BoardGrid` traduce un clic en un bloque a la casilla de una
@@ -281,6 +286,52 @@ item-bets:
     - '*SHULKER_BOX'
     - '*BUNDLE'
 ```
+
+---
+
+## La mesa de póker
+
+**Texas hold'em para hasta 8 jugadores** (`/mvgam play poker`), en una gran mesa ovalada
+tumbada en el centro de su pabellón, con un crupier de pie tras el sabot.
+
+- **Sentarse**: acércate a una silla libre y pulsa su holograma **✚ SENTARSE**, elige tu
+  entrada (en ciegas grandes) y quedas sentado en la silla. Agáchate o pulsa **⏏ Levantarse**
+  para irte.
+- **Cartas privadas**: tus dos cartas están boca abajo para toda la sala; solo tú las ves
+  boca arriba, además de una copia más grande flotando frente a ti. Nadie puede leer tu mano
+  dando vueltas a la mesa.
+- **Tus propios botones**: en tu turno aparecen botones flotantes frente a tu silla, solo
+  para ti: **Retirarse**, **Pasar / Igualar**, **All in**, y **◀ Subir a ▶** para elegir la
+  subida (mínimo, un tercio del bote, la mitad, tres cuartos, el bote...). Las mismas jugadas
+  llegan como botones del chat. Tienes `action-seconds` (30) para actuar; después la mesa pasa
+  o se retira por ti.
+- **El crupier** baraja con el generador verificable, reparte las cartas volando desde el
+  sabot, quema antes de cada calle, mueve el botón de dealer y empuja el bote al ganador.
+- **Reglas reales**: ciegas, mano a mano con el botón en la ciega pequeña, subidas mínimas,
+  all-in que no reabren las apuestas, apuestas no igualadas devueltas, **botes secundarios**,
+  botes repartidos con la ficha impar a la izquierda del botón.
+- **Contra la casa**: solo en la mesa, pulsa **⚑ Jugar contra la casa** y la casa se sienta
+  con tantas fichas como tú. Juega estimando sus probabilidades frente al bote y se queda
+  `house-rake` (5%) de cada bote tras el flop mientras juega.
+
+### Fichas por ítems
+
+El póker se juega con dinero, pero puedes **comprar fichas con ítems**: vanilla, de
+**Slimefun** y de **MultiverseCreatures** y de **todos los addons de Slimefun**, mezclados en un mismo cofre. Cada uno vale lo que
+dice [item-values.yml](src/main/resources/item-values.yml), y al levantarte recuperas primero
+tus ítems (los más valiosos primero, mientras tus fichas los cubran) y el resto en dinero.
+Cómo se fijaron los valores:
+
+| Origen | Cómo se valora |
+|---|---|
+| Vanilla | Frente al ancla **1 diamante = 100 monedas**: lo difícil que es conseguirlo |
+| Slimefun (514 ítems) | Generado desde las recetas de Slimefun: sus ingredientes, por lo que añade la máquina o el ritual (mesa de crafteo mejorada ×1.05, fundición ×1.08, mesa mágica ×1.15, cámara de presión caliente ×1.15, altar antiguo ×1.40), más 0,5 monedas por nivel de investigación, dividido entre lo que produce la receta. Los recursos del mundo (mineral tamizado, uranio, petróleo) tienen valor fijo |
+| MultiverseCreatures (59 ítems) | Un drop vale lo difícil que es su criatura dividido entre su probabilidad (Orbe del Caos: 150 / 60% = 250); los crafteados valen sus ingredientes ×1.10, las armas, armaduras y reliquias legendarias ×1.65; los del mercader valen su intercambio (Excalibur: 16 Núcleos Estelares + 32 netherite) |
+| Addons de Slimefun (todos los instalados) | Se valoran en cada arranque desde las recetas que Slimefun registró de verdad, con la misma regla: DynaTech, Supreme, Galactifun, ExoticGarden, Networks, LiteXpansion, FluffyMachines y cualquier otro addon. Los ítems que se encuentran (drops, recursos GEO) y los que no tienen receta parten de 25 monedas. El resultado se escribe en `plugins/MultiverseGambling/item-values-addons.yml`, agrupado por addon; copia una línea bajo `addons:` en item-values.yml para cambiarla |
+
+Un ítem se reconoce por el ID que su plugin guarda en él, nunca por su nombre, así que un
+ítem renombrado no pasa por uno custom; un ítem vanilla o de MultiverseCreatures que no está en el archivo se rechaza.
+Edita cualquier valor, o `scale` para cambiarlos todos, y `/mvgam reload`.
 
 ---
 
@@ -351,7 +402,7 @@ Los detalles, incluido cómo añadir un tercer idioma, están en la página
 | **Ruleta de la Suerte** | `lucky-wheel` | 12 casillas igual de probables, la mayoría sin premio y un par de golpes grandes. | hasta 4x |
 | **Cara o Cruz** | `coin-flip` | Elige cara o cruz. Pago justo recortado (no 2x fijo: eso no daría ventaja a la casa). | ~1.96x |
 
-### En grupo (9)
+### En grupo (10)
 
 Todos funcionan por rondas automáticas: entra quien quiere, apuesta durante la ventana, la
 ronda se juega sola y la siguiente arranca sin que nadie lance comandos. Si estás solo,
@@ -369,6 +420,7 @@ misma ventaja de la casa que los juegos en solitario, así que una mesa nunca se
 | **Duelo 1v1** | `duel` | Retas a alguien por una cantidad; los dos ponen lo mismo y una moneda decide. Si no acepta a tiempo, recuperas tu dinero. | 2 |
 | **Rifa** | `raffle` | Boletas a precio fijo y sorteo de **tres premios**: 70%, 20% y 10% del bote. | 2-24 |
 | **Póker de Dados** | `dice-poker` | Cinco dados cada uno; gana la mejor mano. Los empates reparten el bote. | 2-16 |
+| **Póker** | `poker` | Texas hold'em en una mesa real: cartas privadas, tus propios botones holográficos, botes secundarios, all in. Las fichas se pueden comprar con ítems. | 2-8 |
 
 Los ids son estables y `/mvgam play` exige exactamente ese id, nunca un nombre ni una
 coincidencia parcial: `/mvgam play lucky-wheel` funciona, `/mvgam play lucky` no. El
@@ -480,6 +532,7 @@ com.chagui68.multiversegambling
 │   ├── RouletteTable, ColorWheel, PrizeWheel, SlotsTable, ScratchCardTable
 │   ├── MinesTable, CrashTable, DiceTable, PlinkoTable
 │   ├── Card.Deck, BlackjackHand, DicePoker, HorseOdds
+│   ├── PokerHand, PokerTable, PokerBot
 ├── economy/       ← EconomyProvider (sBank | Vault | interno), Wager, Pot, EconomyManager
 ├── fair/          ← FairnessService: secreto del servidor, semillas, nonces
 ├── i18n/          ← Language, LanguageStore (elección por jugador)
@@ -558,7 +611,7 @@ bloque `catalog.<id-juego>` en cada `lang/*.yml`.
 - **Distribuciones simuladas.** La bolita del Plinko sigue la binomial, cada caballo gana con
   la frecuencia de su fuerza, cada color de la rueda sale con sus casillas y el ganador del
   bote se elige con la probabilidad que le corresponde.
-- **Geometría del mundo casino.** Los 21 juegos caben en 500 bloques, los pabellones nunca se
+- **Geometría del mundo casino.** Los 22 juegos caben en 500 bloques, los pabellones nunca se
   solapan ni tapan el spawn, las entradas miran a la plaza, cada pabellón está sobre dos
   bulevares unidos a la plaza, las casillas libres son jardines, un mundo demasiado pequeño se
   rechaza y un solo juego recibe igualmente su pabellón. Los espectáculos miran a la puerta

@@ -263,6 +263,44 @@ public final class MultiverseGamblingConfig {
     }
 
     /** Item types that can never be staked: exact names or *_SUFFIX / PREFIX_* families. */
+    // ------------------------------------------------------------------ poker
+
+    public double pokerSmallBlind() {
+        return Math.max(0.01, cfg.getDouble("games.poker.small-blind", 5.0));
+    }
+
+    public double pokerBigBlind() {
+        return Math.max(pokerSmallBlind(), cfg.getDouble("games.poker.big-blind", 10.0));
+    }
+
+    public int pokerActionSeconds() {
+        return ranged(cfg.getInt("games.poker.action-seconds", 30), 8, 180);
+    }
+
+    public int pokerNextHandSeconds() {
+        return ranged(cfg.getInt("games.poker.next-hand-seconds", 6), 2, 60);
+    }
+
+    public double pokerRake() {
+        return ranged(cfg.getDouble("games.poker.rake", 0.0), 0.0, 0.25);
+    }
+
+    public double pokerRakeCap() {
+        return Math.max(0.0, cfg.getDouble("games.poker.rake-cap", 0.0));
+    }
+
+    public double pokerHouseRake() {
+        return ranged(cfg.getDouble("games.poker.house-rake", 0.05), 0.0, 0.25);
+    }
+
+    public int pokerHouseBots() {
+        return ranged(cfg.getInt("games.poker.house-players", 1), 1, 7);
+    }
+
+    public boolean pokerItemBuyIn() {
+        return cfg.getBoolean("games.poker.item-buy-in", true);
+    }
+
     public java.util.List<String> itemBetsBlocked() {
         if (!cfg.isList("item-bets.blocked")) {
             return java.util.List.of("*SHULKER_BOX", "*BUNDLE");
@@ -296,6 +334,9 @@ public final class MultiverseGamblingConfig {
      * 18000 midnight); a negative value keeps the normal day and night cycle.
      */
     public long worldTime() {
+        if (cfg.getBoolean("world.always-day", true)) {
+            return 6000L;
+        }
         long time = cfg.getLong("world.time", 13000L);
         return time < 0 ? -1L : time % 24000L;
     }

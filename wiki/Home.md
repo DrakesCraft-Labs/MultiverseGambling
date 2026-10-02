@@ -4,7 +4,7 @@
 
 **English** · [Español](Home-es)
 
-Chance and betting engine for **Paper 1.21.11** with **21 minigames**, its own **casino
+Chance and betting engine for **Paper 1.21.11** with **22 minigames**, its own **casino
 world** and **in-game translation** into English or Spanish.
 
 | | |
@@ -28,7 +28,8 @@ world** and **in-game translation** into English or Spanish.
 | [World](Casino-World) | The separate world, the plaza, the arenas and the roads |
 | [Languages](Languages) | Self translation, `/mvgam language` and adding a new language |
 | [Solo Games](Games-Solo) | The 12 games against the house |
-| [Group Games](Games-Group) | The 9 games with automatic rounds, also against the house |
+| [Group Games](Games-Group) | The 10 games with automatic rounds, also against the house |
+| [Poker](Poker) | The Texas hold'em table, chips for items and how items are valued |
 | [Item Bets](Item-Bets) | Staking vanilla or custom items and how many come back |
 | [Fairness](Fairness) | Provably fair rolls and `/mvgam verify` |
 | [Economy](Economy) | sBank, Vault or the internal wallet, and the data files |

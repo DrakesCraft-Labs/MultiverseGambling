@@ -97,9 +97,14 @@ world:
   build-structures: true
   # Send players to the casino world when they join the server.
   teleport-on-join: false
-  # Hour the casino world is frozen at, in ticks: 6000 noon, 13000 dusk (the lamps
-  # and the pavilions glow), 18000 midnight. -1 keeps the normal day cycle.
+  # Keep the casino world at noon, always. Turn it off to use "time" instead.
+  always-day: true
+  # Hour the casino world is frozen at when always-day is off, in ticks: 6000 noon,
+  # 13000 dusk (the lamps and the pavilions glow), 18000 midnight. -1 keeps the
+  # normal day cycle.
   time: 13000
+  # No creature ever appears in the casino world, and only players with mvgam_admin
+  # can break or place blocks there. The shows of the games are not affected.
 
   # In world shows. Instead of only counting numbers in the action bar, every game
   # stages its round on its pavilion with display entities: a roulette wheel and its
@@ -246,3 +251,26 @@ games:
 
   dice-poker:
     enabled: true
+
+  # Texas hold'em at a table for up to 8 players, with the house filling in when you
+  # are alone. min-bet and max-bet are the buy-in: the chips you sit down with.
+  poker:
+    enabled: true
+    min-bet: 200
+    max-bet: 1000000
+    small-blind: 5
+    big-blind: 10
+    # Seconds a player has to act before the table checks or folds for them.
+    action-seconds: 30
+    # Pause between two hands.
+    next-hand-seconds: 6
+    # Share of each pot the house keeps once the flop is out (0.05 = 5%), and its cap
+    # per pot in coins (0 = no cap). Players against players: nothing by default.
+    rake: 0.0
+    rake-cap: 0
+    # Rake while the house plays at the table, so its seats are not free money.
+    house-rake: 0.05
+    # How many house players sit down when somebody asks to play the house.
+    house-players: 1
+    # Let players buy chips with items, valued with item-values.yml.
+    item-buy-in: true

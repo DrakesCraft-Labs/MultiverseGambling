@@ -70,6 +70,7 @@ public final class MultiverseGamblingPlugin extends JavaPlugin {
     private EconomyManager economy;
     private FairnessService fair;
     private ItemBank items;
+    private com.chagui68.multiversegambling.economy.ItemValues itemValues;
     private StatsStore stats;
     private SessionManager sessions;
     private GuiManager guis;
@@ -88,6 +89,8 @@ public final class MultiverseGamblingPlugin extends JavaPlugin {
         economy.setup();
         fair = new FairnessService(this);
         items = new ItemBank(this);
+        itemValues = new com.chagui68.multiversegambling.economy.ItemValues(this);
+        itemValues.load();
         stats = new StatsStore(this);
         sessions = new SessionManager(this);
         guis = new GuiManager(this);
@@ -110,6 +113,10 @@ public final class MultiverseGamblingPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new PlayerListener(this), this);
         getServer().getPluginManager().registerEvents(new BoardListener(this), this);
         getServer().getPluginManager().registerEvents(new PropListener(), this);
+        getServer().getPluginManager().registerEvents(
+                new com.chagui68.multiversegambling.listener.WorldProtectionListener(this), this);
+        getServer().getPluginManager().registerEvents(
+                new com.chagui68.multiversegambling.listener.TableListener(this), this);
 
         MultiverseGamblingCommand command = new MultiverseGamblingCommand(this);
         PluginCommand pluginCommand = getCommand("mvgam");
@@ -202,6 +209,7 @@ public final class MultiverseGamblingPlugin extends JavaPlugin {
         registerGame(() -> new DuelGame(this));
         registerGame(() -> new RaffleGame(this));
         registerGame(() -> new DicePokerGame(this));
+        registerGame(() -> new com.chagui68.multiversegambling.games.group.PokerGame(this));
     }
 
     /**
@@ -236,6 +244,7 @@ public final class MultiverseGamblingPlugin extends JavaPlugin {
         config.reload();
         messages.reload();
         economy.setup();
+        itemValues.load();
         if (world != null) {
             // The floating names of the pavilions are written in the default language.
             world.refreshDecor();
@@ -267,6 +276,13 @@ public final class MultiverseGamblingPlugin extends JavaPlugin {
      */
     public ItemBank items() {
         return items;
+    }
+
+    /**
+     * Reference value of items, used to buy poker chips with them.
+     */
+    public com.chagui68.multiversegambling.economy.ItemValues itemValues() {
+        return itemValues;
     }
 
     public FairnessService fair() {

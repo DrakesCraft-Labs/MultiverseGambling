@@ -15,6 +15,7 @@
 * [Solo Games](Games-Solo)
 * [Group Games](Games-Group)
 * [Item Bets](Item-Bets)
+* [Poker](Poker)
 * [Fairness](Fairness)
 * [Economy](Economy)
 
@@ -39,6 +40,7 @@
 * [Juegos en solitario](Juegos-Solo-es)
 * [Juegos en grupo](Juegos-Grupo-es)
 * [Apuestas con ítems](Apuestas-Items-es)
+* [Póker](Poker-es)
 * [Azar verificable](Justicia-es)
 * [Economía](Economia-es)
 * [Problemas](Problemas-es)

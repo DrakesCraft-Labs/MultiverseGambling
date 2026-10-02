@@ -14,7 +14,8 @@ clean and nothing has to be pasted by hand.
 ## What it creates
 
 By default a **flat, 500 × 500 block world** named `mvgam_casino`, with a world border
-centred on spawn, frozen at dusk so the lamps and the pavilions glow:
+centred on spawn and always at noon. No creature ever appears in it and only administrators
+(`mvgam_admin`) can break or place blocks; fire, explosions and decaying leaves cannot change it:
 
 | Piece | Details |
 |---|---|
@@ -54,7 +55,7 @@ games are the closest to the plaza and the newest ones extend outwards. The cent
 reserved for the plaza, which means a grid of `n` columns holds `n² − 1` pavilions.
 
 With the default values (plaza radius 36, pavilion radius 20, spacing 84, margin 16) the grid
-of 21 games needs **408 of the 500 blocks**, so the default world fits everything and keeps a
+of 22 games needs **408 of the 500 blocks**, so the default world fits everything and keeps a
 green belt round the edge. The three cells left over are gardens.
 
 Every pavilion has a gate on each side; the **main gate faces the plaza**, and the shows turn
@@ -69,6 +70,7 @@ world:
   size: 500
   build-structures: true
   teleport-on-join: false
+  always-day: true
   time: 13000
 ```
 
@@ -79,7 +81,8 @@ world:
 | `size` | 200 to 2000. If the layout does not fit, the world **grows in steps of 50** (up to 2000) instead of failing |
 | `build-structures` | With `false` the world is created empty and you build it yourself |
 | `teleport-on-join` | Sends every player to the casino when they join the server |
-| `time` | Hour the world is frozen at: `6000` noon, `13000` dusk, `18000` midnight; `-1` keeps the day cycle |
+| `always-day` | Keeps the world at noon (`6000`) whatever `time` says; on by default |
+| `time` | Hour the world is frozen at when `always-day` is off: `6000` noon, `13000` dusk, `18000` midnight; `-1` keeps the day cycle |
 
 ## In-world shows
 
@@ -169,7 +172,7 @@ audience on `+z`) and calling it from the round.
 - **New games get a pavilion for free.** Register a game and the next start places it on the
   grid and rebuilds the casino without you touching any coordinate.
 - **It is testable geometry.** `CasinoLayout`, `StageFrame`, `CrashCurve`, `PlinkoBoard` and
-  `WheelMath` are pure classes with no Bukkit, and the suite checks that 21 games fit in 500
+  `WheelMath` are pure classes with no Bukkit, and the suite checks that 22 games fit in 500
   blocks, that pavilions never overlap or cover spawn, that every pavilion sits on two
   boulevards connected to the plaza, that shows turn to the main gate without being mirrored
   and that the rocket never leaves its chart.

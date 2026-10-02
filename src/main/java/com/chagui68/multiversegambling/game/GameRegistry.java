@@ -27,9 +27,9 @@ public final class GameRegistry {
 
     public void register(Game game) {
         games.put(game.id(), game);
-        if (game instanceof AbstractGroupGame group) {
-            // Group games share the single plugin clock.
-            plugin.sessions().register(game.id(), group::tick);
+        if (game instanceof Ticking ticking) {
+            // Group games and tables share the single plugin clock.
+            plugin.sessions().register(game.id(), ticking::tick);
         }
     }
 

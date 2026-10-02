@@ -14,7 +14,9 @@ limpio y no hay que pegar nada a mano.
 ## Qué crea
 
 Por defecto un **mundo plano de 500 × 500 bloques** llamado `mvgam_casino`, con borde
-centrado en el spawn y la hora fijada al atardecer para que farolas y pabellones brillen:
+centrado en el spawn y siempre a mediodía. Nunca aparece ninguna criatura y solo los
+administradores (`mvgam_admin`) pueden romper o colocar bloques; el fuego, las explosiones y
+las hojas que se caen no pueden cambiarlo:
 
 | Pieza | Detalles |
 |---|---|
@@ -56,7 +58,7 @@ casilla central se reserva para la plaza, así que una rejilla de `n` columnas a
 pabellones.
 
 Con los valores por defecto (plaza de radio 36, pabellones de radio 20, separación 84, margen
-16) la rejilla de 21 juegos ocupa **408 de los 500 bloques**, así que el mundo por defecto lo
+16) la rejilla de 22 juegos ocupa **408 de los 500 bloques**, así que el mundo por defecto lo
 contiene todo y deja un cinturón verde alrededor. Las tres casillas sobrantes son jardines.
 
 Cada pabellón tiene una puerta en cada lado; la **puerta principal mira a la plaza** y los
@@ -72,6 +74,7 @@ world:
   size: 500
   build-structures: true
   teleport-on-join: false
+  always-day: true
   time: 13000
 ```
 
@@ -82,7 +85,8 @@ world:
 | `size` | De 200 a 2000. Si la distribución no cabe, el mundo **crece de 50 en 50** (hasta 2000) en vez de fallar |
 | `build-structures` | Con `false` el mundo se crea vacío y lo construyes tú |
 | `teleport-on-join` | Manda a cada jugador al casino cuando entra al servidor |
-| `time` | Hora a la que se congela el mundo: `6000` mediodía, `13000` atardecer, `18000` medianoche; `-1` mantiene el ciclo de día |
+| `always-day` | Mantiene el mundo a mediodía (`6000`) diga lo que diga `time`; activado por defecto |
+| `time` | Hora a la que se congela el mundo cuando `always-day` está apagado: `6000` mediodía, `13000` atardecer, `18000` medianoche; `-1` mantiene el ciclo de día |
 
 ## Espectáculos en el mundo
 
@@ -174,7 +178,7 @@ otro juego es extender `ArenaShow`, dibujarlo en el marco local del escenario (e
 - **Los juegos nuevos tienen pabellón gratis.** Registra un juego y el siguiente arranque lo
   coloca en la rejilla y reconstruye el casino sin que toques ninguna coordenada.
 - **Es geometría con tests.** `CasinoLayout`, `StageFrame`, `CrashCurve`, `PlinkoBoard` y
-  `WheelMath` son clases puras sin Bukkit, y la batería comprueba que 21 juegos caben en 500
+  `WheelMath` son clases puras sin Bukkit, y la batería comprueba que 22 juegos caben en 500
   bloques, que los pabellones nunca se solapan ni tapan el spawn, que cada pabellón está sobre
   dos bulevares conectados a la plaza, que los espectáculos se orientan a la puerta principal sin
   quedar en espejo y que el cohete nunca sale de su gráfica.
