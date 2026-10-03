@@ -4,13 +4,13 @@
 
 [English](Home) · **Español**
 
-Motor de azar y apuestas para **Paper 1.21.11** con **22 minijuegos**, su propio **mundo
+Motor de azar y apuestas para **Paper 1.21.11, 26.1 y 26.2** con **22 minijuegos**, su propio **mundo
 casino** y **traducción dentro del juego** al inglés o al español.
 
 | | |
 |---|---|
 | Versión | 1.0.4 |
-| Servidor | Paper 1.21.11 (también carga en cualquier 1.21.x) |
+| Servidor | Paper 1.21.11, 26.1 y 26.2 (también carga en cualquier 1.21.x) |
 | Java | 21 |
 | Dependencia blanda | Vault (opcional) |
 | Autor | **Chagui68** |

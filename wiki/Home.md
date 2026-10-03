@@ -4,13 +4,13 @@
 
 **English** · [Español](Home-es)
 
-Chance and betting engine for **Paper 1.21.11** with **22 minigames**, its own **casino
+Chance and betting engine for **Paper 1.21.11, 26.1 and 26.2** with **22 minigames**, its own **casino
 world** and **in-game translation** into English or Spanish.
 
 | | |
 |---|---|
 | Version | 1.0.4 |
-| Server | Paper 1.21.11 (also loads on any 1.21.x) |
+| Server | Paper 1.21.11, 26.1 and 26.2 (also loads on any 1.21.x) |
 | Java | 21 |
 | Soft dependency | Vault (optional) |
 | Author | **Chagui68** |

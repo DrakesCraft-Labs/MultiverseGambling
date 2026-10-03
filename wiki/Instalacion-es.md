@@ -6,11 +6,13 @@
 
 | Pieza | Versión |
 |---|---|
-| Servidor | Paper 1.21.11 (el jar también carga en 1.21.x) |
+| Servidor | Paper 1.21.11, 26.1 o 26.2 (un solo jar; también carga en 1.21.x) |
 | Java | 21 |
 | Vault | Opcional, recomendado si tu servidor ya tiene economía |
 
 El plugin se compila contra `paper-api:1.21.11-R0.1-SNAPSHOT` y declara `api-version: '1.21'`.
+Las mismas fuentes compilan y pasan sus tests contra Paper 26.1 y 26.2
+(`mvn -P api-26.1 test`, `mvn -P api-26.2 test`, con JDK 25).
 No usa NMS ni módulos internos, solo API pública.
 
 ## Instalación

@@ -6,12 +6,14 @@
 
 | Piece | Version |
 |---|---|
-| Server | Paper 1.21.11 (the jar also loads on 1.21.x) |
+| Server | Paper 1.21.11, 26.1 or 26.2 (one jar; it also loads on 1.21.x) |
 | Java | 21 |
 | Vault | Optional, recommended if your server already has an economy |
 
 The plugin builds against `paper-api:1.21.11-R0.1-SNAPSHOT` and declares
-`api-version: '1.21'`. It uses no NMS and no server internals, only the public API.
+`api-version: '1.21'`. It uses no NMS and no server internals, only the public API, and the
+same sources compile and pass their tests against Paper 26.1 and 26.2
+(`mvn -P api-26.1 test`, `mvn -P api-26.2 test`, with JDK 25).
 
 ## Installing
 

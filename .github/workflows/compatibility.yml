@@ -1,0 +1,89 @@
+name: Version compatibility
+
+# One jar for 1.21.11, 26.1 and 26.2. This workflow builds it once, against 1.21.11, then:
+#   - compiles and tests the sources against the 26.1 and 26.2 APIs (source compatibility), and
+#   - starts a real Paper server of each version with that very same jar (binary compatibility).
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build the release jar (Paper 1.21.11, Java 21)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Build and test
+        run: mvn -B -ntp package
+      - name: Keep the jar
+        run: |
+          mkdir -p dist
+          cp target/MultiverseGambling-*.jar dist/MultiverseGambling.jar
+      - uses: actions/upload-artifact@v4
+        with:
+          name: plugin-jar
+          path: dist/MultiverseGambling.jar
+          retention-days: 7
+
+  api:
+    name: Compile and test against ${{ matrix.profile }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        profile: [api-26.1, api-26.2]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+      - name: Compile and test
+        run: mvn -B -ntp -P ${{ matrix.profile }} test -Dmaven.compiler.showDeprecation=true
+
+  server:
+    name: Same jar on Paper ${{ matrix.minecraft }}
+    needs: build
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - minecraft: '1.21.11'
+            java: '21'
+          - minecraft: '26.1.2'
+            java: '25'
+          - minecraft: '26.2'
+            java: '25'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: plugin-jar
+          path: dist
+      - name: Start the server with the plugin
+        run: bash .github/scripts/server-smoke-test.sh "${{ matrix.minecraft }}" dist/MultiverseGambling.jar
+      - name: Keep the server log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-log-${{ matrix.minecraft }}
+          path: server-${{ matrix.minecraft }}/server.log
+          if-no-files-found: ignore
+          retention-days: 7

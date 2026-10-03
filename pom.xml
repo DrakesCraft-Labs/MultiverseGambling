@@ -107,4 +107,25 @@
       </plugin>
     </plugins>
   </build>
+  <!--
+      The release jar is built against Paper 1.21.11 and runs on 1.21.11, 26.1 and 26.2.
+      These profiles compile (and test) the same sources against the newer APIs, so a call
+      that does not exist there is caught before release. The 26.x APIs need JDK 25:
+          mvn -P api-26.1 test
+          mvn -P api-26.2 test
+  -->
+  <profiles>
+    <profile>
+      <id>api-26.1</id>
+      <properties>
+        <paper.api>26.1.2.build.74-stable</paper.api>
+      </properties>
+    </profile>
+    <profile>
+      <id>api-26.2</id>
+      <properties>
+        <paper.api>26.2.build.124-stable</paper.api>
+      </properties>
+    </profile>
+  </profiles>
 </project>

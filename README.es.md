@@ -3,7 +3,8 @@
 </p>
 
 <p align="center">
-  <a href="https://papermc.io"><img src="https://img.shields.io/badge/Paper-1.21.11-1E293B?style=for-the-badge&labelColor=8B5CF6" alt="Paper 1.21.11"/></a>
+  <a href="https://papermc.io"><img src="https://img.shields.io/badge/Paper-1.21.11%20%C2%B7%2026.1%20%C2%B7%2026.2-1E293B?style=for-the-badge&labelColor=8B5CF6" alt="Paper 1.21.11, 26.1 and 26.2"/></a>
+  <a href="https://github.com/DrakesCraft-Labs/MultiverseGambling/actions/workflows/compatibility.yml"><img src="https://img.shields.io/github/actions/workflow/status/DrakesCraft-Labs/MultiverseGambling/compatibility.yml?branch=main&style=for-the-badge&label=1.21.11%20%C2%B7%2026.1%20%C2%B7%2026.2" alt="Version compatibility"/></a>
   <a href="https://adoptium.net"><img src="https://img.shields.io/badge/Java-21-1E293B?style=for-the-badge&labelColor=8B5CF6" alt="Java 21"/></a>
   <img src="https://img.shields.io/badge/Versi%C3%B3n-1.0.4-1E293B?style=for-the-badge&labelColor=8B5CF6" alt="Versión 1.0.4"/>
   <img src="https://img.shields.io/badge/Juegos-22-1E293B?style=for-the-badge&labelColor=C084FC" alt="22 juegos"/>
@@ -18,7 +19,7 @@
 
 ---
 
-**MultiverseGambling** es un motor de azar y apuestas para **Paper 1.21.11** con
+**MultiverseGambling** es un motor de azar y apuestas para **Paper 1.21.11, 26.1 y 26.2** con
 **22 minijuegos**: 12 en solitario contra la casa y 10 en grupo con rondas automáticas (todos
 ellos jugables también **contra la casa** cuando no hay nadie más). Viven dentro de un
 **mundo casino** propio donde las rondas se representan con display entities, y cada mensaje
@@ -93,10 +94,16 @@ por un test que impide que vuelvan.
 
 ## Instalación
 
-**Requisitos:** Paper 1.21.11, Java 21. Vault es opcional pero recomendado.
+**Requisitos:** Paper 1.21.11, 26.1 o 26.2 (un mismo jar para las tres), Java 21 (los
+servidores 26.x usan Java 25). Vault es opcional pero recomendado.
 
 El plugin se compila contra `paper-api:1.21.11-R0.1-SNAPSHOT` y declara `api-version:
-'1.21'`, así que también carga en cualquier servidor de la serie 1.21.x. No depende de NMS
+'1.21'`, así que también carga en cualquier servidor de la serie 1.21.x y en 26.1 y 26.2. Las
+mismas fuentes se compilan y prueban contra esas APIs con `mvn -P api-26.1 test` y
+`mvn -P api-26.2 test` (JDK 25). En cada push, el workflow
+[Version compatibility](.github/workflows/compatibility.yml) compila el jar una vez y arranca
+un servidor Paper 1.21.11, 26.1 y 26.2 real con ese mismo jar; falla ante cualquier error de
+carga, de habilitación o de enlace. No depende de NMS
 ni de ningún módulo interno: solo API pública.
 
 ```bash
